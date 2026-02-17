@@ -89,6 +89,7 @@ export const GatewayConnectorConfigVersionMap = new Map<ConnectorType, GatewayVe
   [ConnectorType.MQTT, GatewayVersion.v3_5_2],
   [ConnectorType.OPCUA, GatewayVersion.v3_5_2],
   [ConnectorType.MODBUS, GatewayVersion.v3_5_2],
+  [ConnectorType.S7, GatewayVersion.v3_7_0],
 ]);
 
 export interface ConnectorDeviceInfo {

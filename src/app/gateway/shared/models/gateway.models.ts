@@ -65,6 +65,7 @@ export enum ConnectorType {
   OCPP = 'ocpp',
   CUSTOM = 'custom',
   KNX = 'knx',
+  S7 = 's7',
 }
 
 export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, string>([
@@ -85,6 +86,7 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
   [ConnectorType.OCPP, 'OCPP'],
   [ConnectorType.CUSTOM, 'CUSTOM'],
   [ConnectorType.KNX, 'KNX'],
+  [ConnectorType.S7, 'S7'],
 ]);
 
 export const ConnectorsTypesByVersion = new Map<GatewayVersion, ConnectorType[]>([

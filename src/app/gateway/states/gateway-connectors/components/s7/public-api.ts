@@ -13,11 +13,8 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
+export * from './s7-basic-config/s7-basic-config.component';
+export * from './s7-basic-config/s7-legacy-basic-config.component';
+export * from './s7-devices-table/s7-devices-table.component';
+export * from './s7-device-dialog/s7-device-dialog.component';
+export * from './s7-data-keys-panel/s7-data-keys-panel.component';

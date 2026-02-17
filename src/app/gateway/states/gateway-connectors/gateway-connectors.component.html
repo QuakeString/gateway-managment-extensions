@@ -111,6 +111,21 @@
                       (click)="deleteConnector(attribute, $event)">
                 <mat-icon>delete</mat-icon>
               </button>
+              <button mat-icon-button
+                      (click)="$event.stopPropagation()"
+                      [matMenuTriggerFor]="connectorMenu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #connectorMenu="matMenu" xPosition="before">
+                <button mat-menu-item (click)="exportConnectorConfig(attribute, $event)">
+                  <mat-icon>file_download</mat-icon>
+                  <span>Export Config</span>
+                </button>
+                <button mat-menu-item (click)="importConnectorConfig(attribute, $event)">
+                  <mat-icon>file_upload</mat-icon>
+                  <span>Import Config</span>
+                </button>
+              </mat-menu>
             </div>
             <div class="gt-sm:!hidden">
               <button mat-icon-button
@@ -270,6 +285,23 @@
                 (initialized)="basicConfigInitSubject.next()"
                 [generalTabContent]="generalTabContent"
                 [withReportStrategy]="connectorForm.get('configVersion').value | withReportStrategy"
+              />
+            </ng-template>
+          </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.S7">
+            <tb-s7-basic-config
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig : ConnectorType.S7 else legacy"
+              class="h-full"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-s7-legacy-basic-config
+                class="h-full"
+                formControlName="basicConfig"
+                (initialized)="basicConfigInitSubject.next()"
+                [generalTabContent]="generalTabContent"
               />
             </ng-template>
           </ng-container>

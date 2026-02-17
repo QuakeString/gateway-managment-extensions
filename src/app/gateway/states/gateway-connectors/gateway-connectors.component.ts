@@ -84,6 +84,7 @@ import { LatestVersionConfigPipe } from './pipes/public-api';
 import { ReportStrategyComponent } from '../../shared/components/public-api';
 import { BacnetBasicConfigComponent, BacnetLegacyBasicConfigComponent } from './components/bacnet/public-api';
 import { RestLegacyBasicConfigComponent, RestBasicConfigComponent } from './components/rest/public-api';
+import { S7BasicConfigComponent, S7LegacyBasicConfigComponent } from './components/s7/public-api';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null): boolean {
@@ -115,6 +116,8 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
     BacnetLegacyBasicConfigComponent,
     RestLegacyBasicConfigComponent,
     RestBasicConfigComponent,
+    S7BasicConfigComponent,
+    S7LegacyBasicConfigComponent,
   ],
 })
 export class GatewayConnectorComponent extends PageComponent implements AfterViewInit, OnDestroy {
@@ -131,7 +134,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     ConnectorType.MODBUS,
     ConnectorType.SOCKET,
     ConnectorType.BACNET,
-    ConnectorType.REST
+    ConnectorType.REST,
+    ConnectorType.S7,
   ]);
   readonly gatewayLogLevel = Object.values(GatewayLogLevel);
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
@@ -510,6 +514,45 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
 
+  exportConnectorConfig(attribute: GatewayAttributeData, $event: Event): void {
+    $event?.stopPropagation();
+    const config = attribute.value?.configurationJson || {};
+    const name = attribute.key || 'connector';
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}-config.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importConnectorConfig(attribute: GatewayAttributeData, $event: Event): void {
+    $event?.stopPropagation();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) { return; }
+      const reader = new FileReader();
+      reader.onload = (ev: any) => {
+        try {
+          const config = JSON.parse(ev.target.result);
+          attribute.value.configurationJson = config;
+          attribute.value.ts = new Date().getTime();
+          this.attributeUpdateSubject.next(attribute);
+          this.selectConnector(null, attribute);
+          this.cd.detectChanges();
+        } catch {
+          // invalid JSON — ignore
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
   onEnableConnector(attribute: GatewayAttributeData): void {
     attribute.value.ts = new Date().getTime();
 
@@ -522,7 +565,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const connectorName = attribute.key;
     const connector = this.subscription && this.subscription.data
       .find(data => data && data.dataKey.name === `${connectorName}_ERRORS_COUNT`);
-    return (connector && this.activeConnectors.includes(connectorName)) ? (connector.data[0][1] || 0) : 'Inactive';
+    return (connector && this.activeConnectors.includes(connectorName) && connector.data[0]) ? (connector.data[0][1] || 0) : 'Inactive';
   }
 
   onAddConnector(event?: Event): void {

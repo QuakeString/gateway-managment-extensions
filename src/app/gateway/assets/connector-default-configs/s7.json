@@ -1,0 +1,33 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "S7 Device",
+        "host": "192.168.1.10",
+        "port": 102,
+        "rack": 0,
+        "slot": 1,
+        "model": "S7-1200",
+        "pollPeriod": 5000,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 10000,
+        "timeseries": [
+          {
+            "tag": "temperature",
+            "address": "DB1.DBD0",
+            "valueType": "REAL"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "deviceStatus",
+            "address": "DB1.DBX4.0",
+            "valueType": "BOOL"
+          }
+        ],
+        "attributeUpdates": [],
+        "rpc": []
+      }
+    ]
+  }
+}
