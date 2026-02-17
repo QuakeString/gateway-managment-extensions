@@ -32,6 +32,8 @@
     height: 100%;
     width: 100%;
     flex-direction: row;
+    gap: 16px;
+    background-color: var(--tb-surface, #F3F6FA);
     @media #{constants.$mat-lt-lg} {
       flex-direction: column;
     }
@@ -61,13 +63,13 @@
     }
 
     .section-container {
-      background-color: #fff;
+      background-color: var(--tb-surface-card, #fff);
     }
   }
 
   .mat-toolbar {
     background: transparent;
-    color: rgba(0, 0, 0, .87) !important;
+    color: var(--tb-text-primary, rgba(0, 0, 0, .87)) !important;
   }
 
   .mat-mdc-slide-toggle {
@@ -136,7 +138,7 @@
       display: flex;
       z-index: 999;
       pointer-events: none;
-      background-color: #fff;
+      background-color: var(--tb-surface-card, #fff);
 
       button.connector {
         height: auto;
@@ -149,7 +151,7 @@
         flex-wrap: wrap;
         justify-content: center;
         align-items: center;
-        color: rgba(0, 0, 0, 0.38);
+        color: var(--tb-text-disabled, rgba(0, 0, 0, 0.38));
       }
     }
   }
