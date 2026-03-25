@@ -54,7 +54,7 @@ import {
 } from '../../../../shared/public-api';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { TypeValuePanelComponent } from '../type-value-panel/type-value-panel.component';
 import { ConnectorMappingHelpLinkPipe } from '../../pipes/public-api';
 
@@ -116,7 +116,6 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     this.keysListFormArray = this.prepareKeysFormArray(this.keys);
     this.updateFilteredControls();
     this.searchControl.valueChanges.pipe(
-      debounceTime(200),
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.renderLimit = 50;

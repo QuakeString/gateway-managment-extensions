@@ -47,7 +47,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { generateSecret } from '@core/public-api';
 import { coerceBoolean, SharedModule } from '@shared/public-api';
-import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ReportStrategyComponent } from '../../../../../shared/components/public-api';
 
@@ -125,7 +125,6 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
     this.updateFilteredControls();
     this.searchControl.valueChanges.pipe(
-      debounceTime(200),
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.renderLimit = 50;

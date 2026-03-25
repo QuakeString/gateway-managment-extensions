@@ -34,8 +34,13 @@ import {
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
 import { MatDialog } from '@angular/material/dialog';
-import { S7DeviceConfig } from '../../../models/public-api';
+import { S7DataKey, S7DeviceConfig } from '../../../models/public-api';
 import { S7DeviceDialogComponent, S7DeviceDialogData } from '../s7-device-dialog/s7-device-dialog.component';
+import {
+  S7TagImportDialogComponent,
+  S7TagImportDialogData,
+  S7TagImportResult,
+} from '../s7-tag-import-dialog/s7-tag-import-dialog.component';
 
 @Component({
   selector: 'tb-s7-devices-table',
@@ -121,7 +126,8 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
     this.dialog.open<S7DeviceDialogComponent, S7DeviceDialogData, S7DeviceConfig>(
       S7DeviceDialogComponent, {
         data: { isEdit: false },
-        panelClass: 'tb-dialog',
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -137,7 +143,8 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
     this.dialog.open<S7DeviceDialogComponent, S7DeviceDialogData, S7DeviceConfig>(
       S7DeviceDialogComponent, {
         data: { device: this.devices[index], isEdit: true },
-        panelClass: 'tb-dialog',
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -155,41 +162,67 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
     this.emitChange();
   }
 
-  exportDevice(index: number): void {
+  exportTags(index: number): void {
     const device = this.devices[index];
     if (!device) { return; }
-    const blob = new Blob([JSON.stringify(device, null, 2)], { type: 'application/json' });
+
+    const rows: string[] = ['tag,address,valueType,category,multiplier,divider,reportStrategyType,reportPeriod'];
+    const addKeys = (keys: S7DataKey[], category: string) => {
+      for (const k of (keys || [])) {
+        const tag = (k.tag || '').replace(/,/g, ';');
+        rows.push([
+          tag,
+          k.address || '',
+          k.valueType || '',
+          category,
+          k.multiplier ?? '',
+          k.divider ?? '',
+          k.reportStrategy?.type ?? '',
+          k.reportStrategy?.reportPeriod ?? '',
+        ].join(','));
+      }
+    };
+    addKeys(device.timeseries, 'timeseries');
+    addKeys(device.attributes, 'attributes');
+    addKeys(device.attributeUpdates, 'attributeUpdates');
+
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${device.deviceName || 's7-device'}-config.json`;
+    a.download = `${device.deviceName || 's7-device'}-tags.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  importDevice(): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e: any) => {
-      const file = e.target.files[0];
-      if (!file) { return; }
-      const reader = new FileReader();
-      reader.onload = (ev: any) => {
-        try {
-          const device = JSON.parse(ev.target.result) as S7DeviceConfig;
-          if (device.deviceName && device.host) {
-            this.devices = [...this.devices, device];
-            this.updateFilter();
-            this.emitChange();
-          }
-        } catch {
-          // invalid JSON — ignore
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
+  importTags(index: number): void {
+    const device = this.devices[index];
+    if (!device) { return; }
+
+    const existingTags: S7DataKey[] = [
+      ...(device.timeseries || []),
+      ...(device.attributes || []),
+      ...(device.attributeUpdates || []),
+    ];
+
+    this.dialog.open<S7TagImportDialogComponent, S7TagImportDialogData, S7TagImportResult>(
+      S7TagImportDialogComponent, {
+        data: { deviceName: device.deviceName, existingTags },
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        autoFocus: false,
+        width: '800px',
+      }
+    ).afterClosed().subscribe(result => {
+      if (result) {
+        const updated = { ...device };
+        updated.timeseries = [...(updated.timeseries || []), ...result.timeseries];
+        updated.attributes = [...(updated.attributes || []), ...result.attributes];
+        this.devices = this.devices.map((d, i) => i === index ? updated : d);
+        this.updateFilter();
+        this.emitChange();
+      }
+    });
   }
 
   private updateFilter(): void {

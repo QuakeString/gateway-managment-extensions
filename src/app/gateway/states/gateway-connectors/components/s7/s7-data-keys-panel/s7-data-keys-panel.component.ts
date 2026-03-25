@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -31,7 +31,7 @@ import { ModifierType, ModifierTypesMap } from '../../../models/public-api';
 import { S7DataKey, S7RpcConfig, S7ValueKey, S7ValueType } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
 import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-s7-data-keys-panel',
@@ -70,6 +70,7 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private fb = new FormBuilder();
+  private cd = inject(ChangeDetectorRef);
 
   get isRpc(): boolean {
     return this.keysType === S7ValueKey.RPC;
@@ -88,7 +89,6 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
     }
     this.updateFilteredControls();
     this.searchControl.valueChanges.pipe(
-      debounceTime(200),
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.renderLimit = 50;
@@ -155,6 +155,7 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
       this.renderLimit += 50;
       this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+      this.cd.markForCheck();
     }
   }
 
@@ -173,6 +174,7 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
         });
     }
     this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    this.cd.markForCheck();
   }
 
   trackByFilteredItem(_: number, item: { control: FormGroup; index: number }): string {
