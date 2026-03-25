@@ -14,17 +14,24 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
+import { nonZeroFloat, ReportStrategyDefaultValue } from '../../../../../shared/public-api';
+import { ReportStrategyComponent } from '../../../../../shared/components/public-api';
+import { ModifierType, ModifierTypesMap } from '../../../models/public-api';
 import { S7DataKey, S7RpcConfig, S7ValueKey, S7ValueType } from '../../../models/public-api';
+import { generateSecret } from '@core/public-api';
+import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-s7-data-keys-panel',
@@ -32,9 +39,9 @@ import { S7DataKey, S7RpcConfig, S7ValueKey, S7ValueType } from '../../../models
   styleUrls: ['./s7-data-keys-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, SharedModule, ReactiveFormsModule],
+  imports: [CommonModule, SharedModule, ReactiveFormsModule, ReportStrategyComponent],
 })
-export class S7DataKeysPanelComponent implements OnInit {
+export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
 
   @Input() panelTitle = 'Data Keys';
   @Input() addKeyTitle = 'Add key';
@@ -47,9 +54,21 @@ export class S7DataKeysPanelComponent implements OnInit {
   @Output() cancelled = new EventEmitter<void>();
 
   readonly valueTypes = Object.values(S7ValueType);
+  readonly modifierTypes: ModifierType[] = Object.values(ModifierType) as ModifierType[];
+  readonly ModifierTypesMap = ModifierTypesMap;
+  readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
   readonly S7ValueKey = S7ValueKey;
+
+  enableModifiersControlMap = new Map<string, FormControl<boolean>>();
   keysFormArray: FormArray;
 
+  searchControl = new FormControl('');
+  filteredControls: { control: FormGroup; index: number }[] = [];
+  displayedControls: { control: FormGroup; index: number }[] = [];
+  renderLimit = 50;
+  lastAddedId: string | null = null;
+
+  private destroy$ = new Subject<void>();
   private fb = new FormBuilder();
 
   get isRpc(): boolean {
@@ -59,30 +78,56 @@ export class S7DataKeysPanelComponent implements OnInit {
   ngOnInit(): void {
     this.keysFormArray = this.fb.array([]);
     if (this.keys?.length) {
-      this.keys.forEach(key => this.keysFormArray.push(this.createKeyForm(key)));
+      this.keys.forEach(key => {
+        const form = this.createKeyForm(key);
+        if (!this.isRpc) {
+          this.observeEnableModifier(form);
+        }
+        this.keysFormArray.push(form);
+      });
     }
+    this.updateFilteredControls();
+    this.searchControl.valueChanges.pipe(
+      debounceTime(200),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.renderLimit = 50;
+      this.updateFilteredControls();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   addKey(): void {
     if (this.isRpc) {
-      this.keysFormArray.push(this.createKeyForm({
+      const form = this.createKeyForm({
         method: '',
         address: '',
         valueType: null,
         operation: 'read',
-      } as S7RpcConfig));
+      } as S7RpcConfig);
+      this.keysFormArray.insert(0, form);
     } else {
-      this.keysFormArray.push(this.createKeyForm({
+      const form = this.createKeyForm({
         tag: '',
         address: '',
         valueType: null,
-      } as S7DataKey));
+      } as S7DataKey);
+      this.observeEnableModifier(form);
+      this.lastAddedId = form.getRawValue().id;
+      this.keysFormArray.insert(0, form);
     }
+    this.searchControl.setValue('', { emitEvent: false });
+    this.updateFilteredControls();
   }
 
   deleteKey(index: number): void {
     this.keysFormArray.removeAt(index);
     this.keysFormArray.markAsDirty();
+    this.updateFilteredControls();
   }
 
   cancel(): void {
@@ -91,7 +136,7 @@ export class S7DataKeysPanelComponent implements OnInit {
 
   applyKeysData(): void {
     if (this.keysFormArray.valid) {
-      this.keysDataApplied.emit(this.keysFormArray.value);
+      this.keysDataApplied.emit(this.getFormValue());
     }
   }
 
@@ -102,6 +147,52 @@ export class S7DataKeysPanelComponent implements OnInit {
       return method ? `${method} (${op})` : 'New RPC';
     }
     return keyForm.get('tag')?.value || 'New key';
+  }
+
+  onKeyPanelScroll(event: Event): void {
+    if (this.renderLimit >= this.filteredControls.length) return;
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      this.renderLimit += 50;
+      this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    }
+  }
+
+  updateFilteredControls(): void {
+    const search = (this.searchControl.value || '').toLowerCase().trim();
+    if (!search) {
+      this.filteredControls = this.keysFormArray.controls
+        .map((c, i) => ({ control: c as FormGroup, index: i }));
+    } else {
+      this.filteredControls = this.keysFormArray.controls
+        .map((c, i) => ({ control: c as FormGroup, index: i }))
+        .filter(item => {
+          const tag = (item.control.get('tag')?.value || item.control.get('method')?.value || '').toLowerCase();
+          const address = (item.control.get('address')?.value?.toString() || '');
+          return tag.includes(search) || address.toLowerCase().includes(search);
+        });
+    }
+    this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+  }
+
+  trackByFilteredItem(_: number, item: { control: FormGroup; index: number }): string {
+    return item.control.getRawValue().id ?? item.index.toString();
+  }
+
+  private getFormValue(): Array<S7DataKey | S7RpcConfig> {
+    return this.keysFormArray.value.map((key: any, i: number) => {
+      if (this.isRpc) return key;
+      const { id, modifierType, modifierValue, reportStrategy, ...rest } = key;
+      const keyId = (this.keysFormArray.controls[i] as FormGroup).get('id')?.value;
+      const result: any = { ...rest };
+      if (this.enableModifiersControlMap.get(keyId)?.value && modifierType) {
+        result[modifierType] = modifierValue;
+      }
+      if (reportStrategy) {
+        result.reportStrategy = reportStrategy;
+      }
+      return result;
+    });
   }
 
   private createKeyForm(key: S7DataKey | S7RpcConfig): FormGroup {
@@ -115,10 +206,35 @@ export class S7DataKeysPanelComponent implements OnInit {
       });
     }
     const dataKey = key as S7DataKey;
+    const id = generateSecret(5);
+    const hasModifier = !!(dataKey.multiplier || dataKey.divider);
+    this.enableModifiersControlMap.set(id, this.fb.control(hasModifier));
+
     return this.fb.group({
+      id: [{ value: id, disabled: true }],
       tag: [dataKey.tag || '', [Validators.required]],
       address: [dataKey.address || '', [Validators.required, Validators.pattern(/^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|[MIQC]\d+\.\d+|[MIQC][BWDL]\d+)$/i)]],
       valueType: [dataKey.valueType || null],
+      modifierType: [{ value: dataKey.divider ? ModifierType.DIVIDER : ModifierType.MULTIPLIER, disabled: !hasModifier }],
+      modifierValue: [{ value: dataKey.multiplier ?? dataKey.divider ?? 1, disabled: !hasModifier }, [Validators.pattern(nonZeroFloat)]],
+      reportStrategy: [dataKey.reportStrategy || null],
     });
+  }
+
+  private observeEnableModifier(keyFormGroup: FormGroup): void {
+    const id = keyFormGroup.get('id')?.value ?? (keyFormGroup.getRawValue() as any).id;
+    this.enableModifiersControlMap.get(id)?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enabled => {
+        const modifierType = keyFormGroup.get('modifierType');
+        const modifierValue = keyFormGroup.get('modifierValue');
+        if (enabled) {
+          modifierType?.enable();
+          modifierValue?.enable();
+        } else {
+          modifierType?.disable();
+          modifierValue?.disable();
+        }
+      });
   }
 }

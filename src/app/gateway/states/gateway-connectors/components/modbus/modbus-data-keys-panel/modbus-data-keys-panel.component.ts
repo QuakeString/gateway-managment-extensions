@@ -47,7 +47,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { generateSecret } from '@core/public-api';
 import { coerceBoolean, SharedModule } from '@shared/public-api';
-import { filter, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ReportStrategyComponent } from '../../../../../shared/components/public-api';
 
@@ -98,6 +98,12 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   readonly ModbusDataType = ModbusDataType;
   readonly ModbusValueKey = ModbusValueKey;
 
+  searchControl = new FormControl('');
+  filteredControls: { control: UntypedFormGroup; index: number }[] = [];
+  displayedControls: { control: UntypedFormGroup; index: number }[] = [];
+  renderLimit = 50;
+  lastAddedId: string | null = null;
+
   private destroy$ = new Subject<void>();
 
   private readonly defaultReadFunctionCodes = [3, 4];
@@ -117,6 +123,14 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       && !this.hideNewFields;
     this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
+    this.updateFilteredControls();
+    this.searchControl.valueChanges.pipe(
+      debounceTime(200),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.renderLimit = 50;
+      this.updateFilteredControls();
+    });
   }
 
   ngOnDestroy(): void {
@@ -150,7 +164,10 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     this.observeObjectsCount(dataKeyFormGroup);
     this.observeEnableModifier(dataKeyFormGroup);
 
-    this.keysListFormArray.push(dataKeyFormGroup);
+    this.lastAddedId = id;
+    this.keysListFormArray.insert(0, dataKeyFormGroup);
+    this.searchControl.setValue('', { emitEvent: false });
+    this.updateFilteredControls();
   }
 
   deleteKey($event: Event, index: number): void {
@@ -159,10 +176,41 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     }
     this.keysListFormArray.removeAt(index);
     this.keysListFormArray.markAsDirty();
+    this.updateFilteredControls();
   }
 
   cancel(): void {
     this.popover.hide();
+  }
+
+  onKeyPanelScroll(event: Event): void {
+    if (this.renderLimit >= this.filteredControls.length) return;
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      this.renderLimit += 50;
+      this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    }
+  }
+
+  updateFilteredControls(): void {
+    const search = (this.searchControl.value || '').toLowerCase().trim();
+    if (!search) {
+      this.filteredControls = this.keysListFormArray.controls
+        .map((c, i) => ({ control: c as UntypedFormGroup, index: i }));
+    } else {
+      this.filteredControls = this.keysListFormArray.controls
+        .map((c, i) => ({ control: c as UntypedFormGroup, index: i }))
+        .filter(item => {
+          const tag = (item.control.get('tag').value || '').toLowerCase();
+          const address = (item.control.get('address').value?.toString() || '');
+          return tag.includes(search) || address.includes(search);
+        });
+    }
+    this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+  }
+
+  trackByFilteredItem(_: number, item: { control: UntypedFormGroup; index: number }): string {
+    return item.control.get('id').value;
   }
 
   applyKeysData(): void {

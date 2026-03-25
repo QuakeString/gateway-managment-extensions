@@ -16,32 +16,47 @@
 <div class="s7-keys-panel">
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
-    <div class="tb-form-panel no-border no-padding key-panel" *ngIf="keysFormArray.length; else noKeys">
+    <mat-form-field *ngIf="keysFormArray.length > 10" class="fill-width search-keys-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [formControl]="searchControl" placeholder="Search keys..."/>
+      <button *ngIf="searchControl.value" mat-icon-button matSuffix (click)="searchControl.setValue('')" type="button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+    <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
+      {{ filteredControls.length }} of {{ keysFormArray.length }} keys
+    </div>
+    <div class="tb-form-panel no-border no-padding key-panel"
+         *ngIf="displayedControls.length; else noKeys"
+         (scroll)="onKeyPanelScroll($event)">
       <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
-           *ngFor="let keyForm of keysFormArray.controls; let i = index; let isLast = last">
+           *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
         <div class="tb-form-panel stroked tb-flex">
-          <ng-container [formGroup]="keyForm">
-            <mat-expansion-panel class="tb-settings" [expanded]="isLast && !keyForm.get(isRpc ? 'method' : 'tag').value">
+          <ng-container [formGroup]="item.control">
+            <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
               <mat-expansion-panel-header class="flex-wrap">
                 <mat-panel-title>
                   <div class="tb-flex">
                     <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
-                      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? keyForm.get('method').value : keyForm.get('tag').value }}</span>
+                      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? item.control.get('method').value : item.control.get('tag').value }}</span>
                     </div>
                     <div class="title-container">Address:
-                      <span class="key-label">{{ keyForm.get('address').value }}</span>
+                      <span class="key-label">{{ item.control.get('address').value }}</span>
                     </div>
-                    <div *ngIf="keyForm.get('valueType').value" class="title-container">Type:
-                      <span class="key-label">{{ keyForm.get('valueType').value }}</span>
+                    <div *ngIf="item.control.get('valueType').value" class="title-container">Type:
+                      <span class="key-label">{{ item.control.get('valueType').value }}</span>
                     </div>
                   </div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
                 <div class="tb-form-panel no-border no-padding">
+                  <div class="tb-form-hint tb-primary-fill">
+                    {{ 'gateway.hints.s7.data-keys' | translate }}
+                  </div>
                   <ng-container *ngIf="!isRpc">
                     <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">Tag</div>
+                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.tag' | translate }}">Tag</div>
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput formControlName="tag" placeholder="temperature">
                       </mat-form-field>
@@ -49,7 +64,7 @@
                   </ng-container>
                   <ng-container *ngIf="isRpc">
                     <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">Method</div>
+                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">Method</div>
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput formControlName="method" placeholder="setValue">
                       </mat-form-field>
@@ -72,8 +87,8 @@
                                 matTooltipPosition="above"
                                 matTooltipClass="tb-error-tooltip"
                                 [matTooltip]="'Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)'"
-                                *ngIf="keyForm.get('address').hasError('pattern')
-                                                     && keyForm.get('address').touched"
+                                *ngIf="item.control.get('address').hasError('pattern')
+                                                     && item.control.get('address').touched"
                                 class="tb-error">
                         warning
                       </mat-icon>
@@ -90,6 +105,62 @@
                       </mat-select>
                     </mat-form-field>
                   </div>
+                  <ng-container *ngIf="!isRpc">
+                    <div class="tb-form-panel stroked tb-slide-toggle">
+                      <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(item.control.getRawValue().id)?.value">
+                        <mat-expansion-panel-header class="flex-wrap">
+                          <mat-panel-title>
+                            <mat-slide-toggle
+                              [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)"
+                              class="mat-slide"
+                              (click)="$event.stopPropagation()">
+                              <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">{{ 'gateway.modifier' | translate }}</mat-label>
+                            </mat-slide-toggle>
+                          </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <div class="tb-flex no-gap">
+                          <div class="tb-form-row column-xs w-full">
+                            <div class="fixed-title-width" translate>gateway.type</div>
+                            <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                              <mat-select formControlName="modifierType">
+                                <mat-select-trigger>
+                                  <div class="tb-flex align-center">
+                                    <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(item.control.get('modifierType').value)?.icon"></mat-icon>
+                                    <span>{{ ModifierTypesMap.get(item.control.get('modifierType').value)?.name | translate }}</span>
+                                  </div>
+                                </mat-select-trigger>
+                                <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
+                                  <mat-icon class="tb-mat-20" [svgIcon]="ModifierTypesMap.get(modifierType).icon"></mat-icon>
+                                  <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+                        </div>
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width" translate>gateway.value</div>
+                          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
+                            <input matInput required formControlName="modifierValue" step="0.1" type="number"
+                                   placeholder="{{ 'gateway.set' | translate }}" />
+                            <mat-icon matSuffix
+                                      matTooltipPosition="above"
+                                      matTooltipClass="tb-error-tooltip"
+                                      [matTooltip]="('gateway.modifier-invalid') | translate"
+                                      *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
+                                      class="tb-error">
+                              warning
+                            </mat-icon>
+                          </mat-form-field>
+                        </div>
+                      </mat-expansion-panel>
+                    </div>
+                    <tb-report-strategy
+                      class="stroked tb-form-panel"
+                      [defaultValue]="ReportStrategyDefaultValue.Key"
+                      formControlName="reportStrategy"
+                      [isExpansionMode]="true"
+                    />
+                  </ng-container>
                 </div>
               </ng-template>
             </mat-expansion-panel>
@@ -97,7 +168,7 @@
         </div>
         <button type="button"
                 mat-icon-button
-                (click)="deleteKey(i)"
+                (click)="deleteKey(item.index)"
                 [matTooltip]="deleteKeyTitle"
                 matTooltipPosition="above">
           <mat-icon>delete</mat-icon>
@@ -106,7 +177,12 @@
     </div>
     <ng-template #noKeys>
       <div class="tb-flex no-flex center align-center key-panel">
-        <span class="tb-prompt">{{ noKeysText }}</span>
+        <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeys" class="tb-prompt">
+          No matching keys
+        </span>
+        <ng-template #emptyKeys>
+          <span class="tb-prompt">{{ noKeysText }}</span>
+        </ng-template>
       </div>
     </ng-template>
   </div>
