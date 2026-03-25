@@ -16,21 +16,33 @@
 <div class="tb-mapping-keys-panel">
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-panel-title">{{ panelTitle  | translate }}{{' (' + keysListFormArray.controls.length + ')'}}</div>
-    <div class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
+    <mat-form-field *ngIf="keysListFormArray.controls.length > 10" class="fill-width search-keys-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [formControl]="searchControl" placeholder="Search keys..."/>
+      <button *ngIf="searchControl.value" mat-icon-button matSuffix (click)="searchControl.setValue('')" type="button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+    <div *ngIf="searchControl.value && filteredControls.length !== keysListFormArray.controls.length" class="search-result-info">
+      {{ filteredControls.length }} of {{ keysListFormArray.controls.length }} keys
+    </div>
+    <div class="tb-form-panel no-border no-padding key-panel"
+         *ngIf="displayedControls.length; else noKeys"
+         (scroll)="onKeyPanelScroll($event)">
       <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
-           *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByKey; let $index = index; let last = last;">
+           *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
         <div class="tb-form-panel stroked tb-flex">
-          <ng-container [formGroup]="keyControl">
-            <mat-expansion-panel class="tb-settings" [expanded]="last">
+          <ng-container [formGroup]="item.control">
+            <mat-expansion-panel class="tb-settings" [expanded]="item.control === lastAddedControl">
               <mat-expansion-panel-header class="flex flex-row flex-wrap">
                 <mat-panel-title>
                   <ng-container *ngIf="keysType !== MappingKeysType.RPC_METHODS">
                     <div tbTruncateWithTooltip class="title-container">
-                      {{ keyControl.get('key').value }}
+                      {{ item.control.get('key').value }}
                     </div>
                     {{ ':' }}&nbsp;
                   </ng-container>
-                  <div tbTruncateWithTooltip class="title-container">{{ valueTitle(keyControl) }}</div>
+                  <div tbTruncateWithTooltip class="title-container">{{ valueTitle(item.control) }}</div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
@@ -49,15 +61,15 @@
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
                                   [matTooltip]="('gateway.key-required') | translate"
-                                  *ngIf="keyControl.get('key').hasError('required') &&
-                                         keyControl.get('key').touched"
+                                  *ngIf="item.control.get('key').hasError('required') &&
+                                         item.control.get('key').touched"
                                   class="tb-error">
                           warning
                         </mat-icon>
                         <div matSuffix
                              class="see-example p-1"
-                             *ngIf="connectorType | getConnectorMappingHelpLink : this.keysType : keyControl.get('type').value : convertorType"
-                             [tb-help-popup]="connectorType | getConnectorMappingHelpLink : this.keysType : keyControl.get('type').value : convertorType"
+                             *ngIf="connectorType | getConnectorMappingHelpLink : this.keysType : item.control.get('type').value : convertorType"
+                             [tb-help-popup]="connectorType | getConnectorMappingHelpLink : this.keysType : item.control.get('type').value : convertorType"
                              tb-help-popup-placement="left"
                              [tb-help-popup-style]="{maxWidth: '970px'}">
                         </div>
@@ -72,11 +84,11 @@
                         <mat-select formControlName="type">
                           <mat-select-trigger *ngIf="!rawData">
                             <div class="tb-flex align-center">
-                              <mat-icon *ngIf="valueTypes.get(keyControl.get('type').value)?.icon" class="tb-mat-18"
-                                        [svgIcon]="valueTypes.get(keyControl.get('type').value)?.icon">
+                              <mat-icon *ngIf="valueTypes.get(item.control.get('type').value)?.icon" class="tb-mat-18"
+                                        [svgIcon]="valueTypes.get(item.control.get('type').value)?.icon">
                               </mat-icon>
                               <span *ngIf="!rawData; else rawText">
-                                {{ valueTypes.get(keyControl.get('type').value)?.name ?? valueTypes.get(keyControl.get('type').value) | translate }}
+                                {{ valueTypes.get(item.control.get('type').value)?.name ?? valueTypes.get(item.control.get('type').value) | translate }}
                               </span>
                               <ng-template #rawText>
                                 <span>{{ 'gateway.raw' | translate }}</span>
@@ -113,15 +125,15 @@
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
                                   [matTooltip]="'gateway.value-required' | translate"
-                                  *ngIf="keyControl.get('value').hasError('required') &&
-                                         keyControl.get('value').touched"
+                                  *ngIf="item.control.get('value').hasError('required') &&
+                                         item.control.get('value').touched"
                                   class="tb-error">
                           warning
                         </mat-icon>
                         <div matSuffix
                              class="see-example p-1"
-                             *ngIf="connectorType | getConnectorMappingHelpLink : this.keysType : keyControl.get('type').value : convertorType"
-                             [tb-help-popup]="connectorType | getConnectorMappingHelpLink : this.keysType : keyControl.get('type').value : convertorType"
+                             *ngIf="connectorType | getConnectorMappingHelpLink : this.keysType : item.control.get('type').value : convertorType"
+                             [tb-help-popup]="connectorType | getConnectorMappingHelpLink : this.keysType : item.control.get('type').value : convertorType"
                              tb-help-popup-placement="left"
                              [tb-help-popup-style]="{maxWidth: '970px'}">
                         </div>
@@ -138,7 +150,7 @@
                                 matTooltipPosition="above"
                                 matTooltipClass="tb-error-tooltip"
                                 [matTooltip]="('gateway.key-required') | translate"
-                                *ngIf="keyControl.get('key').hasError('required') && keyControl.get('key').touched"
+                                *ngIf="item.control.get('key').hasError('required') && item.control.get('key').touched"
                                 class="tb-error">
                         warning
                       </mat-icon>
@@ -153,7 +165,7 @@
                                 matTooltipPosition="above"
                                 matTooltipClass="tb-error-tooltip"
                                 [matTooltip]="('gateway.value-required') | translate"
-                                *ngIf="keyControl.get('value').hasError('required') && keyControl.get('value').touched"
+                                *ngIf="item.control.get('value').hasError('required') && item.control.get('value').touched"
                                 class="tb-error">
                         warning
                       </mat-icon>
@@ -171,7 +183,7 @@
                                 matTooltipPosition="above"
                                 matTooltipClass="tb-error-tooltip"
                                 [matTooltip]="('gateway.method-required') | translate"
-                                *ngIf="keyControl.get('method').hasError('required') && keyControl.get('method').touched"
+                                *ngIf="item.control.get('method').hasError('required') && item.control.get('method').touched"
                                 class="tb-error">
                         warning
                       </mat-icon>
@@ -182,7 +194,7 @@
                       <mat-expansion-panel-header class="flex flex-wrap">
                         <mat-panel-title>
                           <div class="title-container" tb-hint-tooltip-icon="{{ 'gateway.hints.arguments' | translate }}">
-                            {{ 'gateway.arguments' | translate }}{{' (' + keyControl.get('arguments').value?.length + ')'}}
+                            {{ 'gateway.arguments' | translate }}{{' (' + item.control.get('arguments').value?.length + ')'}}
                           </div>
                         </mat-panel-title>
                       </mat-expansion-panel-header>
@@ -204,7 +216,7 @@
         </div>
         <button type="button"
                 mat-icon-button
-                (click)="deleteKey($event, $index)"
+                (click)="deleteKey($event, item.index)"
                 [matTooltip]="deleteKeyTitle | translate"
                 matTooltipPosition="above">
           <mat-icon>delete</mat-icon>
@@ -219,7 +231,12 @@
   </div>
   <ng-template #noKeys>
     <div class="tb-flex no-flex center align-center key-panel">
-      <span class="tb-prompt" translate>{{ noKeysText }}</span>
+      <span *ngIf="searchControl.value && keysListFormArray.controls.length > 0; else emptyKeys" class="tb-prompt">
+        No matching keys
+      </span>
+      <ng-template #emptyKeys>
+        <span class="tb-prompt" translate>{{ noKeysText }}</span>
+      </ng-template>
     </div>
   </ng-template>
   <div class="tb-flex flex-end">

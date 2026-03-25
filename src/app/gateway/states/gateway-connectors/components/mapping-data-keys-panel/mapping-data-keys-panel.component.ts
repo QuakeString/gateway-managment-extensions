@@ -18,6 +18,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   OnInit,
   Output
 } from '@angular/core';
@@ -27,6 +28,7 @@ import {
   FormControl,
   FormGroup,
   FormBuilder,
+  UntypedFormGroup,
   Validators
 } from '@angular/forms';
 import { coerceBoolean, SharedModule } from '@shared/public-api';
@@ -51,6 +53,8 @@ import {
   ConnectorType,
 } from '../../../../shared/public-api';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { TypeValuePanelComponent } from '../type-value-panel/type-value-panel.component';
 import { ConnectorMappingHelpLinkPipe } from '../../pipes/public-api';
 
@@ -67,7 +71,7 @@ import { ConnectorMappingHelpLinkPipe } from '../../pipes/public-api';
     ConnectorMappingHelpLinkPipe,
   ],
 })
-export class MappingDataKeysPanelComponent extends PageComponent implements OnInit {
+export class MappingDataKeysPanelComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input() panelTitle: string;
   @Input() addKeyTitle: string;
@@ -92,7 +96,15 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
 
   keysListFormArray: FormArray;
 
+  searchControl = new FormControl('');
+  filteredControls: { control: UntypedFormGroup; index: number }[] = [];
+  displayedControls: { control: UntypedFormGroup; index: number }[] = [];
+  renderLimit = 50;
+  lastAddedControl: AbstractControl | null = null;
+
   errorText = '';
+
+  private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder,
               private popover: TbPopoverComponent<MappingDataKeysPanelComponent>,
@@ -102,6 +114,19 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
 
   ngOnInit(): void {
     this.keysListFormArray = this.prepareKeysFormArray(this.keys);
+    this.updateFilteredControls();
+    this.searchControl.valueChanges.pipe(
+      debounceTime(200),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.renderLimit = 50;
+      this.updateFilteredControls();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   trackByKey(index: number, keyControl: AbstractControl): any {
@@ -128,7 +153,10 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
         reportStrategy: [{value: null, disabled: this.isReportStrategyDisabled()}]
       });
     }
-    this.keysListFormArray.push(dataKeyFormGroup);
+    this.lastAddedControl = dataKeyFormGroup;
+    this.keysListFormArray.insert(0, dataKeyFormGroup);
+    this.searchControl.setValue('', { emitEvent: false });
+    this.updateFilteredControls();
   }
 
   deleteKey($event: Event, index: number): void {
@@ -137,6 +165,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     }
     this.keysListFormArray.removeAt(index);
     this.keysListFormArray.markAsDirty();
+    this.updateFilteredControls();
   }
 
   cancel(): void {
@@ -155,6 +184,36 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       }
     }
     this.keysDataApplied.emit(keys);
+  }
+
+  onKeyPanelScroll(event: Event): void {
+    if (this.renderLimit >= this.filteredControls.length) return;
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      this.renderLimit += 50;
+      this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    }
+  }
+
+  updateFilteredControls(): void {
+    const search = (this.searchControl.value || '').toLowerCase().trim();
+    if (!search) {
+      this.filteredControls = this.keysListFormArray.controls
+        .map((c, i) => ({ control: c as UntypedFormGroup, index: i }));
+    } else {
+      this.filteredControls = this.keysListFormArray.controls
+        .map((c, i) => ({ control: c as UntypedFormGroup, index: i }))
+        .filter(item => {
+          const key = (item.control.get('key')?.value || item.control.get('method')?.value || '').toLowerCase();
+          const value = (item.control.get('value')?.value?.toString() || '').toLowerCase();
+          return key.includes(search) || value.includes(search);
+        });
+    }
+    this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+  }
+
+  trackByFilteredItem(_: number, item: { control: UntypedFormGroup; index: number }): any {
+    return item.control;
   }
 
   private prepareKeysFormArray(keys: Array<MappingDataKey | RpcMethodsMapping> | {[key: string]: any}): FormArray {
