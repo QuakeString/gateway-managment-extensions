@@ -338,6 +338,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (!connectorData.ts || attribute.skipSync || !this.isGatewayActive) {
       return false;
     }
+
+    // For disabled connectors: synced = gateway acknowledged the disable (not running it)
+    if (this.inactiveConnectors.includes(attribute.key)) {
+      return !this.activeData.some(data => {
+        const d = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+        return d.name === connectorData.name;
+      });
+    }
+
     const clientIndex = this.activeData.findIndex(data => {
       const sharedData = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
       return sharedData.name === connectorData.name;
