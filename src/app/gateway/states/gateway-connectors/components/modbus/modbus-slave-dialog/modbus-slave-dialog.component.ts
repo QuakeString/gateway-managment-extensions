@@ -35,7 +35,8 @@ import { AppState, deleteNullProperties } from '@core/public-api';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
-  ReportStrategyComponent
+  DeviceProfileNameAutocompleteComponent,
+  ReportStrategyComponent,
 } from '../../../../../shared/components/public-api';
 import {
   ModbusSlaveDialogAbstract
@@ -55,6 +56,7 @@ import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
     GatewayPortTooltipPipe,
     ReportStrategyComponent,
     TruncateWithTooltipDirective,
+    DeviceProfileNameAutocompleteComponent,
   ],
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })

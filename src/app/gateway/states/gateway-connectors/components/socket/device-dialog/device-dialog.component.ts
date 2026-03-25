@@ -30,6 +30,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { DialogComponent, helpBaseUrl, SharedModule } from '@shared/public-api';
 import { Router } from '@angular/router';
 import {
+  DeviceProfileNameAutocompleteComponent,
   EllipsisChipListDirective,
   noLeadTrailSpacesRegex,
   ReportStrategyComponent,
@@ -64,6 +65,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     SharedModule,
     EllipsisChipListDirective,
     ReportStrategyComponent,
+    DeviceProfileNameAutocompleteComponent,
   ]
 })
 export class DeviceDialogComponent extends DialogComponent<DeviceDialogComponent, DevicesConfigMapping> {

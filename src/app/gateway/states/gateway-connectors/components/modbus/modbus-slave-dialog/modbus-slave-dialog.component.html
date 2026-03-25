@@ -169,18 +169,7 @@
         </div>
         <div class="tb-form-row column-xs">
           <div class="fixed-title-width tb-required" translate>gateway.device-profile</div>
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput name="value" formControlName="deviceType" placeholder="{{ 'gateway.set' | translate }}"/>
-              <mat-icon matSuffix
-                        matTooltipPosition="above"
-                        matTooltipClass="tb-error-tooltip"
-                        [matTooltip]="('gateway.device-profile-required') | translate"
-                        *ngIf="slaveConfigFormGroup.get('deviceType').hasError('required') &&
-                                           slaveConfigFormGroup.get('deviceType').touched"
-                        class="tb-error">
-                warning
-              </mat-icon>
-            </mat-form-field>
+          <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
         </div>
         <div *ngIf="data.hideNewFields else reportStrategy" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">

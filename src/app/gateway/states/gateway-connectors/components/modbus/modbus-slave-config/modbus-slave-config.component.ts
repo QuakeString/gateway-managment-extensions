@@ -27,8 +27,9 @@ import {
   Validators,
 } from '@angular/forms';
 import {
+  DeviceProfileNameAutocompleteComponent,
   noLeadTrailSpacesRegex,
-  TruncateWithTooltipDirective
+  TruncateWithTooltipDirective,
 } from '../../../../../shared/public-api';
 import {
   ModbusBaudrates,
@@ -76,6 +77,7 @@ import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
     ModbusSecurityConfigComponent,
     GatewayPortTooltipPipe,
     TruncateWithTooltipDirective,
+    DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validator, OnDestroy {

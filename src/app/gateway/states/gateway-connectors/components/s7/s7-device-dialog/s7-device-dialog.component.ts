@@ -34,7 +34,7 @@ import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
 import { S7DataKey, S7DeviceConfig, S7PlcModel, S7RpcConfig, S7ValueKey } from '../../../models/public-api';
 import { S7DataKeysPanelComponent } from '../s7-data-keys-panel/s7-data-keys-panel.component';
 
@@ -53,6 +53,7 @@ export interface S7DeviceDialogData {
     CommonModule,
     SharedModule,
     EllipsisChipListDirective,
+    DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogComponent, S7DeviceConfig> {
