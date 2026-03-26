@@ -1,0 +1,241 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div [formGroup]="deviceForm" class="dialog-mapping">
+  <mat-toolbar color="primary">
+    <h2>{{ isEdit ? 'Edit' : 'Add' }} EtherNet/IP Device</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">Device Name</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="deviceName" placeholder="Allen-Bradley PLC 1"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'Device name is required'"
+                      *ngIf="deviceForm.get('deviceName').hasError('required')
+                                           && deviceForm.get('deviceName').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>gateway.device-profile</div>
+        <div class="tb-flex no-gap">
+          <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">Host</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="host" placeholder="192.168.1.100"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'Host is required'"
+                      *ngIf="deviceForm.get('host').hasError('required')
+                                           && deviceForm.get('host').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">PLC Type</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="plcType">
+              <mat-option *ngFor="let type of plcTypes" [value]="type">
+                {{ type }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="isLogixType">
+        <div class="fixed-title-width tb-required">Slot</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="slot"/>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="supportsTagBrowsing">
+        <div class="fixed-title-width">Auto-discover Tags</div>
+        <div class="tb-flex no-gap">
+          <mat-checkbox formControlName="initTags">
+            Upload tag list from PLC on connect
+          </mat-checkbox>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="supportsTagBrowsing && browsedTags.length > 0">
+        <div class="fixed-title-width">Browse Tags</div>
+        <div class="tb-flex no-gap" style="gap: 8px; display: flex;">
+          <button mat-stroked-button color="primary" type="button"
+                  (click)="openTagBrowser('timeseries')">
+            <mat-icon>playlist_add</mat-icon>
+            Browse → Timeseries
+          </button>
+          <button mat-stroked-button color="primary" type="button"
+                  (click)="openTagBrowser('attributes')">
+            <mat-icon>playlist_add</mat-icon>
+            Browse → Attributes
+          </button>
+          <span class="browse-count">{{ browsedTags.length }} tags available</span>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-title>Advanced connection settings</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding">
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">Poll Period (ms)</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="pollPeriod"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">Connect Attempts</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="connectAttemptCount"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">Wait After Failed (ms)</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="waitAfterFailedAttemptsMs"/>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">Timeseries</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
+            <mat-chip *ngFor="let ts of deviceForm.get('timeseries').value">
+              {{ ts.tag }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Edit"
+                  matTooltipPosition="above"
+                  #timeseriesButton
+                  (click)="manageKeys($event, timeseriesButton, EthernetIPValueKey.TIMESERIES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">Attributes</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
+            <mat-chip *ngFor="let attr of deviceForm.get('attributes').value">
+              {{ attr.tag }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Edit"
+                  matTooltipPosition="above"
+                  #attributesButton
+                  (click)="manageKeys($event, attributesButton, EthernetIPValueKey.ATTRIBUTES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">Attribute Updates</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
+            <mat-chip *ngFor="let au of deviceForm.get('attributeUpdates').value">
+              {{ au.tag }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Edit"
+                  matTooltipPosition="above"
+                  #attributeUpdatesButton
+                  (click)="manageKeys($event, attributeUpdatesButton, EthernetIPValueKey.ATTRIBUTES_UPDATES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">RPC Methods</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
+            <mat-chip *ngFor="let rpc of deviceForm.get('rpc').value">
+              {{ rpc.method }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Edit"
+                  matTooltipPosition="above"
+                  #rpcButton
+                  (click)="manageKeys($event, rpcButton, EthernetIPValueKey.RPC)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()">
+      Cancel
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="deviceForm.invalid || !keysPopupClosed">
+      {{ isEdit ? 'Update' : 'Add' }}
+    </button>
+  </div>
+</div>

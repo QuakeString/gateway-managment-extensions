@@ -85,6 +85,7 @@ import { ReportStrategyComponent } from '../../shared/components/public-api';
 import { BacnetBasicConfigComponent, BacnetLegacyBasicConfigComponent } from './components/bacnet/public-api';
 import { RestLegacyBasicConfigComponent, RestBasicConfigComponent } from './components/rest/public-api';
 import { S7BasicConfigComponent, S7LegacyBasicConfigComponent } from './components/s7/public-api';
+import { EthernetIPBasicConfigComponent, EthernetIPLegacyBasicConfigComponent } from './components/ethernet-ip/public-api';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null): boolean {
@@ -118,6 +119,8 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
     RestBasicConfigComponent,
     S7BasicConfigComponent,
     S7LegacyBasicConfigComponent,
+    EthernetIPBasicConfigComponent,
+    EthernetIPLegacyBasicConfigComponent,
   ],
 })
 export class GatewayConnectorComponent extends PageComponent implements AfterViewInit, OnDestroy {
@@ -136,6 +139,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     ConnectorType.BACNET,
     ConnectorType.REST,
     ConnectorType.S7,
+    ConnectorType.ETHERNET_IP,
   ]);
   readonly gatewayLogLevel = Object.values(GatewayLogLevel);
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];

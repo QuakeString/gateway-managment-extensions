@@ -1,0 +1,103 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="tag-import-dialog">
+  <mat-toolbar color="primary">
+    <h2>Import Tags — {{ data.deviceName }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div mat-dialog-content class="dialog-content">
+    <div class="file-picker">
+      <button mat-stroked-button (click)="fileInput.click()" type="button">
+        <mat-icon>upload_file</mat-icon>
+        {{ fileName || 'Select Excel/CSV file' }}
+      </button>
+      <input #fileInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)">
+      <span class="file-hint">Supported: .xlsx, .xls, .csv</span>
+    </div>
+
+    <ng-container *ngIf="fileLoaded && detectedColumns.length > 0">
+      <div class="column-mapping">
+        <h4>Column Mapping</h4>
+        <div class="mapping-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Tag Name Column *</mat-label>
+            <mat-select [formControl]="tagColumnControl" (selectionChange)="reprocess()">
+              <mat-option *ngFor="let col of detectedColumns" [value]="col">{{ col }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>PLC Tag Column *</mat-label>
+            <mat-select [formControl]="plcTagColumnControl" (selectionChange)="reprocess()">
+              <mat-option *ngFor="let col of detectedColumns" [value]="col">{{ col }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="summary" *ngIf="parsedTags.length > 0">
+        <span class="badge valid-badge" (click)="showInvalid = false">
+          {{ validTags.length }} valid
+          ({{ validTimeseriesCount }} timeseries, {{ validAttributesCount }} attributes)
+        </span>
+        <span class="badge invalid-badge" *ngIf="invalidTags.length > 0"
+              (click)="toggleInvalid()">
+          {{ invalidTags.length }} invalid
+          <mat-icon class="badge-icon">{{ showInvalid ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </span>
+      </div>
+
+      <div *ngIf="showInvalid && invalidTags.length > 0" class="invalid-table-container">
+        <table class="compact-table">
+          <tr><th>Tag</th><th>PLC Tag</th><th>Error</th></tr>
+          <tr *ngFor="let tag of invalidTags" class="invalid-row">
+            <td>{{ tag.tag }}</td>
+            <td>{{ tag.plcTag }}</td>
+            <td class="error-text">{{ tag.error }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div *ngIf="validTags.length > 0" class="valid-table-container">
+        <h4>Preview (first 50)</h4>
+        <table class="compact-table">
+          <tr><th>Tag</th><th>PLC Tag</th><th>Category</th></tr>
+          <tr *ngFor="let tag of validTags | slice:0:50">
+            <td>{{ tag.tag }}</td>
+            <td>{{ tag.plcTag }}</td>
+            <td>
+              <span class="category-label" [class.attr-category]="tag.category === 'attributes'">
+                {{ tag.category }}
+              </span>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary"
+            (click)="importTags()"
+            [disabled]="validTags.length === 0">
+      Import {{ validTags.length }} Tag{{ validTags.length !== 1 ? 's' : '' }}
+    </button>
+  </div>
+</div>

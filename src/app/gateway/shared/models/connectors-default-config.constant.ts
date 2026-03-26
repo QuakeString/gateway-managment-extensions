@@ -29,6 +29,7 @@ import xmpp from '../../assets/connector-default-configs/xmpp.json';
 import ocpp from '../../assets/connector-default-configs/ocpp.json';
 import knx from '../../assets/connector-default-configs/knx.json';
 import s7 from '../../assets/connector-default-configs/s7.json';
+import ethernet_ip from '../../assets/connector-default-configs/ethernet_ip.json';
 
 import { ConnectorType, GatewayConnector, GatewayVersionedDefaultConfig } from './public-api';
 
@@ -48,7 +49,8 @@ export const connectorConfigs = {
   [ConnectorType.XMPP]: xmpp,
   [ConnectorType.OCPP]: ocpp,
   [ConnectorType.KNX]: knx,
-  [ConnectorType.S7]: s7
+  [ConnectorType.S7]: s7,
+  [ConnectorType.ETHERNET_IP]: ethernet_ip
 };
 
 export function getDefaultConfig(type: ConnectorType): GatewayVersionedDefaultConfig | GatewayConnector {

@@ -1,0 +1,30 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "EthernetIP Device",
+        "host": "192.168.1.100",
+        "slot": 0,
+        "plcType": "ControlLogix",
+        "initTags": true,
+        "pollPeriod": 5000,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 30000,
+        "timeseries": [
+          {
+            "tag": "temperature",
+            "plcTag": "Temperature"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "runMode",
+            "plcTag": "RunMode"
+          }
+        ],
+        "attributeUpdates": [],
+        "rpc": []
+      }
+    ]
+  }
+}

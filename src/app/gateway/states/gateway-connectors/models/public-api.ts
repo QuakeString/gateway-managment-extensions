@@ -21,3 +21,4 @@ export * from './socket.models';
 export * from './bacnet.models';
 export * from './rest.models';
 export * from './s7.models';
+export * from './ethernet-ip.models';

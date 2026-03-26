@@ -1,0 +1,82 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="discover-dialog">
+  <mat-toolbar color="primary">
+    <h2>Discovered EtherNet/IP Devices</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div mat-dialog-content class="dialog-content">
+    <div *ngIf="error" class="error-message">
+      <mat-icon>info</mat-icon>
+      <span>{{ error }}</span>
+    </div>
+
+    <div class="device-count" *ngIf="devices.length > 0">
+      {{ devices.length }} device{{ devices.length !== 1 ? 's' : '' }} found on the network
+    </div>
+
+    <table *ngIf="devices.length > 0" mat-table [dataSource]="devices" class="mat-elevation-z0">
+      <ng-container matColumnDef="ipAddress">
+        <th mat-header-cell *matHeaderCellDef>IP Address</th>
+        <td mat-cell *matCellDef="let device">
+          <strong>{{ device.ipAddress }}</strong>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="productName">
+        <th mat-header-cell *matHeaderCellDef>Product Name</th>
+        <td mat-cell *matCellDef="let device">{{ device.productName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="vendor">
+        <th mat-header-cell *matHeaderCellDef>Vendor</th>
+        <td mat-cell *matCellDef="let device">{{ device.vendor }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="serial">
+        <th mat-header-cell *matHeaderCellDef>Serial</th>
+        <td mat-cell *matCellDef="let device">{{ device.serial }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="revision">
+        <th mat-header-cell *matHeaderCellDef>Revision</th>
+        <td mat-cell *matCellDef="let device">{{ device.revision }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let device">
+          <button mat-stroked-button color="primary"
+                  (click)="addAsDevice(device)" matTooltip="Add as new device">
+            <mat-icon>add_circle_outline</mat-icon>
+            Add
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" (click)="cancel()">Close</button>
+  </div>
+</div>

@@ -1,0 +1,118 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="tag-browser-dialog">
+  <mat-toolbar color="primary">
+    <h2>Browse PLC Tags — Add to {{ targetCategory === 'timeseries' ? 'Timeseries' : 'Attributes' }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div mat-dialog-content class="dialog-content">
+    <!-- Search bar -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search tags</mat-label>
+      <input matInput [formControl]="textSearch" placeholder="Filter by name, type...">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <div class="tag-count">
+      {{ filteredTags.length }} tags found, {{ selection.selected.length }} selected
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="error" class="error-message">
+      <mat-icon>error</mat-icon>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Tags table -->
+    <div class="table-container" *ngIf="!error">
+      <table mat-table [dataSource]="filteredTags" class="mat-elevation-z0">
+        <!-- Checkbox Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox (change)="toggleAllRows()"
+                          [checked]="isAllSelected()"
+                          [indeterminate]="selection.hasValue() && !isAllSelected()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let tag">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="selection.toggle(tag)"
+                          [checked]="selection.isSelected(tag)"
+                          [disabled]="isExisting(tag)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Tag Name Column -->
+        <ng-container matColumnDef="tagName">
+          <th mat-header-cell *matHeaderCellDef>Tag Name</th>
+          <td mat-cell *matCellDef="let tag">
+            <span [class.existing-tag]="isExisting(tag)">{{ tag.tagName }}</span>
+            <mat-icon *ngIf="isExisting(tag)" class="existing-icon"
+                      matTooltip="Already configured">check_circle</mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- Data Type Column -->
+        <ng-container matColumnDef="dataType">
+          <th mat-header-cell *matHeaderCellDef>Data Type</th>
+          <td mat-cell *matCellDef="let tag">{{ tag.dataType }}</td>
+        </ng-container>
+
+        <!-- Tag Type Column -->
+        <ng-container matColumnDef="tagType">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let tag">
+            <span class="tag-type-badge" [class.struct-badge]="tag.tagType === 'struct'">
+              {{ tag.tagType }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Dimensions Column -->
+        <ng-container matColumnDef="dim">
+          <th mat-header-cell *matHeaderCellDef>Dimensions</th>
+          <td mat-cell *matCellDef="let tag">{{ getDimensionsDisplay(tag) }}</td>
+        </ng-container>
+
+        <!-- Access Column -->
+        <ng-container matColumnDef="externalAccess">
+          <th mat-header-cell *matHeaderCellDef>Access</th>
+          <td mat-cell *matCellDef="let tag">{{ tag.externalAccess }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            (click)="!isExisting(row) && selection.toggle(row)"
+            [class.existing-row]="isExisting(row)"
+            class="cursor-pointer"></tr>
+      </table>
+    </div>
+  </div>
+
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary"
+            (click)="addSelected()"
+            [disabled]="selection.isEmpty()">
+      Add {{ selection.selected.length }} Tag{{ selection.selected.length !== 1 ? 's' : '' }}
+    </button>
+  </div>
+</div>
