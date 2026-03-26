@@ -72,3 +72,15 @@
     display: flex;
   }
 }
+
+@media (max-width: 599px) {
+  :host {
+    .key-mapping {
+      max-width: 100%;
+    }
+    .mat-mdc-dialog-content {
+      height: auto;
+      max-height: calc(100vh - 130px);
+    }
+  }
+}

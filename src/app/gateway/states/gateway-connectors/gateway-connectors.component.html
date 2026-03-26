@@ -17,14 +17,24 @@
   <section class="table-section tb-form-panel no-padding section-container flex">
     <mat-toolbar class="mat-mdc-table-toolbar justify-between">
       <h2>{{ 'gateway.connectors' | translate }}</h2>
-      <button *ngIf="dataSource?.data?.length"
-              mat-icon-button
-              [disabled]="isLoading$ | async"
-              (click)="onAddConnector($event)"
-              matTooltip="{{ 'action.add' | translate }}"
-              matTooltipPosition="above">
-        <mat-icon>add</mat-icon>
-      </button>
+      <div>
+        <button *ngIf="dataSource?.data?.length"
+                mat-icon-button
+                [disabled]="isLoading$ | async"
+                (click)="onAddConnector($event)"
+                matTooltip="{{ 'action.add' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button *ngIf="dataSource?.data?.length"
+                mat-icon-button
+                [disabled]="isLoading$ | async"
+                (click)="refreshConnectors()"
+                matTooltip="Refresh connectors"
+                matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
     </mat-toolbar>
     <div class="table-container">
       <section *ngIf="!dataSource?.data?.length"

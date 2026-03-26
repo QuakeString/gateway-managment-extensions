@@ -26,7 +26,7 @@
     .tb-master-table-content {
       width: 100%;
       height: calc(100% - 60px);
-      background: #fff;
+      background: var(--tb-surface-card, #fff);
       overflow: hidden;
 
       .mat-toolbar-tools{
@@ -74,6 +74,21 @@
         width: 100%;
       }
     }
+
+    .tb-master-table {
+      position: relative;
+      height: auto;
+      min-height: 200px;
+    }
+
+    .tb-master-table-content {
+      height: auto !important;
+      overflow: visible !important;
+
+      .table-container {
+        overflow-x: auto;
+      }
+    }
   }
 
   .hint-container {
@@ -89,7 +104,7 @@
       height: 24px;
       width: 24px;
       font-size: 24px;
-      color: #757575
+      color: var(--tb-text-secondary, #757575)
     }
   }
 }

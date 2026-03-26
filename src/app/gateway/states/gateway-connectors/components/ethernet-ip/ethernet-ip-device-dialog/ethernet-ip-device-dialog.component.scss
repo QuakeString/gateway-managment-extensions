@@ -76,3 +76,21 @@
 ::ng-deep .mdc-evolution-chip-set__chips {
   align-items: center;
 }
+
+@media (max-width: 599px) {
+  :host {
+    [mat-dialog-content] > .tb-form-panel {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .dialog-mapping {
+      max-width: 100%;
+    }
+
+    .mat-mdc-dialog-content {
+      height: auto;
+      max-height: calc(100vh - 130px);
+    }
+  }
+}

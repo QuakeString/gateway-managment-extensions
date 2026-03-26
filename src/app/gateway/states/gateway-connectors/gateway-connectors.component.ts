@@ -706,6 +706,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     };
   }
 
+  refreshConnectors(): void {
+    this.loadConnectors();
+  }
+
   private loadConnectors(): void {
     if (!this.device || this.device.id === NULL_UUID) {
       return;

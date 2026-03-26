@@ -62,3 +62,20 @@
   }
 }
 
+@media (max-width: 599px) {
+  :host {
+    .tb-mapping-keys-panel {
+      width: 100%;
+      max-width: 100%;
+
+      .title-container {
+        max-width: 45%;
+      }
+
+      .key-panel {
+        max-height: calc(100vh - 160px);
+      }
+    }
+  }
+}
+

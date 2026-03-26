@@ -22,7 +22,7 @@
 
   .slave-name-label {
     margin-right: 16px;
-    color: rgba(0, 0, 0, 0.87);
+    color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
   }
 
   .fixed-title-width-260 {
@@ -32,6 +32,15 @@
   ::ng-deep.security-config {
     .fixed-title-width {
       min-width: 230px;
+    }
+  }
+}
+
+@media (max-width: 599px) {
+  :host {
+    .slaves-config-container {
+      width: 100%;
+      max-width: 100%;
     }
   }
 }
