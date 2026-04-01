@@ -124,7 +124,7 @@ interface ConnectorConfig {
 }
 
 interface GatewayMainSetting {
-  thingsboard: GatewayMainThingsboardSetting;
+  sentient: GatewayMainThingsboardSetting;
   connectors: Array<GatewayMainConnector>,
   logs: string,
   storage: GatewayStorage
@@ -252,18 +252,18 @@ export function getEntityId(gatewayId: string): EntityId {
 
 export function createFormConfig(keyValue: GatewayMainSetting): GatewayFormModels {
   const formSetting: GatewayFormModels = {};
-  if (Object.prototype.hasOwnProperty.call(keyValue, 'thingsboard')) {
-    formSetting.host = keyValue.thingsboard.host;
-    formSetting.port = keyValue.thingsboard.port;
-    formSetting.remoteConfiguration = keyValue.thingsboard.remoteConfiguration;
-    if (Object.prototype.hasOwnProperty.call(keyValue.thingsboard.security, SecurityType.accessToken)) {
+  if (Object.prototype.hasOwnProperty.call(keyValue, 'sentient')) {
+    formSetting.host = keyValue.sentient.host;
+    formSetting.port = keyValue.sentient.port;
+    formSetting.remoteConfiguration = keyValue.sentient.remoteConfiguration;
+    if (Object.prototype.hasOwnProperty.call(keyValue.sentient.security, SecurityType.accessToken)) {
       formSetting.securityType = SecurityType.accessToken;
-      formSetting.accessToken = (keyValue.thingsboard.security as SecurityToken).accessToken;
+      formSetting.accessToken = (keyValue.sentient.security as SecurityToken).accessToken;
     } else {
       formSetting.securityType = SecurityType.tls;
-      formSetting.caCertPath = (keyValue.thingsboard.security as SecurityCertificate).caCert;
-      formSetting.privateKeyPath = (keyValue.thingsboard.security as SecurityCertificate).privateKey;
-      formSetting.certPath = (keyValue.thingsboard.security as SecurityCertificate).cert;
+      formSetting.caCertPath = (keyValue.sentient.security as SecurityCertificate).caCert;
+      formSetting.privateKeyPath = (keyValue.sentient.security as SecurityCertificate).privateKey;
+      formSetting.certPath = (keyValue.sentient.security as SecurityCertificate).cert;
     }
   }
 

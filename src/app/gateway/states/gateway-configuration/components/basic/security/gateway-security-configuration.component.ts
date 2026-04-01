@@ -85,7 +85,7 @@ export class GatewaySecurityConfigurationComponent implements AfterViewInit, Con
 
   ngAfterViewInit(): void {
     const { usernamePassword, ...value } = this.securityFormGroup.value;
-    this.initialized.emit({ thingsboard: { security: usernamePassword ? { ...value, ...usernamePassword } : value } });
+    this.initialized.emit({ sentient: { security: usernamePassword ? { ...value, ...usernamePassword } : value } });
   }
 
   writeValue(value: GatewayConfigSecurity): void {

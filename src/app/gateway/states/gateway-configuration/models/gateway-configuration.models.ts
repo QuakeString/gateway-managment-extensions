@@ -24,7 +24,7 @@ import {
 
 export interface GatewayConfigValue {
   mode: ConfigurationModes;
-  thingsboard: GatewayGeneralConfig;
+  sentient: GatewayGeneralConfig;
   storage: GatewayStorageConfig;
   grpc: GatewayGRPCConfig;
   connectors?: GatewayConnector[];

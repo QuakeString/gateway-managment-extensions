@@ -297,7 +297,7 @@ export class GatewayConfigurationComponent implements AfterViewInit {
       switch (attr.key) {
         case 'general_configuration':
           if (attr.value) {
-            formValue = { ...formValue, thingsboard: attr.value };
+            formValue = { ...formValue, sentient: attr.value };
           }
           break;
         case 'grpc_configuration':

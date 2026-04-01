@@ -378,7 +378,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
       const attribute = JSON.parse(window.atob(response[0].value));
       for (const attributeKey of Object.keys(attribute)) {
         const keyValue = attribute[attributeKey];
-        if (attributeKey === 'thingsboard') {
+        if (attributeKey === 'sentient') {
           if (keyValue !== null && Object.keys(keyValue).length > 0) {
             this.gatewayConfigurationGroup.patchValue(createFormConfig(keyValue));
           }

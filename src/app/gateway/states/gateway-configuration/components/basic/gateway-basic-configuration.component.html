@@ -16,7 +16,7 @@
 <mat-tab-group #configGroup class="tab-group-block" [formGroup]="basicFormGroup" [class.dialog-mode]="dialogMode">
   <mat-tab label="{{ 'gateway.general' | translate }}">
     <ng-template matTabContent>
-      <div formGroupName="thingsboard" class="mat-content mat-padding configuration-block">
+      <div formGroupName="sentient" class="mat-content mat-padding configuration-block">
         <div class="tb-form-panel no-padding-bottom">
           <div tb-hint-tooltip-icon="{{ 'gateway.hints.remote-configuration' | translate }}"
                class="tb-form-row no-border no-padding">
@@ -75,7 +75,7 @@
   </mat-tab>
   <mat-tab label="{{ 'gateway.statistics.statistics' | translate }}">
     <ng-template matTabContent>
-      <div formGroupName="thingsboard" class="mat-content mat-padding configuration-block">
+      <div formGroupName="sentient" class="mat-content mat-padding configuration-block">
         <div class="tb-form-panel no-padding-bottom" formGroupName="statistics">
           @if (hasUpdatedStatistics) {
             <mat-slide-toggle color="primary" class="mat-slide" formControlName="enable">
@@ -208,7 +208,7 @@
   </mat-tab>
   <mat-tab label="{{ 'gateway.other' | translate }}">
     <ng-template matTabContent>
-      <div formGroupName="thingsboard" class="mat-content mat-padding configuration-block">
+      <div formGroupName="sentient" class="mat-content mat-padding configuration-block">
         <div class="tb-form-panel" formGroupName="checkingDeviceActivity"
              [class.no-padding-bottom]="basicFormGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value">
           <div tb-hint-tooltip-icon="{{ 'gateway.hints.check-device-activity' | translate }}"

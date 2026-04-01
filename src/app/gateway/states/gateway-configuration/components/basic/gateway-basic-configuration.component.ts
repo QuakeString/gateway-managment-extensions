@@ -138,7 +138,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.withReportStrategy && !changes.withReportStrategy.firstChange && this.withReportStrategy) {
-      this.basicFormGroup.get('thingsboard.reportStrategy').enable({emitEvent: false});
+      this.basicFormGroup.get('sentient.reportStrategy').enable({emitEvent: false});
     }
     if (changes.gatewayVersion?.previousValue !== changes.gatewayVersion.currentValue) {
       this.onVersionChange();
@@ -164,7 +164,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
 
   writeValue(basicConfig: GatewayConfigValue): void {
     this.basicFormGroup.patchValue(basicConfig, {emitEvent: false});
-    const reportStrategyCtrl = this.basicFormGroup.get('thingsboard.reportStrategy');
+    const reportStrategyCtrl = this.basicFormGroup.get('sentient.reportStrategy');
     const rs = basicConfig?.thingsboard?.reportStrategy;
     if (rs?.type === "DISABLED" as ReportStrategyType) {
       reportStrategyCtrl.disable({ emitEvent: false });
@@ -183,7 +183,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
   }
 
   commandFormArray(): FormArray {
-    return this.basicFormGroup.get('thingsboard.statistics.commands') as FormArray;
+    return this.basicFormGroup.get('sentient.statistics.commands') as FormArray;
   }
 
   removeCommandControl(index: number, event: PointerEvent): void {
@@ -206,7 +206,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
       }).afterClosed().pipe(take(1)).subscribe(
         (res) => {
           if (!res) {
-            this.basicFormGroup.get('thingsboard.remoteConfiguration').setValue(true, {emitEvent: false});
+            this.basicFormGroup.get('sentient.remoteConfiguration').setValue(true, {emitEvent: false});
           }
         }
       );
@@ -242,7 +242,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
 
   private initBasicFormGroup(): void {
     this.basicFormGroup = this.fb.group({
-      thingsboard: this.initThingsboardFormGroup(),
+      sentient: this.initThingsboardFormGroup(),
       storage: [],
       grpc: [],
       connectors: this.fb.array([]),
@@ -286,9 +286,9 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
   private onVersionChange(): void {
     this.hasUpdatedStatistics = GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion) >= GatewayConnectorVersionMappingUtil.parseVersion(GatewayVersion.v3_7_3);
     if (this.hasUpdatedStatistics) {
-      const enableCustomControl = this.basicFormGroup.get('thingsboard.statistics.enableCustom');
+      const enableCustomControl = this.basicFormGroup.get('sentient.statistics.enableCustom');
       enableCustomControl.enable({emitEvent: false});
-      this.basicFormGroup.get('thingsboard.statistics.enable').valueChanges
+      this.basicFormGroup.get('sentient.statistics.enable').valueChanges
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(enable => {
           if (!enable) {
@@ -305,7 +305,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
   }
 
   private observeRemoteConfigurationChanges(): void {
-    this.basicFormGroup.get('thingsboard.remoteConfiguration').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(enabled => {
+    this.basicFormGroup.get('sentient.remoteConfiguration').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(enabled => {
       if (!enabled) {
         this.openConfigurationConfirmDialog();
       }
@@ -313,7 +313,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
   }
 
   private observeDeviceActivityChanges(): void {
-    const checkingDeviceActivityGroup = this.basicFormGroup.get('thingsboard.checkingDeviceActivity') as FormGroup;
+    const checkingDeviceActivityGroup = this.basicFormGroup.get('sentient.checkingDeviceActivity') as FormGroup;
     checkingDeviceActivityGroup.get('checkDeviceInactivity').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(enabled => {
       checkingDeviceActivityGroup.updateValueAndValidity();
       const validators = [Validators.min(1), Validators.required, Validators.pattern(numberInputPattern)];
