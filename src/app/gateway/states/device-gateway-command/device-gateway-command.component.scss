@@ -30,8 +30,8 @@
 
         pre[class*=language-] {
           margin: 0;
-          background: #F3F6FA;
-          border-color: #305680;
+          background: var(--tb-surface, #F3F6FA);
+          border-color: var(--tb-border, #305680);
           padding-right: 38px;
           overflow: scroll;
           padding-bottom: 4px;
@@ -47,10 +47,10 @@
       button.clipboard-btn {
         right: -2px;
         p {
-          color: #305680;
+          color: var(--tb-text-secondary, #305680);
         }
         p, div {
-          background-color: #F3F6FA;
+          background-color: var(--tb-surface, #F3F6FA);
         }
         div {
           img {
@@ -62,7 +62,7 @@
             display: block;
             width: 18px;
             height: 18px;
-            background: #305680;
+            background: var(--tb-text-secondary, #305680);
             mask-image: url(/assets/copy-code-icon.svg);
             -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;

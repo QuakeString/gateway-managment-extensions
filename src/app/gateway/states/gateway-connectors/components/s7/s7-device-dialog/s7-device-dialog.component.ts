@@ -35,7 +35,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
-import { S7DataKey, S7DeviceConfig, S7PlcModel, S7RpcConfig, S7ValueKey } from '../../../models/public-api';
+import { S7DataKey, S7DeviceConfig, S7PlcModel, S7RedundancyConfig, S7RpcConfig, S7ValueKey, S7_REDUNDANCY_CAPABLE_MODELS } from '../../../models/public-api';
 import { S7DataKeysPanelComponent } from '../s7-data-keys-panel/s7-data-keys-panel.component';
 
 export interface S7DeviceDialogData {
@@ -62,6 +62,7 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
   readonly S7ValueKey = S7ValueKey;
   isEdit: boolean;
   keysPopupClosed = true;
+  supportsRedundancy = false;
 
   deviceForm = this.fb.group({
     deviceName: ['', [Validators.required]],
@@ -74,6 +75,16 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     pollPeriod: [5000, [Validators.required, Validators.min(100)]],
     connectAttemptCount: [3, [Validators.required, Validators.min(1)]],
     waitAfterFailedAttemptsMs: [300000, [Validators.required]],
+    redundancy: this.fb.group({
+      enabled: [false],
+      standbyHost: [''],
+      standbyPort: [102, [Validators.min(1), Validators.max(65535)]],
+      standbyRack: [0, [Validators.min(0)]],
+      standbySlot: [1, [Validators.min(0)]],
+      heartbeatIntervalMs: [500, [Validators.min(100), Validators.max(10000)]],
+      heartbeatTimeoutMs: [300, [Validators.min(50), Validators.max(5000)]],
+      failureThreshold: [2, [Validators.min(1), Validators.max(10)]],
+    }),
     timeseries: [[] as S7DataKey[]],
     attributes: [[] as S7DataKey[]],
     attributeUpdates: [[] as S7DataKey[]],
@@ -99,6 +110,32 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     if (data.device) {
       this.deviceForm.patchValue(data.device as any, { emitEvent: false });
     }
+
+    // Track whether current model supports redundancy
+    this._updateRedundancySupport(this.deviceForm.get('model').value as S7PlcModel);
+    this.deviceForm.get('model').valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((model: S7PlcModel) => {
+        this._updateRedundancySupport(model);
+        this.cdr.markForCheck();
+      });
+
+    // When redundancy is toggled off, clear standbyHost to avoid stale config
+    this.deviceForm.get('redundancy.enabled').valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((enabled: boolean) => {
+        if (!enabled) {
+          this.deviceForm.get('redundancy.standbyHost').setValue('');
+        }
+        this.cdr.markForCheck();
+      });
+  }
+
+  private _updateRedundancySupport(model: S7PlcModel): void {
+    this.supportsRedundancy = S7_REDUNDANCY_CAPABLE_MODELS.has(model);
+    if (!this.supportsRedundancy) {
+      this.deviceForm.get('redundancy.enabled').setValue(false, { emitEvent: false });
+    }
   }
 
   cancel(): void {
@@ -109,7 +146,12 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
 
   save(): void {
     if (this.deviceForm.valid) {
-      this.dialogRef.close(this.deviceForm.value as unknown as S7DeviceConfig);
+      const result = this.deviceForm.value as unknown as S7DeviceConfig;
+      // Strip redundancy config if not enabled to keep JSON clean
+      if (!result.redundancy?.enabled) {
+        delete result.redundancy;
+      }
+      this.dialogRef.close(result);
     }
   }
 

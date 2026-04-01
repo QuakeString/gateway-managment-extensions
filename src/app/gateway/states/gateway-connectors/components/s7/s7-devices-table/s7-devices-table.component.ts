@@ -211,7 +211,6 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,
-        width: '800px',
       }
     ).afterClosed().subscribe(result => {
       if (result) {

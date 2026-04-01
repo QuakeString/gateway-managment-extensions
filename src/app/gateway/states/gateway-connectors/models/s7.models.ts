@@ -43,7 +43,8 @@ export interface S7DataKey {
   tag: string;
   address: string;
   valueType?: S7ValueType;
-  scaling?: S7Scaling;
+  multiplier?: number;
+  divider?: number;
   reportStrategy?: ReportStrategyConfig;
 }
 
@@ -61,6 +62,23 @@ export interface S7RpcConfig {
   operation: 'read' | 'write';
 }
 
+export interface S7RedundancyConfig {
+  enabled: boolean;
+  standbyHost: string;
+  standbyPort: number;
+  standbyRack: number;
+  standbySlot: number;
+  heartbeatIntervalMs: number;
+  heartbeatTimeoutMs: number;
+  failureThreshold: number;
+}
+
+export const S7_REDUNDANCY_CAPABLE_MODELS: Set<S7PlcModel> = new Set([
+  S7PlcModel.S7_300,
+  S7PlcModel.S7_400,
+  S7PlcModel.S7_1500,
+]);
+
 export interface S7DeviceConfig {
   deviceName: string;
   deviceType: string;
@@ -73,6 +91,7 @@ export interface S7DeviceConfig {
   connectAttemptCount: number;
   waitAfterFailedAttemptsMs: number;
   reportStrategy?: ReportStrategyConfig;
+  redundancy?: S7RedundancyConfig;
   timeseries: S7DataKey[];
   attributes: S7DataKey[];
   attributeUpdates: S7DataKey[];

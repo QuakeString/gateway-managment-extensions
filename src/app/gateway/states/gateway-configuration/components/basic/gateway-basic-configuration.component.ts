@@ -165,13 +165,13 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
   writeValue(basicConfig: GatewayConfigValue): void {
     this.basicFormGroup.patchValue(basicConfig, {emitEvent: false});
     const reportStrategyCtrl = this.basicFormGroup.get('sentient.reportStrategy');
-    const rs = basicConfig?.thingsboard?.reportStrategy;
+    const rs = basicConfig?.sentient?.reportStrategy;
     if (rs?.type === "DISABLED" as ReportStrategyType) {
       reportStrategyCtrl.disable({ emitEvent: false });
     } else if (this.withReportStrategy) {
       reportStrategyCtrl.enable({ emitEvent: false });
     }
-    const commands = basicConfig?.thingsboard?.statistics?.commands ?? [];
+    const commands = basicConfig?.sentient?.statistics?.commands ?? [];
     this.commandFormArray().clear({emitEvent: false});
     commands.forEach((command: GatewayConfigCommand) => this.addCommand(command, false));
   }

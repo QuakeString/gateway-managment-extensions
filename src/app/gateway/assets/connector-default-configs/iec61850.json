@@ -1,0 +1,37 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "IEC61850 IED",
+        "deviceType": "default",
+        "host": "192.168.1.10",
+        "port": 102,
+        "pollPeriod": 5000,
+        "connectionTimeout": 10000,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 30000,
+        "dataAcquisition": {
+          "mode": "polling"
+        },
+        "timeseries": [
+          {
+            "tag": "analog_input_1",
+            "reference": "GenericIO/GGIO1.AnIn1.mag.f",
+            "fc": "MX",
+            "valueType": "float"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "device_health",
+            "reference": "GenericIO/LPHD1.PhyHealth.stVal",
+            "fc": "ST",
+            "valueType": "int32"
+          }
+        ],
+        "attributeUpdates": [],
+        "rpc": []
+      }
+    ]
+  }
+}

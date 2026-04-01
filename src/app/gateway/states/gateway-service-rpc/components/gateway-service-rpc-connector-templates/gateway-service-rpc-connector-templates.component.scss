@@ -26,7 +26,7 @@
   }
 
   .template-key {
-    color: rgba(0, 0, 0, 0.38);
+    color: var(--tb-text-disabled, rgba(0, 0, 0, 0.38));
     height: 32px;
     line-height: 32px;
   }
@@ -64,7 +64,7 @@
 
     & > mat-icon {
       margin-left: 15px;
-      color: rgba(0, 0, 0, 0.38);
+      color: var(--tb-text-disabled, rgba(0, 0, 0, 0.38));
     }
   }
 

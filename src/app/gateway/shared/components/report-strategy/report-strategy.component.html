@@ -18,7 +18,7 @@
     <mat-expansion-panel-header class="flex-wrap">
       <mat-panel-title>
         <mat-slide-toggle [formControl]="showStrategyControl" class="mat-slide" (click)="$event.stopPropagation()">
-          <mat-label>
+          <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.report-strategy' | translate }}">
             {{ 'gateway.report-strategy.label' | translate }}
           </mat-label>
         </mat-slide-toggle>

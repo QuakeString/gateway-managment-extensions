@@ -67,6 +67,7 @@ export enum ConnectorType {
   KNX = 'knx',
   S7 = 's7',
   ETHERNET_IP = 'ethernet_ip',
+  IEC61850 = 'iec61850',
 }
 
 export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, string>([
@@ -89,6 +90,7 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
   [ConnectorType.KNX, 'KNX'],
   [ConnectorType.S7, 'S7'],
   [ConnectorType.ETHERNET_IP, 'ETHERNET/IP'],
+  [ConnectorType.IEC61850, 'IEC 61850'],
 ]);
 
 export const ConnectorsTypesByVersion = new Map<GatewayVersion, ConnectorType[]>([

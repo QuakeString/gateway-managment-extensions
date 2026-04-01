@@ -115,7 +115,7 @@ type Connector = {
 }
 
 interface GatewaySetting extends Connector{
-  thingsboard: GatewayMainSetting;
+  sentient: GatewayMainSetting;
 }
 
 interface ConnectorConfig {
@@ -182,7 +182,7 @@ const TEMPLATE_LOGS_CONFIG = '[loggers]}}keys=root, service, connector, converte
 
 export function generateYAMLConfigFile(gatewaySetting: GatewayFormModels): string {
   let config;
-  config = 'thingsboard:\n';
+  config = 'sentient:\n';
   config += '  host: ' + gatewaySetting.host + '\n';
   config += '  remoteConfiguration: ' + gatewaySetting.remoteConfiguration + '\n';
   config += '  port: ' + gatewaySetting.port + '\n';
@@ -298,7 +298,7 @@ export function getDraftConnectorsJSON(currentConnectors: Array<GatewayFormConne
 
 export function gatewayConfigJSON(gatewayConfiguration: GatewayFormModels): GatewaySetting {
   const gatewayConfig = {
-    thingsboard: gatewayMainConfigJSON(gatewayConfiguration)
+    sentient: gatewayMainConfigJSON(gatewayConfiguration)
   };
   gatewayConnectorJSON(gatewayConfig, gatewayConfiguration.connectors);
   return gatewayConfig;
@@ -317,7 +317,7 @@ function gatewayMainConfigJSON(gatewayConfiguration: GatewayFormModels): Gateway
       cert: gatewayConfiguration.certPath
     }
   }
-  const thingsboard: GatewayMainThingsboardSetting = {
+  const sentient: GatewayMainThingsboardSetting = {
     host: gatewayConfiguration.host,
     remoteConfiguration: gatewayConfiguration.remoteConfiguration,
     port: gatewayConfiguration.port,
@@ -354,7 +354,7 @@ function gatewayMainConfigJSON(gatewayConfiguration: GatewayFormModels): Gateway
   }
 
   return {
-    thingsboard,
+    sentient,
     connectors,
     storage,
     logs: window.btoa(getLogsConfig(gatewayConfiguration.remoteLoggingLevel, gatewayConfiguration.remoteLoggingPathToLogs))

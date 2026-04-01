@@ -1,0 +1,90 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="tb-form-panel no-border no-padding">
+  <mat-toolbar class="flex items-center justify-between">
+    <ng-container *ngIf="!searchMode; else searchToolbar">
+      <span>IEDs ({{ devices.length }})</span>
+      <div class="flex items-center gap-1">
+        <button mat-icon-button
+                *ngIf="devices.length"
+                (click)="toggleSearch()"
+                matTooltip="Search">
+          <mat-icon>search</mat-icon>
+        </button>
+        <button mat-icon-button
+                (click)="addDevice()"
+                matTooltip="Add IED">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </ng-container>
+    <ng-template #searchToolbar>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput
+               [value]="searchText"
+               (input)="onSearchChange($event.target.value)"
+               placeholder="Search IEDs..."/>
+      </mat-form-field>
+      <button mat-icon-button (click)="toggleSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </ng-template>
+  </mat-toolbar>
+
+  <div *ngIf="!devices.length" class="tb-hint p-3 text-center">
+    No IEC 61850 IEDs configured. Click "+" to add one.
+  </div>
+
+  <table mat-table [dataSource]="filteredDevices" *ngIf="devices.length" class="w-full">
+    <ng-container matColumnDef="deviceName">
+      <th mat-header-cell *matHeaderCellDef>Device Name</th>
+      <td mat-cell *matCellDef="let device">{{ device.deviceName }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="host">
+      <th mat-header-cell *matHeaderCellDef>Host</th>
+      <td mat-cell *matCellDef="let device">{{ device.host }}:{{ device.port || 102 }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="mode">
+      <th mat-header-cell *matHeaderCellDef>Mode</th>
+      <td mat-cell *matCellDef="let device">
+        {{ device.dataAcquisition?.mode === 'report' ? 'Report' : 'Polling' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="tags">
+      <th mat-header-cell *matHeaderCellDef>Keys</th>
+      <td mat-cell *matCellDef="let device">{{ getTagCount(device) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="cell-action"></th>
+      <td mat-cell *matCellDef="let device; let i = index" class="cell-action">
+        <button mat-icon-button (click)="editDevice(i); $event.stopPropagation()">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="deleteDevice(i); $event.stopPropagation()">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns; let i = index"
+        (click)="editDevice(i)" class="cursor-pointer"></tr>
+  </table>
+</div>

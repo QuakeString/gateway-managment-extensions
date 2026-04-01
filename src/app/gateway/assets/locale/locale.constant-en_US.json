@@ -943,6 +943,11 @@
         "data-keys": "For more information about function codes and data types click on help icon",
         "modifier": "The retrieved value will be adjusted (by multiplying or dividing it) based on the specified modifier value."
       },
+      "s7": {
+        "tag": "Name for key on the platform.",
+        "data-keys": "Use S7 address format, e.g., DB1.DBD0 (data block), M0.0 (merker), IW20 (input word), QW20 (output word)."
+      },
+      "report-strategy": "Defines when data should be reported to the platform: on value change, on a fixed period, or on each received update.",
       "bacnet": {
         "object-id": "The gateway object identifier in the BACnet network.",
         "vendor-id": "The gateway vendor identifier in the BACnet network",

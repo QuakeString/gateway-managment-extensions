@@ -109,16 +109,16 @@ export class GatewayConfigurationComponent implements AfterViewInit {
   saveConfig(): void {
     const { mode, advancedConfig } = deepTrim(this.removeEmpty(this.gatewayConfigGroup.value));
     const value = { mode, ...advancedConfig as GatewayConfigValue };
-    value.thingsboard.statistics.commands = Object.values(value.thingsboard.statistics.commands ?? []);
-    if (!value.thingsboard.reportStrategy) {
-      value.thingsboard.reportStrategy = {
+    value.sentient.statistics.commands = Object.values(value.sentient.statistics.commands ?? []);
+    if (!value.sentient.reportStrategy) {
+      value.sentient.reportStrategy = {
         type: "DISABLED" as ReportStrategyType
       };
     }
     const attributes = this.generateAttributes(value);
 
     this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributes).pipe(
-      switchMap(_ => this.gatewayCredentialsService.updateCredentials(value.thingsboard.security)),
+      switchMap(_ => this.gatewayCredentialsService.updateCredentials(value.sentient.security)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe(() => {
       if (this.dialogRef) {
@@ -172,7 +172,7 @@ export class GatewayConfigurationComponent implements AfterViewInit {
 
     addTimestampedAttribute('grpc_configuration', value.grpc);
     addTimestampedAttribute('storage_configuration', value.storage);
-    addTimestampedAttribute('general_configuration', value.thingsboard);
+    addTimestampedAttribute('general_configuration', value.sentient);
 
     addAttribute('mode', value.mode);
 
@@ -328,10 +328,10 @@ export class GatewayConfigurationComponent implements AfterViewInit {
       formValue = { ...formValue, logs: {...formValue.logs, logLevel } };
     }
 
-    if (formValue.thingsboard?.security) {
+    if (formValue.sentient?.security) {
       this.gatewayCredentialsService.initialCredentials$.pipe(filter(Boolean), take(1), takeUntilDestroyed(this.destroyRef)).subscribe(credentials => {
-        if (this.gatewayCredentialsService.shouldUpdateSecurityConfig(formValue.thingsboard.security)) {
-          formValue.thingsboard.security = this.gatewayCredentialsService.credentialsToSecurityConfig(credentials);
+        if (this.gatewayCredentialsService.shouldUpdateSecurityConfig(formValue.sentient.security)) {
+          formValue.sentient.security = this.gatewayCredentialsService.credentialsToSecurityConfig(credentials);
         }
         this.gatewayConfigGroup.get('basicConfig').patchValue(formValue, { emitEvent: false });
         this.gatewayConfigGroup.get('advancedConfig').patchValue(formValue, { emitEvent: false });

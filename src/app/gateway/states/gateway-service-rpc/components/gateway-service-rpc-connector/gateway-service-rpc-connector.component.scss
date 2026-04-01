@@ -48,15 +48,15 @@
     padding: 16px;
     margin-bottom: 10px;
     box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
-    border: solid 1px #e0e0e0;
+    border: solid 1px var(--tb-border, #e0e0e0);
     border-radius: 4px;
 
     .title {
-      color: rgba(0, 0, 0, .54);
+      color: var(--tb-text-secondary, rgba(0, 0, 0, .54));
     }
 
     .mat-icon {
-      color: rgba(0, 0, 0, .38);
+      color: var(--tb-text-disabled, rgba(0, 0, 0, .38));
     }
 
     .mat-divider {

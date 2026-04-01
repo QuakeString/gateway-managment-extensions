@@ -32,7 +32,7 @@
 
   .page-header.mat-toolbar {
     background: transparent;
-    color: rgba(0, 0, 0, .87) !important;
+    color: var(--tb-text-primary, rgba(0, 0, 0, .87)) !important;
   }
 
   .content-wrapper {

@@ -132,7 +132,7 @@ $maxLegendHeight: 35%;
           display: flex;
           align-items: center;
           gap: 4px;
-          color: #ccc;
+          color: var(--tb-text-secondary, #ccc);
           white-space: nowrap;
           cursor: pointer;
           .tb-time-series-chart-legend-item-label-circle {
@@ -165,11 +165,11 @@ $maxLegendHeight: 35%;
     line-height: 16px;
 
     &.legend-row-color {
-      color: rgba(0, 0, 0, 0.38);
+      color: var(--tb-text-disabled, rgba(0, 0, 0, 0.38));
     }
 
     &.legend-label-color {
-      color: black;
+      color: var(--tb-text-primary, black);
     }
   }
 }

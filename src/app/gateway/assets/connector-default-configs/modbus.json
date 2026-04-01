@@ -104,22 +104,22 @@
                             "tag": "16uint_read",
                             "type": "16uint",
                             "functionCode": 4,
-                            "objectsCount": 2,
+                            "objectsCount": 1,
                             "address": 18
                         },
                         {
                             "tag": "32uint_read",
                             "type": "32uint",
                             "functionCode": 4,
-                            "objectsCount": 4,
+                            "objectsCount": 2,
                             "address": 20
                         },
                         {
                             "tag": "64uint_read",
                             "type": "64uint",
                             "functionCode": 4,
-                            "objectsCount": 1,
-                            "address": 24
+                            "objectsCount": 4,
+                            "address": 32
                         },
                         {
                             "tag": "16float_read",
@@ -327,22 +327,22 @@
                             "tag": "16uint_read",
                             "type": "16uint",
                             "functionCode": 4,
-                            "objectsCount": 2,
+                            "objectsCount": 1,
                             "address": 18
                         },
                         {
                             "tag": "32uint_read",
                             "type": "32uint",
                             "functionCode": 4,
-                            "objectsCount": 4,
+                            "objectsCount": 2,
                             "address": 20
                         },
                         {
                             "tag": "64uint_read",
                             "type": "64uint",
                             "functionCode": 4,
-                            "objectsCount": 1,
-                            "address": 24
+                            "objectsCount": 4,
+                            "address": 32
                         },
                         {
                             "tag": "16float_read",

@@ -15,7 +15,7 @@
 -->
 <div [formGroup]="deviceForm" class="dialog-mapping">
   <mat-toolbar color="primary">
-    <h2>{{ isEdit ? 'Edit' : 'Add' }} S7 PLC Device</h2>
+    <h2>{{ isEdit ? 'Edit' : 'Add' }} IEC 61850 IED</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -29,7 +29,7 @@
         <div class="fixed-title-width tb-required">Device Name</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="deviceName" placeholder="Siemens PLC 1"/>
+            <input matInput formControlName="deviceName" placeholder="IEC61850 IED"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
@@ -85,109 +85,15 @@
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">PLC Model</div>
+        <div class="fixed-title-width">Acquisition Mode</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="model">
-              <mat-option *ngFor="let model of plcModels" [value]="model">
-                {{ model }}
-              </mat-option>
+            <mat-select formControlName="acquisitionMode">
+              <mat-option [value]="AcquisitionMode.POLLING">Polling</mat-option>
+              <mat-option [value]="AcquisitionMode.REPORT">Report (BRCB)</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
-      </div>
-      <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Rack</div>
-        <div class="tb-flex no-gap">
-          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput type="number" formControlName="rack"/>
-          </mat-form-field>
-        </div>
-      </div>
-      <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Slot</div>
-        <div class="tb-flex no-gap">
-          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput type="number" formControlName="slot"/>
-          </mat-form-field>
-        </div>
-      </div>
-      <div class="tb-form-panel stroked" *ngIf="supportsRedundancy" formGroupName="redundancy">
-        <mat-expansion-panel class="tb-settings">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Redundancy (R/H System)
-              <span *ngIf="deviceForm.get('redundancy.enabled').value"
-                    style="margin-left: 8px; font-size: 12px; color: #4caf50;">
-                Enabled
-              </span>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <div class="tb-form-panel no-border no-padding">
-            <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Enable Redundancy</div>
-              <mat-slide-toggle formControlName="enabled"></mat-slide-toggle>
-            </div>
-            <ng-container *ngIf="deviceForm.get('redundancy.enabled').value">
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width tb-required">Standby Host</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput formControlName="standbyHost" placeholder="192.168.1.11"/>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width">Standby Port</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput type="number" formControlName="standbyPort"/>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width">Standby Rack</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput type="number" formControlName="standbyRack"/>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width">Standby Slot</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput type="number" formControlName="standbySlot"/>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width">Heartbeat Interval (ms)</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput type="number" formControlName="heartbeatIntervalMs"/>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width">Heartbeat Timeout (ms)</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput type="number" formControlName="heartbeatTimeoutMs"/>
-                  </mat-form-field>
-                </div>
-              </div>
-              <div class="tb-form-row column-xs">
-                <div class="fixed-title-width">Failure Threshold</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <input matInput type="number" formControlName="failureThreshold"/>
-                  </mat-form-field>
-                </div>
-              </div>
-            </ng-container>
-          </div>
-        </mat-expansion-panel>
       </div>
       <div class="tb-form-panel stroked">
         <mat-expansion-panel class="tb-settings">
@@ -199,6 +105,12 @@
               <div class="fixed-title-width">Poll Period (ms)</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="pollPeriod"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">Connection Timeout (ms)</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="connectionTimeout"/>
               </mat-form-field>
             </div>
             <div class="tb-form-row column-xs">
@@ -217,11 +129,11 @@
         </mat-expansion-panel>
       </div>
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Timeseries</div>
+        <div class="fixed-title-width">Telemetry</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
             <mat-chip *ngFor="let ts of deviceForm.get('timeseries').value">
-              {{ ts.tag }}
+              {{ ts.tag || ts.reference }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
               <label class="ellipsis-text"></label>
@@ -233,7 +145,7 @@
                   matTooltip="Edit"
                   matTooltipPosition="above"
                   #timeseriesButton
-                  (click)="manageKeys($event, timeseriesButton, S7ValueKey.TIMESERIES)">
+                  (click)="manageKeys($event, timeseriesButton, ValueKey.TIMESERIES)">
             <tb-icon matButtonIcon>edit</tb-icon>
           </button>
         </div>
@@ -243,7 +155,7 @@
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
             <mat-chip *ngFor="let attr of deviceForm.get('attributes').value">
-              {{ attr.tag }}
+              {{ attr.tag || attr.reference }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
               <label class="ellipsis-text"></label>
@@ -255,7 +167,7 @@
                   matTooltip="Edit"
                   matTooltipPosition="above"
                   #attributesButton
-                  (click)="manageKeys($event, attributesButton, S7ValueKey.ATTRIBUTES)">
+                  (click)="manageKeys($event, attributesButton, ValueKey.ATTRIBUTES)">
             <tb-icon matButtonIcon>edit</tb-icon>
           </button>
         </div>
@@ -265,7 +177,7 @@
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
             <mat-chip *ngFor="let au of deviceForm.get('attributeUpdates').value">
-              {{ au.tag }}
+              {{ au.tag || au.reference }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
               <label class="ellipsis-text"></label>
@@ -277,7 +189,7 @@
                   matTooltip="Edit"
                   matTooltipPosition="above"
                   #attributeUpdatesButton
-                  (click)="manageKeys($event, attributeUpdatesButton, S7ValueKey.ATTRIBUTES_UPDATES)">
+                  (click)="manageKeys($event, attributeUpdatesButton, ValueKey.ATTRIBUTES_UPDATES)">
             <tb-icon matButtonIcon>edit</tb-icon>
           </button>
         </div>
@@ -299,7 +211,7 @@
                   matTooltip="Edit"
                   matTooltipPosition="above"
                   #rpcButton
-                  (click)="manageKeys($event, rpcButton, S7ValueKey.RPC)">
+                  (click)="manageKeys($event, rpcButton, ValueKey.RPC)">
             <tb-icon matButtonIcon>edit</tb-icon>
           </button>
         </div>

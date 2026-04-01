@@ -24,12 +24,12 @@
     .tb-mapping-table-content {
       width: 100%;
       height: 100%;
-      background: #fff;
+      background: var(--tb-surface-card, #fff);
       overflow: hidden;
 
       &.tb-outlined-border {
         box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
-        border: solid 1px #e0e0e0;
+        border: solid 1px var(--tb-border, #e0e0e0);
         border-radius: 4px;
       }
 
@@ -96,7 +96,7 @@
       height: 24px;
       width: 24px;
       font-size: 24px;
-      color: #757575
+      color: var(--tb-text-secondary, #757575)
     }
   }
 }

@@ -1,0 +1,136 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="iec61850-keys-panel">
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-panel-title">{{ title }} ({{ keysFormArray.length }})</div>
+    <div class="tb-form-panel no-border no-padding key-panel"
+         *ngIf="keysFormArray.length; else noKeys">
+      <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
+           *ngFor="let keyGroup of keysFormArray.controls; let i = index">
+        <div class="tb-form-panel stroked tb-flex">
+          <ng-container [formGroup]="keyGroup">
+            <mat-expansion-panel class="tb-settings">
+              <mat-expansion-panel-header class="flex-wrap">
+                <mat-panel-title>
+                  <div class="tb-flex">
+                    <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
+                      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? keyGroup.get('method').value : keyGroup.get('tag').value }}</span>
+                    </div>
+                    <div class="title-container">Reference:
+                      <span class="key-label">{{ keyGroup.get('reference').value }}</span>
+                    </div>
+                    <div *ngIf="keyGroup.get('fc').value" class="title-container">FC:
+                      <span class="key-label">{{ keyGroup.get('fc').value }}</span>
+                    </div>
+                  </div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <div class="tb-form-panel no-border no-padding">
+                  <ng-container *ngIf="!isRpc">
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width tb-required">Tag</div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput formControlName="tag" placeholder="analog_input_1"/>
+                      </mat-form-field>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="isRpc">
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width tb-required">Method</div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput formControlName="method" placeholder="setValue"/>
+                      </mat-form-field>
+                    </div>
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width tb-required">Operation</div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="operation">
+                          <mat-option value="read">Read</mat-option>
+                          <mat-option value="write">Write</mat-option>
+                          <mat-option value="control">Control</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </ng-container>
+                  <div class="tb-form-row column-xs">
+                    <div class="fixed-title-width tb-required">Reference</div>
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <input matInput formControlName="reference" placeholder="GenericIO/GGIO1.AnIn1.mag.f"/>
+                    </mat-form-field>
+                  </div>
+                  <div class="tb-form-row column-xs">
+                    <div class="fixed-title-width">FC</div>
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <mat-select formControlName="fc">
+                        <mat-option *ngFor="let fc of fcOptions" [value]="fc">
+                          {{ fc }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="tb-form-row column-xs">
+                    <div class="fixed-title-width">Value Type</div>
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <mat-select formControlName="valueType">
+                        <mat-option [value]="null">Auto</mat-option>
+                        <mat-option *ngFor="let vt of valueTypes" [value]="vt">
+                          {{ vt }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                </div>
+              </ng-template>
+            </mat-expansion-panel>
+          </ng-container>
+        </div>
+        <button type="button"
+                mat-icon-button
+                (click)="removeKey(i)"
+                matTooltip="Delete key"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+    <ng-template #noKeys>
+      <div class="tb-flex no-flex center align-center key-panel">
+        <span class="tb-prompt">No keys configured. Add a key to get started.</span>
+      </div>
+    </ng-template>
+  </div>
+</div>
+<div class="flex justify-between pt-4">
+  <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+    Add {{ isRpc ? 'RPC Method' : 'Key' }}
+  </button>
+  <div class="tb-flex flex-end">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      Cancel
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="apply()"
+            [disabled]="keysFormArray.invalid || !keysFormArray.dirty">
+      Apply
+    </button>
+  </div>
+</div>

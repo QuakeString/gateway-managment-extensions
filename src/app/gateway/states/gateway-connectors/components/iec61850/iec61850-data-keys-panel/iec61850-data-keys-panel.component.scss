@@ -13,31 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 :host {
+  .iec61850-keys-panel {
+    width: 77vw;
+    max-width: 700px;
 
-  .title-container {
-    max-width: 11vw;
-  }
+    .title-container {
+      width: 180px;
+    }
 
-  .key-panel {
-    height: 250px;
-    overflow: auto;
-  }
+    .key-label {
+      font-weight: 400;
+    }
 
-  .tb-form-panel {
-    .mat-mdc-icon-button {
-      width: 56px;
-      height: 56px;
-      padding: 16px;
-      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+    .key-panel {
+      height: calc(100vh - 112px);
+      max-height: 500px;
+      overflow: auto;
     }
   }
 }
 
 :host ::ng-deep {
-  .mat-mdc-form-field-icon-suffix {
-    display: flex;
+  .tb-form-row {
+    .fixed-title-width {
+      min-width: 40px;
+      width: 35%;
+    }
+    .mat-mdc-form-field {
+      width: 0;
+    }
   }
 }
 
+@media (max-width: 599px) {
+  :host {
+    .iec61850-keys-panel {
+      width: 100%;
+      max-width: 100%;
+
+      .title-container {
+        width: auto;
+        max-width: 45%;
+      }
+
+      .key-panel {
+        max-height: calc(100vh - 160px);
+      }
+    }
+  }
+}

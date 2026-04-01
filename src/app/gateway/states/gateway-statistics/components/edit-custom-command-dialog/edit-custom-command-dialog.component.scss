@@ -29,9 +29,9 @@
   }
 
   .mat-mdc-form-field-icon-suffix {
-    color: #E0E0E0;
+    color: var(--tb-icon-disabled, #E0E0E0);
     &:hover {
-      color: #9E9E9E;
+      color: var(--tb-icon-color, #9E9E9E);
     }
   }
 

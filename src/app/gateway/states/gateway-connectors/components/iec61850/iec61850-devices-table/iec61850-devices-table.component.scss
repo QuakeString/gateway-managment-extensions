@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.gw-delete-icon-button {
-  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+:host {
+  display: block;
 }
 
-.gw-connector-table {
-  .mat-mdc-table {
-    table-layout: fixed;
+.cell-action {
+  width: 80px;
+  text-align: right;
+}
+
+@media (max-width: 599px) {
+  .cell-action {
+    width: 60px;
   }
 }
-
-.gw-chip-list {
-  .mdc-evolution-chip-set__chips {
-    justify-content: flex-end;
-    align-items: center;
-  }
-}
-
-.gw-table-toolbar.mat-mdc-table-toolbar.mat-mdc-table-toolbar  {
-  padding: 0 8px;
-}
-
-.see-example{
-  display: flex;
-}
-/***************
- * TAILWIND CSS
- ***************/
-
-@tailwind utilities;

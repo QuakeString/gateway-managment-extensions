@@ -45,6 +45,7 @@ import { coerceBoolean, coerceNumber, SharedModule } from '@shared/public-api';
 @Component({
   selector: 'tb-report-strategy',
   templateUrl: './report-strategy.component.html',
+  host: { class: 'tb-slide-toggle' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {

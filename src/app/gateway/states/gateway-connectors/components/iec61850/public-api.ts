@@ -13,13 +13,8 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
-export * from './ethernet-ip.models';
-export * from './iec61850.models';
+export * from './iec61850-basic-config/iec61850-basic-config.component';
+export * from './iec61850-basic-config/legacy-iec61850-basic-config.component';
+export * from './iec61850-devices-table/iec61850-devices-table.component';
+export * from './iec61850-device-dialog/iec61850-device-dialog.component';
+export * from './iec61850-data-keys-panel/iec61850-data-keys-panel.component';

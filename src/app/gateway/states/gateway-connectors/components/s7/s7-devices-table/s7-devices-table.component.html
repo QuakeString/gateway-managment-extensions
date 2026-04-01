@@ -95,13 +95,13 @@
           <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #deviceMenu="matMenu" xPosition="before">
-          <button mat-menu-item (click)="exportDevice(getOriginalIndex(device))">
+          <button mat-menu-item (click)="exportTags(getOriginalIndex(device))">
             <mat-icon>file_download</mat-icon>
-            <span>Export</span>
+            <span>Export Tags</span>
           </button>
-          <button mat-menu-item (click)="importDevice()">
+          <button mat-menu-item (click)="importTags(getOriginalIndex(device))">
             <mat-icon>file_upload</mat-icon>
-            <span>Import</span>
+            <span>Import Tags</span>
           </button>
         </mat-menu>
       </td>
