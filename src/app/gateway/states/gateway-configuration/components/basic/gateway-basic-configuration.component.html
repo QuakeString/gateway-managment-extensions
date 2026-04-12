@@ -37,20 +37,20 @@
               <mat-icon matIconSuffix style="cursor:pointer;"
                         matTooltip="{{ 'gateway.hints.host' | translate }}">info_outlined
               </mat-icon>
-              @if (basicFormGroup.get('thingsboard.host').hasError('required')) {
+              @if (basicFormGroup.get('sentient.host').hasError('required')) {
                 <mat-error>{{ 'gateway.thingsboard-host-required' | translate }}</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline" class="flex flex-1">
               <mat-label translate>gateway.thingsboard-port</mat-label>
               <input matInput formControlName="port" type="number" min="0"/>
-              @if (basicFormGroup.get('thingsboard.port').hasError('required')) {
+              @if (basicFormGroup.get('sentient.port').hasError('required')) {
                 <mat-error>{{ 'gateway.thingsboard-port-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.port').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.port').hasError('min')) {
                 <mat-error>{{ 'gateway.thingsboard-port-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.port').hasError('max')) {
+              } @else if (basicFormGroup.get('sentient.port').hasError('max')) {
                 <mat-error>{{ 'gateway.thingsboard-port-max' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.port').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.port').hasError('pattern')) {
                 <mat-error>{{ 'gateway.thingsboard-port-pattern' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"
@@ -96,22 +96,22 @@
           <mat-form-field appearance="outline">
             <mat-label translate>gateway.statistics.send-period</mat-label>
             <input matInput formControlName="statsSendPeriodInSeconds" type="number" min="60"/>
-            @if (basicFormGroup.get('thingsboard.statistics.statsSendPeriodInSeconds').hasError('required')) {
+            @if (basicFormGroup.get('sentient.statistics.statsSendPeriodInSeconds').hasError('required')) {
               <mat-error>{{ 'gateway.statistics.send-period-required' | translate }}</mat-error>
-            } @else if (basicFormGroup.get('thingsboard.statistics.statsSendPeriodInSeconds').hasError('min')) {
+            } @else if (basicFormGroup.get('sentient.statistics.statsSendPeriodInSeconds').hasError('min')) {
               <mat-error>{{ 'gateway.statistics.send-period-min' | translate }}</mat-error>
-            } @else if (basicFormGroup.get('thingsboard.statistics.statsSendPeriodInSeconds').hasError('pattern')) {
+            } @else if (basicFormGroup.get('sentient.statistics.statsSendPeriodInSeconds').hasError('pattern')) {
               <mat-error>{{ 'gateway.statistics.send-period-pattern' | translate }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label translate>gateway.statistics.custom-send-period</mat-label>
             <input matInput formControlName="customStatsSendPeriodInSeconds" type="number" min="60"/>
-            @if (basicFormGroup.get('thingsboard.statistics.customStatsSendPeriodInSeconds').hasError('required')) {
+            @if (basicFormGroup.get('sentient.statistics.customStatsSendPeriodInSeconds').hasError('required')) {
               <mat-error>{{ 'gateway.statistics.custom-send-period-required' | translate }}</mat-error>
-            } @else if (basicFormGroup.get('thingsboard.statistics.customStatsSendPeriodInSeconds').hasError('min')) {
+            } @else if (basicFormGroup.get('sentient.statistics.customStatsSendPeriodInSeconds').hasError('min')) {
               <mat-error>{{ 'gateway.statistics.custom-send-period-min' | translate }}</mat-error>
-            } @else if (basicFormGroup.get('thingsboard.statistics.customStatsSendPeriodInSeconds').hasError('pattern')) {
+            } @else if (basicFormGroup.get('sentient.statistics.customStatsSendPeriodInSeconds').hasError('pattern')) {
               <mat-error>{{ 'gateway.statistics.custom-send-period-pattern' | translate }}</mat-error>
             }
           </mat-form-field>
@@ -188,7 +188,7 @@
               </section>
               <button mat-icon-button (click)="removeCommandControl($index, $event)"
                       class="tb-box-button"
-                      [disabled]="!basicFormGroup.get('thingsboard.remoteConfiguration').value"
+                      [disabled]="!basicFormGroup.get('sentient.remoteConfiguration').value"
                       matTooltip="{{ 'gateway.statistics.remove' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>delete</mat-icon>
@@ -197,7 +197,7 @@
             <button mat-stroked-button color="primary"
                     style="width: fit-content;"
                     type="button"
-                    [disabled]="!basicFormGroup.get('thingsboard.remoteConfiguration').value"
+                    [disabled]="!basicFormGroup.get('sentient.remoteConfiguration').value"
                     (click)="addCommand()">
               {{ 'gateway.statistics.add' | translate }}
             </button>
@@ -210,7 +210,7 @@
     <ng-template matTabContent>
       <div formGroupName="sentient" class="mat-content mat-padding configuration-block">
         <div class="tb-form-panel" formGroupName="checkingDeviceActivity"
-             [class.no-padding-bottom]="basicFormGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value">
+             [class.no-padding-bottom]="basicFormGroup.get('sentient.checkingDeviceActivity.checkDeviceInactivity').value">
           <div tb-hint-tooltip-icon="{{ 'gateway.hints.check-device-activity' | translate }}"
                class="tb-form-row no-border no-padding">
             <mat-slide-toggle class="mat-slide" color="primary" formControlName="checkDeviceInactivity">
@@ -218,15 +218,15 @@
             </mat-slide-toggle>
           </div>
           <section class="tb-form-row no-border no-padding tb-standard-fields column-xs"
-                   *ngIf="basicFormGroup.get('thingsboard.checkingDeviceActivity.checkDeviceInactivity').value">
+                   *ngIf="basicFormGroup.get('sentient.checkingDeviceActivity.checkDeviceInactivity').value">
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.inactivity-timeout-seconds</mat-label>
               <input matInput formControlName="inactivityTimeoutSeconds" type="number" min="0"/>
-              @if (basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('required')) {
+              @if (basicFormGroup.get('sentient.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('required')) {
                 <mat-error>{{ 'gateway.inactivity-timeout-seconds-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('min')) {
                 <mat-error>{{ 'gateway.inactivity-timeout-seconds-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.checkingDeviceActivity.inactivityTimeoutSeconds').hasError('pattern')) {
                 <mat-error>{{ 'gateway.inactivity-timeout-seconds-pattern' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"
@@ -236,11 +236,11 @@
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.inactivity-check-period-seconds</mat-label>
               <input matInput type="number" min="0" formControlName="inactivityCheckPeriodSeconds"/>
-              @if (basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('required')) {
+              @if (basicFormGroup.get('sentient.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('required')) {
                 <mat-error>{{ 'gateway.inactivity-check-period-seconds-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('min')) {
                 <mat-error>{{ 'gateway.inactivity-check-period-seconds-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('pattern')) {
                 <mat-error>{{ 'gateway.inactivity-check-period-seconds-pattern' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"
@@ -255,11 +255,11 @@
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.min-pack-send-delay</mat-label>
               <input matInput formControlName="minPackSendDelayMS" type="number" min="0"/>
-              @if (basicFormGroup.get('thingsboard.minPackSendDelayMS').hasError('required')) {
+              @if (basicFormGroup.get('sentient.minPackSendDelayMS').hasError('required')) {
                 <mat-error>{{ 'gateway.min-pack-send-delay-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.minPackSendDelayMS').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.minPackSendDelayMS').hasError('min')) {
                 <mat-error>{{ 'gateway.min-pack-send-delay-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.minPackSendDelayMS').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.minPackSendDelayMS').hasError('pattern')) {
                 <mat-error>{{ 'gateway.min-pack-send-delay-pattern' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"
@@ -272,11 +272,11 @@
                 <mat-option [value]="0">0</mat-option>
                 <mat-option [value]="1">1</mat-option>
               </mat-select>
-              @if (basicFormGroup.get('thingsboard.qos').hasError('required')) {
+              @if (basicFormGroup.get('sentient.qos').hasError('required')) {
                 <mat-error>{{ 'gateway.mqtt-qos-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.qos').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.qos').hasError('min')) {
                 <mat-error>{{ 'gateway.mqtt-qos-range' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.qos').hasError('max')) {
+              } @else if (basicFormGroup.get('sentient.qos').hasError('max')) {
                 <mat-error>{{ 'gateway.mqtt-qos-range' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"
@@ -288,22 +288,22 @@
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.statistics.check-connectors-configuration</mat-label>
               <input matInput formControlName="checkConnectorsConfigurationInSeconds" type="number" min="0"/>
-              @if (basicFormGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('required')) {
+              @if (basicFormGroup.get('sentient.checkConnectorsConfigurationInSeconds').hasError('required')) {
                 <mat-error>{{ 'gateway.statistics.check-connectors-configuration-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.checkConnectorsConfigurationInSeconds').hasError('min')) {
                 <mat-error>{{ 'gateway.statistics.check-connectors-configuration-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.checkConnectorsConfigurationInSeconds').hasError('pattern')) {
                 <mat-error>{{ 'gateway.statistics.check-connectors-configuration-pattern' | translate }}</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.statistics.max-payload-size-bytes</mat-label>
               <input matInput formControlName="maxPayloadSizeBytes" type="number" min="0"/>
-              @if (basicFormGroup.get('thingsboard.maxPayloadSizeBytes').hasError('required')) {
+              @if (basicFormGroup.get('sentient.maxPayloadSizeBytes').hasError('required')) {
                 <mat-error>{{ 'gateway.statistics.max-payload-size-bytes-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.maxPayloadSizeBytes').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.maxPayloadSizeBytes').hasError('min')) {
                 <mat-error>{{ 'gateway.statistics.max-payload-size-bytes-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.maxPayloadSizeBytes').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.maxPayloadSizeBytes').hasError('pattern')) {
                 <mat-error>{{ 'gateway.statistics.max-payload-size-bytes-pattern' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"
@@ -315,11 +315,11 @@
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.statistics.min-pack-size-to-send</mat-label>
               <input matInput formControlName="minPackSizeToSend" type="number" min="0"/>
-              @if (basicFormGroup.get('thingsboard.minPackSizeToSend').hasError('required')) {
+              @if (basicFormGroup.get('sentient.minPackSizeToSend').hasError('required')) {
                 <mat-error>{{ 'gateway.statistics.min-pack-size-to-send-required' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.minPackSizeToSend').hasError('min')) {
+              } @else if (basicFormGroup.get('sentient.minPackSizeToSend').hasError('min')) {
                 <mat-error>{{ 'gateway.statistics.min-pack-size-to-send-min' | translate }}</mat-error>
-              } @else if (basicFormGroup.get('thingsboard.minPackSizeToSend').hasError('pattern')) {
+              } @else if (basicFormGroup.get('sentient.minPackSizeToSend').hasError('pattern')) {
                 <mat-error>{{ 'gateway.statistics.min-pack-size-to-send-pattern' | translate }}</mat-error>
               }
               <mat-icon matIconSuffix style="cursor:pointer;"

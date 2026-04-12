@@ -191,7 +191,7 @@ export const LocalLogsConfigTranslateMap = new Map<LocalLogsConfigs, string>([
   [LocalLogsConfigs.service, 'Service'],
   [LocalLogsConfigs.connector, 'Connector'],
   [LocalLogsConfigs.converter, 'Converter'],
-  [LocalLogsConfigs.tb_connection, 'TB Connection'],
+  [LocalLogsConfigs.tb_connection, 'ST Connection'],
   [LocalLogsConfigs.storage, 'Storage'],
   [LocalLogsConfigs.extension, 'Extension']
 ]);

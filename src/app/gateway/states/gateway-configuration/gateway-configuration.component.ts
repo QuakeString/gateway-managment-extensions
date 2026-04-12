@@ -343,11 +343,11 @@ export class GatewayConfigurationComponent implements AfterViewInit {
   }
 
   private logsToObj(logsConfig: LogAttribute): GatewayLogsConfig {
-    const { format: logFormat, datefmt: dateFormat } = logsConfig.formatters.LogFormatter;
+    const { format: logFormat, datefmt: dateFormat } = logsConfig?.formatters?.LogFormatter ?? { format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt: '%Y-%m-%d %H:%M:%S' };
 
     const localLogs = Object.keys(LocalLogsConfigs).reduce((acc, key) => {
-      const handler = logsConfig.handlers[`${key}Handler`] || {};
-      const logger = logsConfig.loggers[key] || {};
+      const handler = logsConfig?.handlers?.[`${key}Handler`] || {};
+      const logger = logsConfig?.loggers?.[key] || {};
 
       acc[key] = {
         logLevel: logger.level || GatewayLogLevel.INFO,

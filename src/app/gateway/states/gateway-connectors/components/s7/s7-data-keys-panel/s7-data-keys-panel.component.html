@@ -13,197 +13,389 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<div class="s7-keys-panel">
-  <div class="tb-form-panel no-border no-padding">
-    <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
-    <mat-form-field *ngIf="keysFormArray.length > 10" class="fill-width search-keys-field" appearance="outline" subscriptSizing="dynamic">
-      <mat-icon matPrefix>search</mat-icon>
-      <input matInput [formControl]="searchControl" placeholder="Search keys..."/>
-      <button *ngIf="searchControl.value" mat-icon-button matSuffix (click)="searchControl.setValue('')" type="button">
-        <mat-icon>close</mat-icon>
-      </button>
-    </mat-form-field>
-    <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
-      {{ filteredControls.length }} of {{ keysFormArray.length }} keys
-    </div>
-    <div class="tb-form-panel no-border no-padding key-panel"
-         *ngIf="displayedControls.length; else noKeys"
-         (scroll)="onKeyPanelScroll($event)">
-      <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
-           *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
-        <div class="tb-form-panel stroked tb-flex">
-          <ng-container [formGroup]="item.control">
-            <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
-              <mat-expansion-panel-header class="flex-wrap">
-                <mat-panel-title>
-                  <div class="tb-flex">
-                    <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
-                      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? item.control.get('method').value : item.control.get('tag').value }}</span>
-                    </div>
-                    <div class="title-container">Address:
-                      <span class="key-label">{{ item.control.get('address').value }}</span>
-                    </div>
-                    <div *ngIf="item.control.get('valueType').value" class="title-container">Type:
-                      <span class="key-label">{{ item.control.get('valueType').value }}</span>
-                    </div>
-                  </div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <div class="tb-form-panel no-border no-padding">
-                  <div class="tb-form-hint tb-primary-fill">
-                    {{ 'gateway.hints.s7.data-keys' | translate }}
-                  </div>
-                  <ng-container *ngIf="!isRpc">
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.tag' | translate }}">Tag</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput formControlName="tag" placeholder="temperature">
-                      </mat-form-field>
-                    </div>
-                  </ng-container>
-                  <ng-container *ngIf="isRpc">
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">Method</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput formControlName="method" placeholder="setValue">
-                      </mat-form-field>
-                    </div>
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">Operation</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <mat-select formControlName="operation">
-                          <mat-option value="read">Read</mat-option>
-                          <mat-option value="write">Write</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                  </ng-container>
-                  <div class="tb-form-row column-xs">
-                    <div class="fixed-title-width tb-required">Address</div>
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput formControlName="address" placeholder="DB1.DBD0">
-                      <mat-icon matSuffix
-                                matTooltipPosition="above"
-                                matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="'Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)'"
-                                *ngIf="item.control.get('address').hasError('pattern')
-                                                     && item.control.get('address').touched"
-                                class="tb-error">
-                        warning
-                      </mat-icon>
-                    </mat-form-field>
-                  </div>
-                  <div class="tb-form-row column-xs">
-                    <div class="fixed-title-width">Value Type</div>
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <mat-select formControlName="valueType">
-                        <mat-option [value]="null">Auto</mat-option>
-                        <mat-option *ngFor="let type of valueTypes" [value]="type">
-                          {{ type }}
-                        </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                  <ng-container *ngIf="!isRpc">
-                    <div class="tb-form-panel stroked tb-slide-toggle">
-                      <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(item.control.getRawValue().id)?.value">
-                        <mat-expansion-panel-header class="flex-wrap">
-                          <mat-panel-title>
-                            <mat-slide-toggle
-                              [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)"
-                              class="mat-slide"
-                              (click)="$event.stopPropagation()">
-                              <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">{{ 'gateway.modifier' | translate }}</mat-label>
-                            </mat-slide-toggle>
-                          </mat-panel-title>
-                        </mat-expansion-panel-header>
-                        <div class="tb-flex no-gap">
-                          <div class="tb-form-row column-xs w-full">
-                            <div class="fixed-title-width" translate>gateway.type</div>
-                            <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
-                              <mat-select formControlName="modifierType">
-                                <mat-select-trigger>
-                                  <div class="tb-flex align-center">
-                                    <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(item.control.get('modifierType').value)?.icon"></mat-icon>
-                                    <span>{{ ModifierTypesMap.get(item.control.get('modifierType').value)?.name | translate }}</span>
-                                  </div>
-                                </mat-select-trigger>
-                                <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
-                                  <mat-icon class="tb-mat-20" [svgIcon]="ModifierTypesMap.get(modifierType).icon"></mat-icon>
-                                  <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
-                                </mat-option>
+<div #panelRoot class="s7-data-keys-panel-root" [class.fullscreen]="isFullscreen">
+  <div class="s7-keys-panel">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
+      <div class="header-actions">
+        <div *ngIf="keysFormArray.length > 10 || isFullscreen" class="rounded-search">
+          <mat-icon class="rounded-search-icon">search</mat-icon>
+          <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
+          <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <button type="button"
+                mat-icon-button
+                class="header-action-btn"
+                [matMenuTriggerFor]="sortMenu"
+                matTooltip="Sort"
+                matTooltipPosition="above">
+          <mat-icon>sort</mat-icon>
+        </button>
+        <button type="button"
+                mat-icon-button
+                class="header-action-btn"
+                (click)="toggleFullscreen()"
+                [matTooltip]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+                matTooltipPosition="above">
+          <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+        <mat-menu #sortMenu="matMenu" class="s7-sort-menu-panel">
+          <button mat-menu-item type="button" (click)="setSortField(null)">
+            <mat-icon *ngIf="sortField === null">check</mat-icon>
+            <span>Default order</span>
+          </button>
+          <button *ngFor="let f of sortFields"
+                  mat-menu-item
+                  type="button"
+                  (click)="setSortField(f.value)">
+            <mat-icon *ngIf="sortField === f.value">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            <span>{{ f.label }}</span>
+          </button>
+        </mat-menu>
+      </div>
+      <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
+        {{ filteredControls.length }} of {{ keysFormArray.length }} keys
+      </div>
+
+      <ng-container *ngIf="!isFullscreen; else spreadsheet">
+        <div class="tb-form-panel no-border no-padding key-panel"
+             *ngIf="displayedControls.length; else noKeys"
+             (scroll)="onKeyPanelScroll($event)">
+          <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
+               *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
+            <div class="tb-form-panel stroked tb-flex">
+              <ng-container [formGroup]="item.control">
+                <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
+                  <mat-expansion-panel-header class="flex-wrap">
+                    <mat-panel-title>
+                      <div class="tb-flex">
+                        <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
+                          <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? item.control.get('method').value : item.control.get('tag').value }}</span>
+                        </div>
+                        <div class="title-container">Address:
+                          <span class="key-label">{{ item.control.get('address').value }}</span>
+                        </div>
+                        <div class="title-container">Type:
+                          <span class="key-label">{{ item.control.get('valueType').value || 'Auto' }}</span>
+                        </div>
+                      </div>
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <ng-template matExpansionPanelContent>
+                    <div class="tb-form-panel no-border no-padding">
+                      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+                        {{ 'gateway.hints.s7.data-keys' | translate }}
+                        <div matSuffix
+                             class="see-example p-1"
+                             [tb-help-popup]="'widget/lib/gateway/s7-address-data-types_fn'"
+                             tb-help-popup-placement="left"
+                             [tb-help-popup-style]="{maxWidth: '970px'}">
+                        </div>
+                      </div>
+                      <div class="tb-form-panel stroked">
+                        <div class="tb-form-panel-title" translate>gateway.platform-side</div>
+                        <ng-container *ngIf="!isRpc">
+                          <div class="tb-form-row column-xs">
+                            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.tag' | translate }}">{{ 'gateway.key' | translate }}</div>
+                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                              <input matInput formControlName="tag" placeholder="temperature">
+                            </mat-form-field>
+                          </div>
+                        </ng-container>
+                        <ng-container *ngIf="isRpc">
+                          <div class="tb-form-row column-xs">
+                            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">Method</div>
+                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                              <input matInput formControlName="method" placeholder="setValue">
+                            </mat-form-field>
+                          </div>
+                        </ng-container>
+                      </div>
+                      <div class="tb-form-panel stroked">
+                        <div class="tb-form-panel-title" translate>gateway.connector-side</div>
+                        <ng-container *ngIf="isRpc">
+                          <div class="tb-form-row column-xs">
+                            <div class="fixed-title-width tb-required">Operation</div>
+                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                              <mat-select formControlName="operation">
+                                <mat-option value="read">Read</mat-option>
+                                <mat-option value="write">Write</mat-option>
                               </mat-select>
                             </mat-form-field>
                           </div>
-                        </div>
+                        </ng-container>
                         <div class="tb-form-row column-xs">
-                          <div class="fixed-title-width" translate>gateway.value</div>
-                          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
-                            <input matInput required formControlName="modifierValue" step="0.1" type="number"
-                                   placeholder="{{ 'gateway.set' | translate }}" />
+                          <div class="fixed-title-width tb-required">Address</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="address" placeholder="DB1.DBD0">
                             <mat-icon matSuffix
                                       matTooltipPosition="above"
                                       matTooltipClass="tb-error-tooltip"
-                                      [matTooltip]="('gateway.modifier-invalid') | translate"
-                                      *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
+                                      [matTooltip]="'Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)'"
+                                      *ngIf="item.control.get('address').hasError('pattern')
+                                                           && item.control.get('address').touched"
                                       class="tb-error">
                               warning
                             </mat-icon>
                           </mat-form-field>
                         </div>
-                      </mat-expansion-panel>
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width">Value Type</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <mat-select formControlName="valueType">
+                              <mat-option value="">Auto</mat-option>
+                              <mat-option *ngFor="let type of valueTypes" [value]="type">
+                                {{ type }}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </div>
+                      </div>
+                      <ng-container *ngIf="!isRpc">
+                        <div class="tb-form-panel stroked tb-slide-toggle">
+                          <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(item.control.getRawValue().id)?.value">
+                            <mat-expansion-panel-header class="flex-wrap">
+                              <mat-panel-title>
+                                <mat-slide-toggle
+                                  [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)"
+                                  class="mat-slide"
+                                  (click)="$event.stopPropagation()">
+                                  <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">{{ 'gateway.modifier' | translate }}</mat-label>
+                                </mat-slide-toggle>
+                              </mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <div class="tb-flex no-gap">
+                              <div class="tb-form-row column-xs w-full">
+                                <div class="fixed-title-width" translate>gateway.type</div>
+                                <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                                  <mat-select formControlName="modifierType">
+                                    <mat-select-trigger>
+                                      <div class="tb-flex align-center">
+                                        <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(item.control.get('modifierType').value)?.icon"></mat-icon>
+                                        <span>{{ ModifierTypesMap.get(item.control.get('modifierType').value)?.name | translate }}</span>
+                                      </div>
+                                    </mat-select-trigger>
+                                    <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
+                                      <mat-icon class="tb-mat-20" [svgIcon]="ModifierTypesMap.get(modifierType).icon"></mat-icon>
+                                      <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
+                                    </mat-option>
+                                  </mat-select>
+                                </mat-form-field>
+                              </div>
+                            </div>
+                            <div class="tb-form-row column-xs">
+                              <div class="fixed-title-width" translate>gateway.value</div>
+                              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
+                                <input matInput required formControlName="modifierValue" step="0.1" type="number"
+                                       placeholder="{{ 'gateway.set' | translate }}" />
+                                <mat-icon matSuffix
+                                          matTooltipPosition="above"
+                                          matTooltipClass="tb-error-tooltip"
+                                          [matTooltip]="('gateway.modifier-invalid') | translate"
+                                          *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
+                                          class="tb-error">
+                                  warning
+                                </mat-icon>
+                              </mat-form-field>
+                            </div>
+                          </mat-expansion-panel>
+                        </div>
+                        <tb-report-strategy
+                          class="stroked tb-form-panel"
+                          [defaultValue]="ReportStrategyDefaultValue.Key"
+                          formControlName="reportStrategy"
+                          [isExpansionMode]="true"
+                        />
+                      </ng-container>
                     </div>
-                    <tb-report-strategy
-                      class="stroked tb-form-panel"
-                      [defaultValue]="ReportStrategyDefaultValue.Key"
-                      formControlName="reportStrategy"
-                      [isExpansionMode]="true"
-                    />
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-expansion-panel>
-          </ng-container>
+                  </ng-template>
+                </mat-expansion-panel>
+              </ng-container>
+            </div>
+            <button type="button"
+                    mat-icon-button
+                    (click)="deleteKey(item.index)"
+                    [matTooltip]="deleteKeyTitle"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </div>
-        <button type="button"
-                mat-icon-button
-                (click)="deleteKey(item.index)"
-                [matTooltip]="deleteKeyTitle"
-                matTooltipPosition="above">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-    </div>
-    <ng-template #noKeys>
-      <div class="tb-flex no-flex center align-center key-panel">
-        <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeys" class="tb-prompt">
-          No matching keys
-        </span>
-        <ng-template #emptyKeys>
-          <span class="tb-prompt">{{ noKeysText }}</span>
+        <ng-template #noKeys>
+          <div class="tb-flex no-flex center align-center key-panel">
+            <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeys" class="tb-prompt">
+              No matching keys
+            </span>
+            <ng-template #emptyKeys>
+              <span class="tb-prompt">{{ noKeysText }}</span>
+            </ng-template>
+          </div>
         </ng-template>
-      </div>
-    </ng-template>
+      </ng-container>
+
+      <ng-template #spreadsheet>
+        <div class="spreadsheet-wrapper key-panel" *ngIf="displayedControls.length; else noKeysFs"
+             (scroll)="onKeyPanelScroll($event)">
+          <div class="spreadsheet-table" [class.rpc-mode]="isRpc">
+            <ng-container *ngIf="!isRpc">
+              <div class="header-cell row-number-cell" (click)="toggleSelectAll()">#</div>
+              <div class="header-cell" (click)="setSortField('tag')">
+                Key <mat-icon *ngIf="sortField === 'tag'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+              <div class="header-cell" (click)="setSortField('address')">
+                Address <mat-icon *ngIf="sortField === 'address'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+              <div class="header-cell" (click)="setSortField('valueType')">
+                Value Type <mat-icon *ngIf="sortField === 'valueType'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+              <div class="header-cell center">Mod.</div>
+              <div class="header-cell">Mod. Type</div>
+              <div class="header-cell">Mod. Value</div>
+              <div class="header-cell center">Strat.</div>
+              <div class="header-cell">Strat. Type</div>
+              <div class="header-cell">Period (ms)</div>
+
+              <div class="spreadsheet-row"
+                   *ngFor="let item of displayedControls; let i = index; trackBy: trackByFilteredItem"
+                   [class.selected]="isRowSelected(item.control)">
+                <ng-container [formGroup]="item.control">
+                  <div class="cell row-number-cell" (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
+                  <div class="cell">
+                    <input class="cell-input" name="tag" formControlName="tag" placeholder="temperature"
+                           (keydown)="onCellKeydown($event)">
+                  </div>
+                  <div class="cell">
+                    <input class="cell-input" name="address" formControlName="address" placeholder="DB1.DBD0"
+                           [class.invalid]="item.control.get('address').hasError('pattern') && item.control.get('address').touched"
+                           (keydown)="onCellKeydown($event)">
+                  </div>
+                  <div class="cell">
+                    <select class="cell-select" formControlName="valueType" (keydown)="onCellKeydown($event)">
+                      <option [ngValue]="''">Auto</option>
+                      <option *ngFor="let type of valueTypes" [ngValue]="type">{{ type }}</option>
+                    </select>
+                  </div>
+                  <div class="cell center">
+                    <input type="checkbox" class="cell-checkbox"
+                           [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)">
+                  </div>
+                  <div class="cell">
+                    <select class="cell-select" formControlName="modifierType" (keydown)="onCellKeydown($event)">
+                      <option *ngFor="let modifierType of modifierTypes" [ngValue]="modifierType">
+                        {{ ModifierTypesMap.get(modifierType).name | translate }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="cell">
+                    <input class="cell-input" type="number" step="0.1" formControlName="modifierValue" placeholder="1"
+                           (keydown)="onCellKeydown($event)">
+                  </div>
+                  <div class="cell center">
+                    <input type="checkbox" class="cell-checkbox"
+                           [checked]="isReportStrategyEnabled(item.control)"
+                           (change)="setReportStrategyEnabled(item.control, $any($event.target).checked)">
+                  </div>
+                  <div class="cell">
+                    <select class="cell-select"
+                            [value]="getReportStrategyType(item.control)"
+                            [disabled]="!isReportStrategyEnabled(item.control)"
+                            (change)="setReportStrategyType(item.control, $any($event.target).value)"
+                            (keydown)="onCellKeydown($event)">
+                      <option *ngFor="let t of reportStrategyTypes" [value]="t">
+                        {{ ReportStrategyTypeTranslationsMap.get(t) | translate }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="cell">
+                    <input class="cell-input" type="number"
+                           [value]="getReportStrategyPeriod(item.control) ?? ''"
+                           [disabled]="!isReportStrategyPeriodInputEnabled(item.control)"
+                           (input)="setReportStrategyPeriod(item.control, $any($event.target).value)"
+                           (keydown)="onCellKeydown($event)"
+                           placeholder="ms">
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+
+            <ng-container *ngIf="isRpc">
+              <div class="header-cell row-number-cell" (click)="toggleSelectAll()">#</div>
+              <div class="header-cell" (click)="setSortField('method')">
+                Method <mat-icon *ngIf="sortField === 'method'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+              <div class="header-cell" (click)="setSortField('address')">
+                Address <mat-icon *ngIf="sortField === 'address'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+              <div class="header-cell" (click)="setSortField('valueType')">
+                Value Type <mat-icon *ngIf="sortField === 'valueType'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+              <div class="header-cell" (click)="setSortField('operation')">
+                Operation <mat-icon *ngIf="sortField === 'operation'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+              </div>
+
+              <div class="spreadsheet-row"
+                   *ngFor="let item of displayedControls; let i = index; trackBy: trackByFilteredItem"
+                   [class.selected]="isRowSelected(item.control)">
+                <ng-container [formGroup]="item.control">
+                  <div class="cell row-number-cell" (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
+                  <div class="cell">
+                    <input class="cell-input" name="method" formControlName="method" placeholder="setValue"
+                           (keydown)="onCellKeydown($event)">
+                  </div>
+                  <div class="cell">
+                    <input class="cell-input" name="address" formControlName="address" placeholder="DB1.DBD0"
+                           (keydown)="onCellKeydown($event)">
+                  </div>
+                  <div class="cell">
+                    <select class="cell-select" formControlName="valueType" (keydown)="onCellKeydown($event)">
+                      <option [ngValue]="''">Auto</option>
+                      <option *ngFor="let type of valueTypes" [ngValue]="type">{{ type }}</option>
+                    </select>
+                  </div>
+                  <div class="cell">
+                    <select class="cell-select" formControlName="operation" (keydown)="onCellKeydown($event)">
+                      <option value="read">Read</option>
+                      <option value="write">Write</option>
+                    </select>
+                  </div>
+                </ng-container>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <ng-template #noKeysFs>
+          <div class="empty-state-fullscreen">
+            <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeysFs" class="tb-prompt">
+              No matching keys
+            </span>
+            <ng-template #emptyKeysFs>
+              <span class="tb-prompt">{{ noKeysText }}</span>
+            </ng-template>
+          </div>
+        </ng-template>
+      </ng-template>
+    </div>
   </div>
-</div>
-<div class="flex justify-between pt-4">
-  <button type="button" mat-stroked-button color="primary" (click)="addKey()">
-    {{ addKeyTitle }}
-  </button>
-  <div class="tb-flex flex-end">
-    <button mat-button
-            color="primary"
-            type="button"
-            (click)="cancel()">
-      Cancel
+  <div class="flex justify-between pt-4 footer-actions">
+    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+      {{ addKeyTitle }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            (click)="applyKeysData()"
-            [disabled]="keysFormArray.invalid || !keysFormArray.dirty">
-      Apply
-    </button>
+    <div class="tb-flex flex-end">
+      <button mat-button
+              color="primary"
+              type="button"
+              (click)="cancel()">
+        Cancel
+      </button>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="applyKeysData()"
+              [disabled]="keysFormArray.invalid || !keysFormArray.dirty">
+        Apply
+      </button>
+    </div>
   </div>
 </div>
