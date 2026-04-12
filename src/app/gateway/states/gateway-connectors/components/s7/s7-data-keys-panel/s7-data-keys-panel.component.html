@@ -18,7 +18,7 @@
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
       <div class="header-actions">
-        <div *ngIf="keysFormArray.length > 10 || isFullscreen" class="rounded-search">
+        <div class="rounded-search">
           <mat-icon class="rounded-search-icon">search</mat-icon>
           <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
           <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
@@ -152,63 +152,63 @@
                             </mat-select>
                           </mat-form-field>
                         </div>
-                      </div>
-                      <ng-container *ngIf="!isRpc">
-                        <div class="tb-form-panel stroked tb-slide-toggle">
-                          <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(item.control.getRawValue().id)?.value">
-                            <mat-expansion-panel-header class="flex-wrap">
-                              <mat-panel-title>
-                                <mat-slide-toggle
-                                  [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)"
-                                  class="mat-slide"
-                                  (click)="$event.stopPropagation()">
-                                  <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">{{ 'gateway.modifier' | translate }}</mat-label>
-                                </mat-slide-toggle>
-                              </mat-panel-title>
-                            </mat-expansion-panel-header>
-                            <div class="tb-flex no-gap">
-                              <div class="tb-form-row column-xs w-full">
-                                <div class="fixed-title-width" translate>gateway.type</div>
-                                <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
-                                  <mat-select formControlName="modifierType">
-                                    <mat-select-trigger>
-                                      <div class="tb-flex align-center">
-                                        <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(item.control.get('modifierType').value)?.icon"></mat-icon>
-                                        <span>{{ ModifierTypesMap.get(item.control.get('modifierType').value)?.name | translate }}</span>
-                                      </div>
-                                    </mat-select-trigger>
-                                    <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
-                                      <mat-icon class="tb-mat-20" [svgIcon]="ModifierTypesMap.get(modifierType).icon"></mat-icon>
-                                      <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
-                                    </mat-option>
-                                  </mat-select>
+                        <ng-container *ngIf="!isRpc">
+                          <div class="tb-form-panel stroked tb-slide-toggle">
+                            <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(item.control.getRawValue().id)?.value">
+                              <mat-expansion-panel-header class="flex-wrap">
+                                <mat-panel-title>
+                                  <mat-slide-toggle
+                                    [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)"
+                                    class="mat-slide"
+                                    (click)="$event.stopPropagation()">
+                                    <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">{{ 'gateway.modifier' | translate }}</mat-label>
+                                  </mat-slide-toggle>
+                                </mat-panel-title>
+                              </mat-expansion-panel-header>
+                              <div class="tb-flex no-gap">
+                                <div class="tb-form-row column-xs w-full">
+                                  <div class="fixed-title-width" translate>gateway.type</div>
+                                  <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                                    <mat-select formControlName="modifierType">
+                                      <mat-select-trigger>
+                                        <div class="tb-flex align-center">
+                                          <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(item.control.get('modifierType').value)?.icon"></mat-icon>
+                                          <span>{{ ModifierTypesMap.get(item.control.get('modifierType').value)?.name | translate }}</span>
+                                        </div>
+                                      </mat-select-trigger>
+                                      <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
+                                        <mat-icon class="tb-mat-20" [svgIcon]="ModifierTypesMap.get(modifierType).icon"></mat-icon>
+                                        <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
+                                      </mat-option>
+                                    </mat-select>
+                                  </mat-form-field>
+                                </div>
+                              </div>
+                              <div class="tb-form-row column-xs">
+                                <div class="fixed-title-width" translate>gateway.value</div>
+                                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
+                                  <input matInput required formControlName="modifierValue" step="0.1" type="number"
+                                         placeholder="{{ 'gateway.set' | translate }}" />
+                                  <mat-icon matSuffix
+                                            matTooltipPosition="above"
+                                            matTooltipClass="tb-error-tooltip"
+                                            [matTooltip]="('gateway.modifier-invalid') | translate"
+                                            *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
+                                            class="tb-error">
+                                    warning
+                                  </mat-icon>
                                 </mat-form-field>
                               </div>
-                            </div>
-                            <div class="tb-form-row column-xs">
-                              <div class="fixed-title-width" translate>gateway.value</div>
-                              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
-                                <input matInput required formControlName="modifierValue" step="0.1" type="number"
-                                       placeholder="{{ 'gateway.set' | translate }}" />
-                                <mat-icon matSuffix
-                                          matTooltipPosition="above"
-                                          matTooltipClass="tb-error-tooltip"
-                                          [matTooltip]="('gateway.modifier-invalid') | translate"
-                                          *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
-                                          class="tb-error">
-                                  warning
-                                </mat-icon>
-                              </mat-form-field>
-                            </div>
-                          </mat-expansion-panel>
-                        </div>
-                        <tb-report-strategy
-                          class="stroked tb-form-panel"
-                          [defaultValue]="ReportStrategyDefaultValue.Key"
-                          formControlName="reportStrategy"
-                          [isExpansionMode]="true"
-                        />
-                      </ng-container>
+                            </mat-expansion-panel>
+                          </div>
+                          <tb-report-strategy
+                            class="stroked tb-form-panel"
+                            [defaultValue]="ReportStrategyDefaultValue.Key"
+                            formControlName="reportStrategy"
+                            [isExpansionMode]="true"
+                          />
+                        </ng-container>
+                      </div>
                     </div>
                   </ng-template>
                 </mat-expansion-panel>
