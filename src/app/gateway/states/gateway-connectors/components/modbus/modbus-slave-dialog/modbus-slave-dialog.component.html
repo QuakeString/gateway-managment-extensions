@@ -276,6 +276,57 @@
             </div>
           </mat-expansion-panel>
         </div>
+        <div class="tb-form-panel stroked" *ngIf="protocolType !== ModbusProtocolType.Serial" formGroupName="redundancy">
+          <mat-expansion-panel class="tb-settings">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Redundancy (Failover)
+                <span *ngIf="slaveConfigFormGroup.get('redundancy.enabled').value"
+                      style="margin-left: 8px; font-size: 12px; color: #4caf50;">
+                  Enabled
+                </span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="tb-form-panel no-border no-padding">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">Enable Redundancy</div>
+                <mat-slide-toggle formControlName="enabled"></mat-slide-toggle>
+              </div>
+              <ng-container *ngIf="slaveConfigFormGroup.get('redundancy.enabled').value">
+                <div class="tb-form-row column-xs">
+                  <div class="fixed-title-width tb-required">Standby Host</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="standbyHost" placeholder="192.168.1.101"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-row column-xs">
+                  <div class="fixed-title-width">Standby Port</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="standbyPort"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-row column-xs">
+                  <div class="fixed-title-width">Heartbeat Interval (ms)</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="heartbeatIntervalMs"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-row column-xs">
+                  <div class="fixed-title-width">Heartbeat Timeout (ms)</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="heartbeatTimeoutMs"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-row column-xs">
+                  <div class="fixed-title-width">Failure Threshold</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="failureThreshold"/>
+                  </mat-form-field>
+                </div>
+              </ng-container>
+            </div>
+          </mat-expansion-panel>
+        </div>
         <div class="tb-form-panel stroked">
           <tb-modbus-values [singleMode]="true" [hideNewFields]="data.hideNewFields" formControlName="values"></tb-modbus-values>
         </div>

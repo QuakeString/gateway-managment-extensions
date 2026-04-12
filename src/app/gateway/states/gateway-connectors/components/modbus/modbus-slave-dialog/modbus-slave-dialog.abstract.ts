@@ -141,6 +141,14 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
       waitAfterFailedAttemptsMs: [30000, [Validators.required]],
       values: [{}],
       security: [{}],
+      redundancy: this.fb.group({
+        enabled: [false],
+        standbyHost: [''],
+        standbyPort: [502, [Validators.min(1), Validators.max(65535)]],
+        heartbeatIntervalMs: [2000, [Validators.min(100), Validators.max(30000)]],
+        heartbeatTimeoutMs: [1000, [Validators.min(50), Validators.max(10000)]],
+        failureThreshold: [3, [Validators.min(1), Validators.max(20)]],
+      }),
     });
     this.addFieldsToFormGroup();
   }
@@ -158,7 +166,15 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
         timeseries: this.data.value.timeseries ?? [],
         attributeUpdates: this.data.value.attributeUpdates ?? [],
         rpc: this.data.value.rpc ?? [],
-      }
+      },
+      redundancy: this.data.value.redundancy ?? {
+        enabled: false,
+        standbyHost: '',
+        standbyPort: 502,
+        heartbeatIntervalMs: 2000,
+        heartbeatTimeoutMs: 1000,
+        failureThreshold: 3,
+      },
     });
   }
 

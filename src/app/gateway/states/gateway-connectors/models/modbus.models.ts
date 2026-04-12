@@ -91,6 +91,7 @@ export interface SlaveConfig {
   attributeUpdates: ModbusValue[];
   rpc: ModbusValue[];
   security?: ModbusSecurity;
+  redundancy?: ModbusRedundancyConfig;
   baudrate?: number;
   stopbits?: number;
   bytesize?: number;
@@ -151,9 +152,19 @@ export interface ModbusSlave {
   byteOrder: ModbusOrderType;
   wordOrder: ModbusOrderType;
   identity: ModbusIdentity;
+  redundancy?: ModbusRedundancyConfig;
   values?: ModbusValuesState;
   port: string | number;
   security: ModbusSecurity;
+}
+
+export interface ModbusRedundancyConfig {
+  enabled: boolean;
+  standbyHost: string;
+  standbyPort: number;
+  heartbeatIntervalMs: number;
+  heartbeatTimeoutMs: number;
+  failureThreshold: number;
 }
 
 export interface ModbusLegacySlave extends Omit<ModbusSlave, 'values'> {
