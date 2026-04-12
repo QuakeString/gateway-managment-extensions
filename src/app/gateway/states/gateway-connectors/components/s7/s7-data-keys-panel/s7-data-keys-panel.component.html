@@ -17,7 +17,7 @@
   <div class="s7-keys-panel">
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
-      <div class="header-actions">
+      <div class="header-actions" *ngIf="!isFullscreen">
         <div class="rounded-search">
           <mat-icon class="rounded-search-icon">search</mat-icon>
           <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
@@ -41,7 +41,7 @@
                 matTooltipPosition="above">
           <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
         </button>
-        <mat-menu #sortMenu="matMenu" class="s7-sort-menu-panel">
+        <mat-menu #sortMenu="matMenu" class="spreadsheet-sort-menu-panel">
           <button mat-menu-item type="button" (click)="setSortField(null)">
             <mat-icon *ngIf="sortField === null">check</mat-icon>
             <span>Default order</span>
@@ -55,7 +55,7 @@
           </button>
         </mat-menu>
       </div>
-      <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
+      <div *ngIf="!isFullscreen && searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
         {{ filteredControls.length }} of {{ keysFormArray.length }} keys
       </div>
 
@@ -129,7 +129,9 @@
                         <div class="tb-form-row column-xs">
                           <div class="fixed-title-width tb-required">Address</div>
                           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                            <input matInput formControlName="address" placeholder="DB1.DBD0">
+                            <input matInput formControlName="address" placeholder="DB1.DBD0"
+                                   style="text-transform: uppercase"
+                                   (input)="onAddressInput(item.control)">
                             <mat-icon matSuffix
                                       matTooltipPosition="above"
                                       matTooltipClass="tb-error-tooltip"
@@ -236,145 +238,16 @@
       </ng-container>
 
       <ng-template #spreadsheet>
-        <div class="spreadsheet-wrapper key-panel" *ngIf="displayedControls.length; else noKeysFs"
-             (scroll)="onKeyPanelScroll($event)">
-          <div class="spreadsheet-table" [class.rpc-mode]="isRpc">
-            <ng-container *ngIf="!isRpc">
-              <div class="header-cell row-number-cell" (click)="toggleSelectAll()">#</div>
-              <div class="header-cell" (click)="setSortField('tag')">
-                Key <mat-icon *ngIf="sortField === 'tag'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-              <div class="header-cell" (click)="setSortField('address')">
-                Address <mat-icon *ngIf="sortField === 'address'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-              <div class="header-cell" (click)="setSortField('valueType')">
-                Value Type <mat-icon *ngIf="sortField === 'valueType'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-              <div class="header-cell center">Mod.</div>
-              <div class="header-cell">Mod. Type</div>
-              <div class="header-cell">Mod. Value</div>
-              <div class="header-cell center">Strat.</div>
-              <div class="header-cell">Strat. Type</div>
-              <div class="header-cell">Period (ms)</div>
-
-              <div class="spreadsheet-row"
-                   *ngFor="let item of displayedControls; let i = index; trackBy: trackByFilteredItem"
-                   [class.selected]="isRowSelected(item.control)">
-                <ng-container [formGroup]="item.control">
-                  <div class="cell row-number-cell" (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
-                  <div class="cell">
-                    <input class="cell-input" name="tag" formControlName="tag" placeholder="temperature"
-                           (keydown)="onCellKeydown($event)">
-                  </div>
-                  <div class="cell">
-                    <input class="cell-input" name="address" formControlName="address" placeholder="DB1.DBD0"
-                           [class.invalid]="item.control.get('address').hasError('pattern') && item.control.get('address').touched"
-                           (keydown)="onCellKeydown($event)">
-                  </div>
-                  <div class="cell">
-                    <select class="cell-select" formControlName="valueType" (keydown)="onCellKeydown($event)">
-                      <option [ngValue]="''">Auto</option>
-                      <option *ngFor="let type of valueTypes" [ngValue]="type">{{ type }}</option>
-                    </select>
-                  </div>
-                  <div class="cell center">
-                    <input type="checkbox" class="cell-checkbox"
-                           [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)">
-                  </div>
-                  <div class="cell">
-                    <select class="cell-select" formControlName="modifierType" (keydown)="onCellKeydown($event)">
-                      <option *ngFor="let modifierType of modifierTypes" [ngValue]="modifierType">
-                        {{ ModifierTypesMap.get(modifierType).name | translate }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="cell">
-                    <input class="cell-input" type="number" step="0.1" formControlName="modifierValue" placeholder="1"
-                           (keydown)="onCellKeydown($event)">
-                  </div>
-                  <div class="cell center">
-                    <input type="checkbox" class="cell-checkbox"
-                           [checked]="isReportStrategyEnabled(item.control)"
-                           (change)="setReportStrategyEnabled(item.control, $any($event.target).checked)">
-                  </div>
-                  <div class="cell">
-                    <select class="cell-select"
-                            [value]="getReportStrategyType(item.control)"
-                            [disabled]="!isReportStrategyEnabled(item.control)"
-                            (change)="setReportStrategyType(item.control, $any($event.target).value)"
-                            (keydown)="onCellKeydown($event)">
-                      <option *ngFor="let t of reportStrategyTypes" [value]="t">
-                        {{ ReportStrategyTypeTranslationsMap.get(t) | translate }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="cell">
-                    <input class="cell-input" type="number"
-                           [value]="getReportStrategyPeriod(item.control) ?? ''"
-                           [disabled]="!isReportStrategyPeriodInputEnabled(item.control)"
-                           (input)="setReportStrategyPeriod(item.control, $any($event.target).value)"
-                           (keydown)="onCellKeydown($event)"
-                           placeholder="ms">
-                  </div>
-                </ng-container>
-              </div>
-            </ng-container>
-
-            <ng-container *ngIf="isRpc">
-              <div class="header-cell row-number-cell" (click)="toggleSelectAll()">#</div>
-              <div class="header-cell" (click)="setSortField('method')">
-                Method <mat-icon *ngIf="sortField === 'method'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-              <div class="header-cell" (click)="setSortField('address')">
-                Address <mat-icon *ngIf="sortField === 'address'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-              <div class="header-cell" (click)="setSortField('valueType')">
-                Value Type <mat-icon *ngIf="sortField === 'valueType'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-              <div class="header-cell" (click)="setSortField('operation')">
-                Operation <mat-icon *ngIf="sortField === 'operation'" class="sort-icon">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              </div>
-
-              <div class="spreadsheet-row"
-                   *ngFor="let item of displayedControls; let i = index; trackBy: trackByFilteredItem"
-                   [class.selected]="isRowSelected(item.control)">
-                <ng-container [formGroup]="item.control">
-                  <div class="cell row-number-cell" (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
-                  <div class="cell">
-                    <input class="cell-input" name="method" formControlName="method" placeholder="setValue"
-                           (keydown)="onCellKeydown($event)">
-                  </div>
-                  <div class="cell">
-                    <input class="cell-input" name="address" formControlName="address" placeholder="DB1.DBD0"
-                           (keydown)="onCellKeydown($event)">
-                  </div>
-                  <div class="cell">
-                    <select class="cell-select" formControlName="valueType" (keydown)="onCellKeydown($event)">
-                      <option [ngValue]="''">Auto</option>
-                      <option *ngFor="let type of valueTypes" [ngValue]="type">{{ type }}</option>
-                    </select>
-                  </div>
-                  <div class="cell">
-                    <select class="cell-select" formControlName="operation" (keydown)="onCellKeydown($event)">
-                      <option value="read">Read</option>
-                      <option value="write">Write</option>
-                    </select>
-                  </div>
-                </ng-container>
-              </div>
-            </ng-container>
-          </div>
-        </div>
-        <ng-template #noKeysFs>
-          <div class="empty-state-fullscreen">
-            <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeysFs" class="tb-prompt">
-              No matching keys
-            </span>
-            <ng-template #emptyKeysFs>
-              <span class="tb-prompt">{{ noKeysText }}</span>
-            </ng-template>
-          </div>
-        </ng-template>
+        <tb-spreadsheet-keys
+          [keysFormArray]="keysFormArray"
+          [columns]="spreadsheetColumns"
+          [searchFields]="searchFields"
+          [isFullscreen]="isFullscreen"
+          hostSelector="tb-s7-data-keys-panel"
+          (fullscreenToggled)="onFullscreenToggled($event)"
+          (addRowRequested)="onAddRowRequested()"
+          (deleteRowsRequested)="onDeleteRowsRequested($event)">
+        </tb-spreadsheet-keys>
       </ng-template>
     </div>
   </div>

@@ -124,10 +124,6 @@
     align-items: center;
     gap: 4px;
 
-    .search-keys-field {
-      flex: 1;
-    }
-
     .header-action-btn {
       flex-shrink: 0;
     }
@@ -137,183 +133,8 @@
     display: flex;
     flex-direction: column;
   }
-
-  .spreadsheet-wrapper {
-    overflow: auto;
-    border: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
-    border-radius: 4px;
-    background: var(--tb-surface-card, #ffffff);
-  }
-
-  .spreadsheet-table {
-    display: grid;
-    grid-template-columns:
-      48px              // row number
-      minmax(120px, 1.2fr)
-      minmax(140px, 1.2fr)
-      minmax(110px, 0.9fr)
-      44px
-      minmax(110px, 0.9fr)
-      minmax(80px, 0.7fr)
-      44px
-      minmax(150px, 1fr)
-      minmax(90px, 0.7fr);
-    gap: 0;
-    align-items: stretch;
-
-    &.rpc-mode {
-      grid-template-columns:
-        48px
-        minmax(150px, 1.4fr)
-        minmax(150px, 1.4fr)
-        minmax(120px, 1fr)
-        minmax(120px, 1fr);
-    }
-
-    .header-cell {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: var(--tb-surface, #eeeeee);
-      padding: 6px 8px;
-      font-weight: 600;
-      font-size: 12px;
-      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
-      border-bottom: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
-      border-right: 1px solid var(--tb-border, rgba(0, 0, 0, 0.08));
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-      height: 28px;
-      box-sizing: border-box;
-
-      &.center {
-        justify-content: center;
-      }
-
-      &:last-child {
-        border-right: none;
-      }
-
-      &.row-number-cell {
-        cursor: default;
-        justify-content: center;
-        padding: 6px 4px;
-      }
-
-      .sort-icon {
-        font-size: 14px;
-        width: 14px;
-        height: 14px;
-      }
-    }
-
-    .spreadsheet-row {
-      display: contents;
-
-      &.selected .cell {
-        background-color: rgba(38, 166, 154, 0.18);
-      }
-    }
-
-    .cell {
-      padding: 0;
-      border-bottom: 1px solid var(--tb-border, rgba(0, 0, 0, 0.06));
-      border-right: 1px solid var(--tb-border, rgba(0, 0, 0, 0.06));
-      display: flex;
-      align-items: stretch;
-      color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
-      min-height: 28px;
-      max-height: 28px;
-      box-sizing: border-box;
-      background: var(--tb-surface-card, #ffffff);
-
-      &.center {
-        justify-content: center;
-        align-items: center;
-      }
-
-      &:last-child {
-        border-right: none;
-      }
-
-      &.row-number-cell {
-        background: var(--tb-surface, #eeeeee);
-        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
-        font-size: 12px;
-        font-weight: 500;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        user-select: none;
-
-        &:hover {
-          background: var(--tb-surface-card-elevated, #ddd);
-        }
-      }
-    }
-
-    .cell-input,
-    .cell-select {
-      width: 100%;
-      height: 100%;
-      border: none;
-      outline: none;
-      background: transparent;
-      padding: 4px 8px;
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
-      box-sizing: border-box;
-
-      &:focus {
-        background: rgba(38, 166, 154, 0.12);
-        box-shadow: inset 0 0 0 1px var(--tb-primary, #26a69a);
-      }
-
-      &:disabled {
-        color: var(--tb-text-disabled, rgba(0, 0, 0, 0.38));
-        cursor: not-allowed;
-      }
-
-      &.invalid {
-        background: rgba(244, 67, 54, 0.10);
-      }
-    }
-
-    .cell-select {
-      appearance: auto;
-      padding-right: 4px;
-    }
-
-    .cell-checkbox {
-      cursor: pointer;
-      width: 16px;
-      height: 16px;
-      margin: 0;
-      accent-color: var(--tb-primary, #26a69a);
-    }
-  }
-
-  .empty-state-fullscreen {
-    flex: 1;
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-
-    .tb-prompt {
-      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-    }
-  }
 }
 
-// Expand mode — pane sizing is done via inline JS styles on the popover overlay pane.
-// This rule just makes our content fill the now-expanded pane.
 :host {
   .s7-data-keys-panel-root.fullscreen {
     width: 100%;
@@ -338,6 +159,13 @@
         flex-direction: column;
         flex: 1;
         min-height: 0;
+
+        tb-spreadsheet-keys {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+        }
       }
 
       .key-panel {

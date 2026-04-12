@@ -45,6 +45,8 @@ import {
   ReportStrategyTypeTranslationsMap,
 } from '../../../../../shared/public-api';
 import { ReportStrategyComponent } from '../../../../../shared/components/public-api';
+import { SpreadsheetKeysComponent } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.component';
+import { SpreadsheetColumnConfig, SelectOption } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
 import { ModifierType, ModifierTypesMap } from '../../../models/public-api';
 import { S7DataKey, S7RpcConfig, S7ValueKey, S7ValueType } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
@@ -64,7 +66,7 @@ interface SortFieldOption {
   styleUrls: ['./s7-data-keys-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, SharedModule, ReactiveFormsModule, ReportStrategyComponent],
+  imports: [CommonModule, SharedModule, ReactiveFormsModule, ReportStrategyComponent, SpreadsheetKeysComponent],
 })
 export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
 
@@ -79,9 +81,9 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
   @Output() cancelled = new EventEmitter<void>();
 
   @ViewChild('panelRoot', { static: true }) panelRoot!: ElementRef<HTMLElement>;
+  @ViewChild(SpreadsheetKeysComponent) spreadsheetKeys: SpreadsheetKeysComponent;
 
   private elementRef = inject(ElementRef) as ElementRef<HTMLElement>;
-  private static globalStylesInjected = false;
 
   readonly valueTypes = Object.values(S7ValueType);
   readonly modifierTypes: ModifierType[] = Object.values(ModifierType) as ModifierType[];
@@ -117,8 +119,8 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
   sortField: string | null = null;
   sortDirection: SortDirection = 'asc';
 
-  selectedRowControls = new Set<FormGroup>();
-  private lastSelectedRowControl: FormGroup | null = null;
+  spreadsheetColumns: SpreadsheetColumnConfig[] = [];
+  searchFields: string[] = [];
 
   private destroy$ = new Subject<void>();
   private fb = new FormBuilder();
@@ -128,24 +130,17 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
     return this.isRpc ? this.rpcSortFields : this.timeseriesSortFields;
   }
 
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    if (this.isFullscreen) {
-      this.toggleFullscreen();
-    }
-  }
-
-  @HostListener('document:keydown.delete', ['$event'])
-  onDeleteKey(event: KeyboardEvent): void {
-    if (!this.isFullscreen || this.selectedRowControls.size === 0) return;
-    const target = event.target as HTMLElement | null;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA')) return;
-    event.preventDefault();
-    this.deleteSelectedRows();
-  }
-
   get isRpc(): boolean {
     return this.keysType === S7ValueKey.RPC;
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: KeyboardEvent): void {
+    if (this.isFullscreen) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      this.toggleFullscreen();
+    }
   }
 
   ngOnInit(): void {
@@ -166,7 +161,7 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
       this.renderLimit = 50;
       this.updateFilteredControls();
     });
-    this.injectGlobalStyles();
+    this.buildColumnConfigs();
   }
 
   ngOnDestroy(): void {
@@ -183,99 +178,19 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
       this.addFullscreenClass();
     } else {
       this.removeFullscreenClass();
+      this.updateFilteredControls();
     }
     this.cd.markForCheck();
   }
 
   private addFullscreenClass(): void {
     const pane = this.elementRef.nativeElement.closest('.cdk-overlay-pane') as HTMLElement | null;
-    pane?.classList.add('s7-fullscreen-pane');
+    pane?.classList.add('spreadsheet-fullscreen-pane');
   }
 
   private removeFullscreenClass(): void {
     const pane = this.elementRef.nativeElement.closest('.cdk-overlay-pane') as HTMLElement | null;
-    pane?.classList.remove('s7-fullscreen-pane');
-  }
-
-  private injectGlobalStyles(): void {
-    if (typeof document === 'undefined') return;
-    const STYLE_ID = 's7-data-keys-panel-globals-v4';
-    // Always remove any existing version (including current) so updated rules take effect.
-    document.querySelectorAll('style[id^="s7-data-keys-panel-globals"]').forEach(el => el.remove());
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
-/* Sort menu panel theming (rendered in cdk-overlay-container, outside component scope) */
-.s7-sort-menu-panel.mat-mdc-menu-panel {
-  background: var(--tb-surface-card) !important;
-}
-.s7-sort-menu-panel .mat-mdc-menu-item {
-  color: var(--tb-text-primary) !important;
-}
-.s7-sort-menu-panel .mat-mdc-menu-item .mdc-list-item__primary-text {
-  color: var(--tb-text-primary) !important;
-}
-.s7-sort-menu-panel .mat-mdc-menu-item:hover:not([disabled]),
-.s7-sort-menu-panel .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
-.s7-sort-menu-panel .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]),
-.s7-sort-menu-panel .mat-mdc-menu-item-highlighted:not([disabled]) {
-  background: color-mix(in srgb, var(--tb-primary, #26a69a) 22%, transparent) !important;
-}
-.s7-sort-menu-panel .mat-mdc-menu-item .mat-mdc-focus-indicator::before {
-  background: transparent !important;
-}
-.s7-sort-menu-panel .mat-mdc-menu-item .mat-icon {
-  color: var(--tb-text-secondary) !important;
-}
-/* Fullscreen overlay pane — overrides CDK position strategy via !important */
-.cdk-overlay-pane.s7-fullscreen-pane {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  transform: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-.cdk-overlay-pane.s7-fullscreen-pane > div,
-.cdk-overlay-pane.s7-fullscreen-pane .tb-popover,
-.cdk-overlay-pane.s7-fullscreen-pane .tb-popover-content,
-.cdk-overlay-pane.s7-fullscreen-pane .tb-popover-inner,
-.cdk-overlay-pane.s7-fullscreen-pane .tb-popover-inner-content {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-}
-.cdk-overlay-pane.s7-fullscreen-pane .tb-popover-arrow {
-  display: none !important;
-}
-.cdk-overlay-pane.s7-fullscreen-pane tb-s7-data-keys-panel {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-/* Apply dark color-scheme so native form controls (inputs, selects, checkboxes) and their dropdown popups render dark */
-body.tb-dark tb-s7-data-keys-panel,
-body.tb-dark .cdk-overlay-pane.s7-fullscreen-pane,
-body.tb-dark tb-s7-data-keys-panel .cell-input,
-body.tb-dark tb-s7-data-keys-panel .cell-select,
-body.tb-dark tb-s7-data-keys-panel .cell-checkbox,
-body.tb-dark tb-s7-data-keys-panel input[type="checkbox"],
-body.tb-dark tb-s7-data-keys-panel input[type="number"] {
-  color-scheme: dark;
-}
-`;
-    document.head.appendChild(style);
-    S7DataKeysPanelComponent.globalStylesInjected = true;
+    pane?.classList.remove('spreadsheet-fullscreen-pane');
   }
 
   setSortField(field: string | null): void {
@@ -289,6 +204,120 @@ body.tb-dark tb-s7-data-keys-panel input[type="number"] {
       this.sortDirection = 'asc';
     }
     this.updateFilteredControls();
+  }
+
+  updateFilteredControls(): void {
+    const search = (this.searchControl.value || '').toLowerCase().trim();
+    if (!search) {
+      this.filteredControls = this.keysFormArray.controls
+        .map((c, i) => ({ control: c as FormGroup, index: i }));
+    } else {
+      this.filteredControls = this.keysFormArray.controls
+        .map((c, i) => ({ control: c as FormGroup, index: i }))
+        .filter(item => {
+          const tag = (item.control.get('tag')?.value || item.control.get('method')?.value || '').toLowerCase();
+          const address = (item.control.get('address')?.value?.toString() || '');
+          return tag.includes(search) || address.toLowerCase().includes(search);
+        });
+    }
+    if (this.sortField) {
+      const dir = this.sortDirection === 'asc' ? 1 : -1;
+      const field = this.sortField;
+      this.filteredControls = [...this.filteredControls].sort((a, b) => {
+        const av = (a.control.get(field)?.value ?? '').toString().toLowerCase();
+        const bv = (b.control.get(field)?.value ?? '').toString().toLowerCase();
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return 0;
+      });
+    }
+    this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    this.cd.markForCheck();
+  }
+
+  onKeyPanelScroll(event: Event): void {
+    if (this.renderLimit >= this.filteredControls.length) return;
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      this.renderLimit += 50;
+      this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+      this.cd.markForCheck();
+    }
+  }
+
+  trackByFilteredItem(_: number, item: { control: FormGroup; index: number }): string {
+    return item.control.getRawValue().id ?? item.index.toString();
+  }
+
+  private buildColumnConfigs(): void {
+    if (this.isRpc) {
+      this.searchFields = ['method', 'address'];
+      this.spreadsheetColumns = [
+        { key: 'method', label: 'Method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
+        { key: 'address', label: 'Address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: true },
+        { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)',
+          options: [{ value: '', label: 'Auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
+        { key: 'operation', label: 'Operation', type: 'select', sortable: true, width: 'minmax(120px, 1fr)',
+          options: [{ value: 'read', label: 'Read' }, { value: 'write', label: 'Write' }] },
+      ];
+    } else {
+      this.searchFields = ['tag', 'address'];
+      const modifierTypeOptions: SelectOption[] = this.modifierTypes.map(t => ({
+        value: t, label: ModifierTypesMap.get(t)?.name || t
+      }));
+      const reportStrategyOptions: SelectOption[] = this.reportStrategyTypes.map(t => ({
+        value: t, label: ReportStrategyTypeTranslationsMap.get(t) || t
+      }));
+      this.spreadsheetColumns = [
+        { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
+        { key: 'address', label: 'Address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true },
+        { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)',
+          options: [{ value: '', label: 'Auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
+        { key: '_modEnabled', label: 'Mod.', type: 'checkbox', width: '44px', headerClass: 'center',
+          externalControl: (row) => this.enableModifiersControlMap.get(row.getRawValue().id) },
+        { key: 'modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(110px, 0.9fr)', options: modifierTypeOptions, translateLabels: true },
+        { key: 'modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)', step: 0.1, placeholder: '1' },
+        { key: '_stratEnabled', label: 'Strat.', type: 'checkbox', width: '44px', headerClass: 'center',
+          getValue: (row) => this.isReportStrategyEnabled(row),
+          setValue: (row, v) => this.setReportStrategyEnabled(row, v) },
+        { key: '_stratType', label: 'Strat. Type', type: 'select', width: 'minmax(150px, 1fr)', translateLabels: true,
+          options: reportStrategyOptions,
+          getValue: (row) => this.getReportStrategyType(row),
+          setValue: (row, v) => this.setReportStrategyType(row, v),
+          cellDisabled: (row) => !this.isReportStrategyEnabled(row) },
+        { key: '_stratPeriod', label: 'Period (ms)', type: 'number', width: 'minmax(90px, 0.7fr)', placeholder: 'ms',
+          getValue: (row) => this.getReportStrategyPeriod(row),
+          setValue: (row, v) => this.setReportStrategyPeriod(row, v),
+          cellDisabled: (row) => !this.isReportStrategyPeriodInputEnabled(row) },
+      ];
+    }
+  }
+
+  onFullscreenToggled(fullscreen: boolean): void {
+    this.isFullscreen = fullscreen;
+    if (!fullscreen) {
+      this.removeFullscreenClass();
+      this.updateFilteredControls();
+    }
+    this.cd.markForCheck();
+  }
+
+  onAddRowRequested(): void {
+    this.addKeyAtBottom();
+  }
+
+  onDeleteRowsRequested(rows: FormGroup[]): void {
+    const indicesToDelete: number[] = [];
+    this.keysFormArray.controls.forEach((c, i) => {
+      if (rows.includes(c as FormGroup)) {
+        indicesToDelete.push(i);
+      }
+    });
+    for (let i = indicesToDelete.length - 1; i >= 0; i--) {
+      this.keysFormArray.removeAt(indicesToDelete[i]);
+    }
+    this.keysFormArray.markAsDirty();
+    this.spreadsheetKeys?.refreshDisplay();
   }
 
   isReportStrategyEnabled(form: FormGroup): boolean {
@@ -375,7 +404,12 @@ body.tb-dark tb-s7-data-keys-panel input[type="number"] {
     this.keysFormArray.markAsDirty();
     this.searchControl.setValue('', { emitEvent: false });
     this.updateFilteredControls();
-    this.focusBottomKey();
+    this.spreadsheetKeys?.refreshDisplay();
+    if (this.isFullscreen) {
+      this.spreadsheetKeys?.focusLastRow();
+    } else {
+      this.focusBottomKey();
+    }
   }
 
   private focusBottomKey(): void {
@@ -383,12 +417,7 @@ body.tb-dark tb-s7-data-keys-panel input[type="number"] {
     let attempts = 0;
     const tryFocus = () => {
       const root = this.panelRoot?.nativeElement;
-      // Spreadsheet view first; fall back to card view input.
-      let inputs: NodeListOf<HTMLInputElement> | null =
-        (root?.querySelectorAll<HTMLInputElement>(`.spreadsheet-row .cell-input[name="${fieldName}"]`)) ?? null;
-      if (!inputs || inputs.length === 0) {
-        inputs = root?.querySelectorAll<HTMLInputElement>(`input[formControlName="${fieldName}"]`) ?? null;
-      }
+      const inputs = root?.querySelectorAll<HTMLInputElement>(`input[formControlName="${fieldName}"]`) ?? null;
       const input = inputs && inputs.length ? inputs[inputs.length - 1] : null;
       if (input) {
         let el: HTMLElement | null = input.parentElement;
@@ -407,101 +436,6 @@ body.tb-dark tb-s7-data-keys-panel input[type="number"] {
     setTimeout(tryFocus);
   }
 
-  toggleSelectAll(): void {
-    const allSelected = this.displayedControls.length > 0 &&
-      this.displayedControls.every(d => this.selectedRowControls.has(d.control));
-    if (allSelected) {
-      this.selectedRowControls.clear();
-    } else {
-      this.selectedRowControls.clear();
-      this.displayedControls.forEach(d => this.selectedRowControls.add(d.control));
-    }
-    this.lastSelectedRowControl = null;
-    this.cd.markForCheck();
-  }
-
-  selectRow(form: FormGroup, event: MouseEvent): void {
-    event.stopPropagation();
-    if (event.shiftKey && this.lastSelectedRowControl) {
-      const ids = this.displayedControls.map(d => d.control);
-      const startIdx = ids.indexOf(this.lastSelectedRowControl);
-      const endIdx = ids.indexOf(form);
-      if (startIdx >= 0 && endIdx >= 0) {
-        const [from, to] = startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
-        for (let i = from; i <= to; i++) {
-          this.selectedRowControls.add(ids[i]);
-        }
-      }
-    } else if (event.ctrlKey || event.metaKey) {
-      if (this.selectedRowControls.has(form)) {
-        this.selectedRowControls.delete(form);
-      } else {
-        this.selectedRowControls.add(form);
-      }
-      this.lastSelectedRowControl = form;
-    } else {
-      this.selectedRowControls.clear();
-      this.selectedRowControls.add(form);
-      this.lastSelectedRowControl = form;
-    }
-    this.cd.markForCheck();
-  }
-
-  isRowSelected(form: FormGroup): boolean {
-    return this.selectedRowControls.has(form);
-  }
-
-  deleteSelectedRows(): void {
-    if (this.selectedRowControls.size === 0) return;
-    const indicesToDelete: number[] = [];
-    this.keysFormArray.controls.forEach((c, i) => {
-      if (this.selectedRowControls.has(c as FormGroup)) {
-        indicesToDelete.push(i);
-      }
-    });
-    for (let i = indicesToDelete.length - 1; i >= 0; i--) {
-      this.keysFormArray.removeAt(indicesToDelete[i]);
-    }
-    this.keysFormArray.markAsDirty();
-    this.selectedRowControls.clear();
-    this.lastSelectedRowControl = null;
-    this.updateFilteredControls();
-  }
-
-  onCellKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    if (event.ctrlKey || event.metaKey) {
-      this.addKeyAtBottom();
-      return;
-    }
-    this.moveToCellBelow(event.target as HTMLElement);
-  }
-
-  private moveToCellBelow(currentEl: HTMLElement): void {
-    const currentCell = currentEl.closest('.cell') as HTMLElement | null;
-    const currentRow = currentEl.closest('.spreadsheet-row') as HTMLElement | null;
-    if (!currentCell || !currentRow) return;
-    const cellIdx = Array.from(currentRow.children).indexOf(currentCell);
-    let nextRow = currentRow.nextElementSibling as HTMLElement | null;
-    while (nextRow && !nextRow.classList.contains('spreadsheet-row')) {
-      nextRow = nextRow.nextElementSibling as HTMLElement | null;
-    }
-    if (!nextRow) {
-      this.addKeyAtBottom();
-      return;
-    }
-    const nextCell = nextRow.children[cellIdx] as HTMLElement | undefined;
-    if (!nextCell) return;
-    const focusable = nextCell.querySelector<HTMLElement>('input, select');
-    if (focusable) {
-      focusable.focus();
-      if (focusable instanceof HTMLInputElement) {
-        focusable.select();
-      }
-    }
-  }
-
   cancel(): void {
     this.cancelled.emit();
   }
@@ -512,6 +446,17 @@ body.tb-dark tb-s7-data-keys-panel input[type="number"] {
     }
   }
 
+  onAddressInput(form: FormGroup): void {
+    const ctrl = form.get('address');
+    if (ctrl) {
+      const val = ctrl.value;
+      const upper = typeof val === 'string' ? val.toUpperCase() : val;
+      if (val !== upper) {
+        ctrl.setValue(upper, { emitEvent: false });
+      }
+    }
+  }
+
   getKeyLabel(keyForm: FormGroup): string {
     if (this.isRpc) {
       const method = keyForm.get('method')?.value;
@@ -519,49 +464,6 @@ body.tb-dark tb-s7-data-keys-panel input[type="number"] {
       return method ? `${method} (${op})` : 'New RPC';
     }
     return keyForm.get('tag')?.value || 'New key';
-  }
-
-  onKeyPanelScroll(event: Event): void {
-    if (this.renderLimit >= this.filteredControls.length) return;
-    const el = event.target as HTMLElement;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
-      this.renderLimit += 50;
-      this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
-      this.cd.markForCheck();
-    }
-  }
-
-  updateFilteredControls(): void {
-    const search = (this.searchControl.value || '').toLowerCase().trim();
-    if (!search) {
-      this.filteredControls = this.keysFormArray.controls
-        .map((c, i) => ({ control: c as FormGroup, index: i }));
-    } else {
-      this.filteredControls = this.keysFormArray.controls
-        .map((c, i) => ({ control: c as FormGroup, index: i }))
-        .filter(item => {
-          const tag = (item.control.get('tag')?.value || item.control.get('method')?.value || '').toLowerCase();
-          const address = (item.control.get('address')?.value?.toString() || '');
-          return tag.includes(search) || address.toLowerCase().includes(search);
-        });
-    }
-    if (this.sortField) {
-      const dir = this.sortDirection === 'asc' ? 1 : -1;
-      const field = this.sortField;
-      this.filteredControls = [...this.filteredControls].sort((a, b) => {
-        const av = (a.control.get(field)?.value ?? '').toString().toLowerCase();
-        const bv = (b.control.get(field)?.value ?? '').toString().toLowerCase();
-        if (av < bv) return -1 * dir;
-        if (av > bv) return 1 * dir;
-        return 0;
-      });
-    }
-    this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
-    this.cd.markForCheck();
-  }
-
-  trackByFilteredItem(_: number, item: { control: FormGroup; index: number }): string {
-    return item.control.getRawValue().id ?? item.index.toString();
   }
 
   private getFormValue(): Array<S7DataKey | S7RpcConfig> {

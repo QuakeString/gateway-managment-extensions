@@ -1,0 +1,175 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div #spreadsheetRoot class="spreadsheet-keys-root" [class.fullscreen]="isFullscreen">
+  <div class="header-actions">
+    <div class="rounded-search">
+      <mat-icon class="rounded-search-icon">search</mat-icon>
+      <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
+      <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <button type="button"
+            mat-icon-button
+            class="header-action-btn"
+            (click)="toggleFullscreen()"
+            [matTooltip]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+            matTooltipPosition="above">
+      <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </div>
+  <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
+    {{ filteredControls.length }} of {{ keysFormArray.length }} keys
+  </div>
+
+  <div class="spreadsheet-wrapper key-panel" *ngIf="displayedControls.length; else noKeysFs"
+       (scroll)="onKeyPanelScroll($event)">
+    <div class="spreadsheet-table" [style.grid-template-columns]="gridTemplateColumns">
+      <!-- Header row -->
+      <div class="header-cell row-number-cell" (click)="toggleSelectAll()">#</div>
+      <ng-container *ngFor="let col of columns">
+        <div class="header-cell"
+             [class.center]="col.headerClass === 'center'"
+             [class.sortable]="col.sortable"
+             (click)="col.sortable ? setSortField(col.key) : null">
+          {{ col.label }}
+          <mat-icon *ngIf="col.sortable && sortField === col.key" class="sort-icon">
+            {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+          </mat-icon>
+        </div>
+      </ng-container>
+
+      <!-- Data rows -->
+      <div class="spreadsheet-row"
+           *ngFor="let item of displayedControls; let i = index; trackBy: trackByFilteredItem"
+           [class.selected]="isRowSelected(item.control)">
+        <ng-container [formGroup]="item.control">
+          <div class="cell row-number-cell" (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
+
+          <ng-container *ngFor="let col of columns">
+            <!-- Regular input -->
+            <ng-container *ngIf="col.type === 'input' && !col.key.startsWith('_')">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input class="cell-input" [name]="col.key" [formControlName]="col.key"
+                       [placeholder]="col.placeholder || ''"
+                       [style.text-transform]="col.uppercase ? 'uppercase' : 'none'"
+                       (input)="col.uppercase && onUppercaseInput(item.control, col.key)"
+                       (keydown)="onCellKeydown($event)">
+              </div>
+            </ng-container>
+
+            <!-- Number input with formControlName -->
+            <ng-container *ngIf="col.type === 'number' && !col.key.startsWith('_')">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input class="cell-input" type="number" [name]="col.key" [formControlName]="col.key"
+                       [step]="col.step || 1"
+                       [placeholder]="col.placeholder || ''"
+                       (keydown)="onCellKeydown($event)">
+              </div>
+            </ng-container>
+
+            <!-- Select with formControlName -->
+            <ng-container *ngIf="col.type === 'select' && !col.key.startsWith('_')">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <select class="cell-select" [formControlName]="col.key" (keydown)="onCellKeydown($event)">
+                  <option *ngFor="let opt of getColumnOptions(col, item.control)" [ngValue]="opt.value">{{ col.translateLabels ? (opt.label | translate) : opt.label }}</option>
+                </select>
+              </div>
+            </ng-container>
+
+            <!-- Checkbox with formControlName -->
+            <ng-container *ngIf="col.type === 'checkbox' && !col.key.startsWith('_') && !col.externalControl">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input type="checkbox" class="cell-checkbox" [formControlName]="col.key">
+              </div>
+            </ng-container>
+
+            <!-- Checkbox with externalControl -->
+            <ng-container *ngIf="col.type === 'checkbox' && col.externalControl">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input type="checkbox" class="cell-checkbox"
+                       [formControl]="col.externalControl(item.control)">
+              </div>
+            </ng-container>
+
+            <!-- Imperative input (_prefixed key) -->
+            <ng-container *ngIf="col.type === 'input' && col.key.startsWith('_')">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input class="cell-input" [name]="col.key"
+                       [value]="getCellValue(col, item.control) ?? ''"
+                       [disabled]="isCellDisabled(col, item.control)"
+                       [placeholder]="col.placeholder || ''"
+                       (input)="onCellValueChange(col, item.control, $event)"
+                       (keydown)="onCellKeydown($event)">
+              </div>
+            </ng-container>
+
+            <!-- Imperative number (_prefixed key) -->
+            <ng-container *ngIf="col.type === 'number' && col.key.startsWith('_')">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input class="cell-input" type="number" [name]="col.key"
+                       [value]="getCellValue(col, item.control) ?? ''"
+                       [disabled]="isCellDisabled(col, item.control)"
+                       [step]="col.step || 1"
+                       [placeholder]="col.placeholder || ''"
+                       (input)="onCellValueChange(col, item.control, $event)"
+                       (keydown)="onCellKeydown($event)">
+              </div>
+            </ng-container>
+
+            <!-- Imperative select (_prefixed key) -->
+            <ng-container *ngIf="col.type === 'select' && col.key.startsWith('_')">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <select class="cell-select"
+                        [value]="getCellValue(col, item.control)"
+                        [disabled]="isCellDisabled(col, item.control)"
+                        (change)="onCellValueChange(col, item.control, $event)"
+                        (keydown)="onCellKeydown($event)">
+                  <option *ngFor="let opt of getColumnOptions(col, item.control)" [value]="opt.value">{{ col.translateLabels ? (opt.label | translate) : opt.label }}</option>
+                </select>
+              </div>
+            </ng-container>
+
+            <!-- Imperative checkbox (_prefixed key, no externalControl) -->
+            <ng-container *ngIf="col.type === 'checkbox' && col.key.startsWith('_') && !col.externalControl">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+                <input type="checkbox" class="cell-checkbox"
+                       [checked]="getCellValue(col, item.control)"
+                       [disabled]="isCellDisabled(col, item.control)"
+                       (change)="onCellValueChange(col, item.control, $event)">
+              </div>
+            </ng-container>
+
+            <ng-template #emptyCell>
+              <div class="cell empty-cell"></div>
+            </ng-template>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noKeysFs>
+    <div class="empty-state-fullscreen key-panel">
+      <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeysFs" class="tb-prompt">
+        No matching keys
+      </span>
+      <ng-template #emptyKeysFs>
+        <span class="tb-prompt">No data keys configured</span>
+      </ng-template>
+    </div>
+  </ng-template>
+</div>

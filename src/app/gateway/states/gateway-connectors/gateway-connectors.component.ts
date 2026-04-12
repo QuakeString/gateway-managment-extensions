@@ -421,7 +421,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.setValue({
       mode: ConfigurationModes.BASIC,
       name: '',
-      type: ConnectorType.MQTT,
+      type: ConnectorType.MODBUS,
       sendDataOnlyOnChange: false,
       enableRemoteLogging: false,
       logLevel: GatewayLogLevel.INFO,

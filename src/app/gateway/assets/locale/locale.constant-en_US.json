@@ -414,7 +414,7 @@
       }
     },
     "rpc": {
-      "rpc":"RPC",
+      "rpc": "RPC",
       "title": "{{type}} Connector RPC parameters",
       "templates-title": "Connector RPC Templates",
       "methodFilter": "Method filter",
@@ -503,7 +503,7 @@
     },
     "rpc-methods": "RPC methods",
     "rpc-requests": "RPC requests",
-    "request" : {
+    "request": {
       "connect-request": "Connect request",
       "disconnect-request": "Disconnect request",
       "attribute-request": "Attribute request",
@@ -960,6 +960,8 @@
         "device-timeout": "Period of time when the connector will try to discover BACnet devices.",
         "network-number": "Identifier of the network segment."
       }
-    }
+    },
+    "discard-changes-title": "Unsaved changes",
+    "discard-changes-text": "You have unsaved changes. Are you sure you want to discard them?"
   }
 }

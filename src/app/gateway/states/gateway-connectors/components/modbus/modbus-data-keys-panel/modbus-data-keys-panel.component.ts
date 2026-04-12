@@ -13,7 +13,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -30,6 +30,8 @@ import {
   noLeadTrailSpacesRegex,
   nonZeroFloat,
   ReportStrategyDefaultValue,
+  ReportStrategyType,
+  ReportStrategyTypeTranslationsMap,
   TruncateWithTooltipDirective,
   ModbusDataType,
   ModbusEditableDataTypes,
@@ -50,17 +52,21 @@ import { coerceBoolean, SharedModule } from '@shared/public-api';
 import { filter, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ReportStrategyComponent } from '../../../../../shared/components/public-api';
+import { SpreadsheetKeysComponent } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.component';
+import { SpreadsheetColumnConfig, SelectOption } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
   templateUrl: './modbus-data-keys-panel.component.html',
   styleUrls: ['./modbus-data-keys-panel.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
     SharedModule,
     ReportStrategyComponent,
     TruncateWithTooltipDirective,
+    SpreadsheetKeysComponent,
   ]
 })
 export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
@@ -77,6 +83,8 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   @Input() values: ModbusValue[];
 
   @Output() keysDataApplied = new EventEmitter<Array<ModbusValue>>();
+
+  @ViewChild(SpreadsheetKeysComponent) spreadsheetKeys: SpreadsheetKeysComponent;
 
   keysListFormArray: FormArray<UntypedFormGroup>;
   withFunctionCode = true;
@@ -98,6 +106,18 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   readonly ModbusDataType = ModbusDataType;
   readonly ModbusValueKey = ModbusValueKey;
 
+  isFullscreen = false;
+  spreadsheetColumns: SpreadsheetColumnConfig[] = [];
+  searchFields = ['tag', 'address'];
+
+  sortField: string | null = null;
+  sortDirection: 'asc' | 'desc' = 'asc';
+  readonly sortFields = [
+    { value: 'tag', label: 'Key' },
+    { value: 'type', label: 'Data Type' },
+    { value: 'address', label: 'Address' },
+  ];
+
   searchControl = new FormControl('');
   filteredControls: { control: UntypedFormGroup; index: number }[] = [];
   displayedControls: { control: UntypedFormGroup; index: number }[] = [];
@@ -105,11 +125,22 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   lastAddedId: string | null = null;
 
   private destroy$ = new Subject<void>();
+  private cd = inject(ChangeDetectorRef);
+  private elementRef = inject(ElementRef) as ElementRef<HTMLElement>;
 
   private readonly defaultReadFunctionCodes = [3, 4];
   private readonly bitsReadFunctionCodes = [1, 2];
   private readonly defaultWriteFunctionCodes = [6, 16];
   private readonly bitsWriteFunctionCodes = [5, 15];
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: KeyboardEvent): void {
+    if (this.isFullscreen) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      this.toggleFullscreen();
+    }
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -130,11 +161,207 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       this.renderLimit = 50;
       this.updateFilteredControls();
     });
+    this.buildColumnConfigs();
   }
 
   ngOnDestroy(): void {
+    if (this.isFullscreen) {
+      this.removeFullscreenClass();
+    }
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  setSortField(field: string | null): void {
+    if (field === null) {
+      this.sortField = null;
+      this.sortDirection = 'asc';
+    } else if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.updateFilteredControls();
+  }
+
+  toggleFullscreen(): void {
+    this.isFullscreen = !this.isFullscreen;
+    if (this.isFullscreen) {
+      this.addFullscreenClass();
+    } else {
+      this.removeFullscreenClass();
+      this.updateFilteredControls();
+    }
+    this.cd.markForCheck();
+  }
+
+  private addFullscreenClass(): void {
+    const pane = this.elementRef.nativeElement.closest('.cdk-overlay-pane') as HTMLElement | null;
+    pane?.classList.add('spreadsheet-fullscreen-pane');
+  }
+
+  private removeFullscreenClass(): void {
+    const pane = this.elementRef.nativeElement.closest('.cdk-overlay-pane') as HTMLElement | null;
+    pane?.classList.remove('spreadsheet-fullscreen-pane');
+  }
+
+  private buildColumnConfigs(): void {
+    const dataTypeOptions: SelectOption[] = this.modbusDataTypes.map(t => ({ value: t, label: t }));
+    const modifierTypeOptions: SelectOption[] = this.modifierTypes.map(t => ({
+      value: t, label: ModifierTypesMap.get(t)?.name || t
+    }));
+
+    const cols: SpreadsheetColumnConfig[] = [
+      { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'Tag' },
+      { key: 'type', label: 'Data Type', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)', options: dataTypeOptions },
+    ];
+
+    if (this.withFunctionCode) {
+      cols.push({
+        key: '_functionCode', label: 'Func. Code', type: 'select', width: 'minmax(80px, 0.7fr)', translateLabels: true,
+        options: (row) => {
+          const codes = this.functionCodesMap.get(row.get('id').value) || this.defaultFunctionCodes;
+          return codes.map((c: number) => ({ value: c, label: ModbusFunctionCodeTranslationsMap.get(c) || `FC ${c}` }));
+        },
+        getValue: (row) => row.get('functionCode')?.value,
+        setValue: (row, v) => { row.get('functionCode')?.setValue(parseInt(v, 10)); row.markAsDirty(); },
+        cellDisabled: (row) => row.get('functionCode')?.disabled ?? false,
+      });
+    }
+
+    cols.push(
+      { key: 'objectsCount', label: 'Obj. Count', type: 'number', width: 'minmax(80px, 0.7fr)',
+        cellDisabled: (row) => !this.ModbusEditableDataTypes.includes(row.get('type')?.value) },
+      { key: 'address', label: 'Address', type: 'number', sortable: true, width: 'minmax(80px, 0.7fr)', placeholder: '0' },
+    );
+
+    if (!this.isMaster && (this.keysType === ModbusValueKey.ATTRIBUTES || this.keysType === ModbusValueKey.TIMESERIES)) {
+      cols.push(
+        { key: '_modEnabled', label: 'Mod.', type: 'checkbox', width: '44px', headerClass: 'center',
+          cellVisible: (row) => this.showModifiersMap.get(row.get('id').value) ?? false,
+          externalControl: (row) => this.enableModifiersControlMap.get(row.get('id').value) },
+        { key: 'modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(100px, 0.8fr)', translateLabels: true,
+          options: modifierTypeOptions,
+          cellVisible: (row) => this.showModifiersMap.get(row.get('id').value) ?? false },
+        { key: 'modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)', step: 0.1, placeholder: '1',
+          cellVisible: (row) => this.showModifiersMap.get(row.get('id').value) ?? false },
+      );
+    }
+
+    if (this.withReportStrategy) {
+      const reportStrategyTypes = Object.values(ReportStrategyType);
+      const reportStrategyOptions: SelectOption[] = reportStrategyTypes.map(t => ({
+        value: t, label: ReportStrategyTypeTranslationsMap.get(t) || t
+      }));
+      cols.push(
+        { key: '_stratEnabled', label: 'Strat.', type: 'checkbox', width: '44px', headerClass: 'center',
+          getValue: (row) => !!row.get('reportStrategy')?.value,
+          setValue: (row, v) => {
+            const ctrl = row.get('reportStrategy');
+            if (!ctrl) return;
+            ctrl.setValue(v ? { type: ReportStrategyType.OnReportPeriod, reportPeriod: ReportStrategyDefaultValue.Key } : null);
+            row.markAsDirty();
+            this.cd.markForCheck();
+          }
+        },
+        { key: '_stratType', label: 'Strat. Type', type: 'select', width: 'minmax(140px, 1fr)', translateLabels: true,
+          options: reportStrategyOptions,
+          getValue: (row) => row.get('reportStrategy')?.value?.type ?? null,
+          setValue: (row, v) => {
+            const ctrl = row.get('reportStrategy');
+            if (!ctrl) return;
+            const cur = ctrl.value ?? {};
+            ctrl.setValue({ ...cur, type: v });
+            row.markAsDirty();
+            this.cd.markForCheck();
+          },
+          cellDisabled: (row) => !row.get('reportStrategy')?.value
+        },
+        { key: '_stratPeriod', label: 'Period (ms)', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: 'ms',
+          getValue: (row) => row.get('reportStrategy')?.value?.reportPeriod ?? null,
+          setValue: (row, v) => {
+            const ctrl = row.get('reportStrategy');
+            if (!ctrl) return;
+            const cur = ctrl.value ?? {};
+            const parsed = typeof v === 'number' ? v : parseInt(v, 10);
+            ctrl.setValue({ ...cur, reportPeriod: isNaN(parsed) ? null : parsed });
+            row.markAsDirty();
+            this.cd.markForCheck();
+          },
+          cellDisabled: (row) => {
+            const rs = row.get('reportStrategy')?.value;
+            if (!rs) return true;
+            return rs.type === ReportStrategyType.OnChange || rs.type === ReportStrategyType.OnReceived;
+          }
+        },
+      );
+    }
+
+    if (this.isMaster) {
+      cols.push(
+        { key: 'value', label: 'Value', type: 'input', width: 'minmax(80px, 0.7fr)', placeholder: 'Value' },
+      );
+    }
+
+    this.spreadsheetColumns = cols;
+  }
+
+  onFullscreenToggled(fullscreen: boolean): void {
+    this.isFullscreen = fullscreen;
+    if (!fullscreen) {
+      this.removeFullscreenClass();
+      this.updateFilteredControls();
+    }
+    this.cd.markForCheck();
+  }
+
+  onAddRowRequested(): void {
+    this.addKeyAtBottom();
+    this.spreadsheetKeys?.refreshDisplay();
+    this.spreadsheetKeys?.focusLastRow();
+  }
+
+  private addKeyAtBottom(): void {
+    const id = generateSecret(5);
+    const dataKeyFormGroup = this.fb.group({
+      tag: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      value: [{value: '', disabled: !this.isMaster}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      type: [ModbusDataType.BYTES, [Validators.required]],
+      address: [null, [Validators.required]],
+      objectsCount: [1, [Validators.required]],
+      functionCode: [{ value: this.getDefaultFunctionCodes()[0], disabled: !this.withFunctionCode }, [Validators.required]],
+      reportStrategy: [{ value: null, disabled: !this.withReportStrategy }],
+      modifierType: [{ value: ModifierType.MULTIPLIER, disabled: true }],
+      modifierValue: [{ value: 1, disabled: true }, [Validators.pattern(nonZeroFloat)]],
+      bit: [{ value: null, disabled: true }],
+      bitTargetType: [{ value: ModbusBitTargetType.IntegerType, disabled: true }],
+      id: [{value: id, disabled: true}],
+    });
+    this.showModifiersMap.set(id, false);
+    this.enableModifiersControlMap.set(id, this.fb.control(false));
+    this.observeKeyDataType(dataKeyFormGroup);
+    this.observeObjectsCount(dataKeyFormGroup);
+    this.observeEnableModifier(dataKeyFormGroup);
+    this.keysListFormArray.push(dataKeyFormGroup);
+    this.keysListFormArray.markAsDirty();
+    this.searchControl.setValue('', { emitEvent: false });
+    this.updateFilteredControls();
+  }
+
+  onDeleteRowsRequested(rows: FormGroup[]): void {
+    const indicesToDelete: number[] = [];
+    this.keysListFormArray.controls.forEach((c, i) => {
+      if (rows.includes(c as FormGroup)) {
+        indicesToDelete.push(i);
+      }
+    });
+    for (let i = indicesToDelete.length - 1; i >= 0; i--) {
+      this.keysListFormArray.removeAt(indicesToDelete[i]);
+    }
+    this.keysListFormArray.markAsDirty();
+    this.spreadsheetKeys?.refreshDisplay();
+    this.updateFilteredControls();
   }
 
   trackByControlId(_: number, keyControl: AbstractControl): string {
@@ -164,9 +391,11 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     this.observeEnableModifier(dataKeyFormGroup);
 
     this.lastAddedId = id;
-    this.keysListFormArray.insert(0, dataKeyFormGroup);
+    this.keysListFormArray.push(dataKeyFormGroup);
+    this.keysListFormArray.markAsDirty();
     this.searchControl.setValue('', { emitEvent: false });
     this.updateFilteredControls();
+    this.spreadsheetKeys?.refreshDisplay();
   }
 
   deleteKey($event: Event, index: number): void {
@@ -176,6 +405,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     this.keysListFormArray.removeAt(index);
     this.keysListFormArray.markAsDirty();
     this.updateFilteredControls();
+    this.spreadsheetKeys?.refreshDisplay();
   }
 
   cancel(): void {
@@ -205,7 +435,19 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
           return tag.includes(search) || address.includes(search);
         });
     }
+    if (this.sortField) {
+      const dir = this.sortDirection === 'asc' ? 1 : -1;
+      const field = this.sortField;
+      this.filteredControls = [...this.filteredControls].sort((a, b) => {
+        const av = (a.control.get(field)?.value ?? '').toString().toLowerCase();
+        const bv = (b.control.get(field)?.value ?? '').toString().toLowerCase();
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return 0;
+      });
+    }
     this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    this.cd.markForCheck();
   }
 
   trackByFilteredItem(_: number, item: { control: UntypedFormGroup; index: number }): string {

@@ -13,186 +13,236 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<div class="eip-keys-panel">
-  <div class="tb-form-panel no-border no-padding">
-    <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
-    <mat-form-field *ngIf="keysFormArray.length > 10" class="fill-width search-keys-field" appearance="outline" subscriptSizing="dynamic">
-      <mat-icon matPrefix>search</mat-icon>
-      <input matInput [formControl]="searchControl" placeholder="Search keys..."/>
-      <button *ngIf="searchControl.value" mat-icon-button matSuffix (click)="searchControl.setValue('')" type="button">
-        <mat-icon>close</mat-icon>
-      </button>
-    </mat-form-field>
-    <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
-      {{ filteredControls.length }} of {{ keysFormArray.length }} keys
-    </div>
-    <div class="tb-form-panel no-border no-padding key-panel"
-         *ngIf="displayedControls.length; else noKeys"
-         (scroll)="onKeyPanelScroll($event)">
-      <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
-           *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
-        <div class="tb-form-panel stroked tb-flex">
-          <ng-container [formGroup]="item.control">
-            <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
-              <mat-expansion-panel-header class="flex-wrap">
-                <mat-panel-title>
-                  <div class="tb-flex">
-                    <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
-                      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? item.control.get('method').value : item.control.get('tag').value }}</span>
-                    </div>
-                    <div class="title-container">PLC Tag:
-                      <span class="key-label">{{ item.control.get('plcTag').value }}</span>
-                    </div>
-                    <div *ngIf="isRpc && item.control.get('valueType').value" class="title-container">Type:
-                      <span class="key-label">{{ item.control.get('valueType').value }}</span>
-                    </div>
-                  </div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <div class="tb-form-panel no-border no-padding">
-                  <ng-container *ngIf="!isRpc">
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">Key</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput formControlName="tag" placeholder="temperature">
-                      </mat-form-field>
-                    </div>
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">PLC Tag</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput formControlName="plcTag"
-                               [placeholder]="isSLC ? 'N7:0' : 'Program:MainProgram.Temperature'">
-                      </mat-form-field>
-                    </div>
-                  </ng-container>
-                  <ng-container *ngIf="isRpc">
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">Method</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput formControlName="method" placeholder="readTemperature">
-                      </mat-form-field>
-                    </div>
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">Operation</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <mat-select formControlName="operation">
-                          <mat-option value="read">Read</mat-option>
-                          <mat-option value="write">Write</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width tb-required">PLC Tag</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput formControlName="plcTag"
-                               [placeholder]="isSLC ? 'N7:0' : 'MotorSpeed'">
-                      </mat-form-field>
-                    </div>
-                    <div class="tb-form-row column-xs">
-                      <div class="fixed-title-width">Value Type</div>
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <mat-select formControlName="valueType">
-                          <mat-option [value]="null">Auto</mat-option>
-                          <mat-option *ngFor="let type of dataTypes" [value]="type">
-                            {{ type }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                  </ng-container>
-                  <ng-container *ngIf="!isRpc">
-                    <div class="tb-form-panel stroked tb-slide-toggle">
-                      <mat-expansion-panel class="tb-settings"
-                                           [expanded]="enableScalingControlMap.get(item.control.getRawValue().id)?.value">
-                        <mat-expansion-panel-header class="flex-wrap">
-                          <mat-panel-title>
-                            <mat-slide-toggle
-                              [formControl]="enableScalingControlMap.get(item.control.getRawValue().id)"
-                              class="mat-slide"
-                              (click)="$event.stopPropagation()">
-                              <mat-label>Scaling</mat-label>
-                            </mat-slide-toggle>
-                          </mat-panel-title>
-                        </mat-expansion-panel-header>
-                        <ng-template matExpansionPanelContent>
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width">Raw Min</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <input matInput type="number" formControlName="rawMin">
-                            </mat-form-field>
-                          </div>
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width">Raw Max</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <input matInput type="number" formControlName="rawMax">
-                            </mat-form-field>
-                          </div>
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width">Eng Min</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <input matInput type="number" formControlName="engMin">
-                            </mat-form-field>
-                          </div>
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width">Eng Max</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <input matInput type="number" formControlName="engMax">
-                            </mat-form-field>
-                          </div>
-                        </ng-template>
-                      </mat-expansion-panel>
-                    </div>
-                    <tb-report-strategy
-                      class="stroked tb-form-panel"
-                      [defaultValue]="ReportStrategyDefaultValue.Key"
-                      formControlName="reportStrategy"
-                      [isExpansionMode]="true"
-                    />
-                  </ng-container>
-                </div>
-              </ng-template>
-            </mat-expansion-panel>
-          </ng-container>
+<div class="eip-keys-panel-root" [class.fullscreen]="isFullscreen">
+  <div class="eip-keys-panel">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
+
+      <div class="header-actions" *ngIf="!isFullscreen">
+        <div class="rounded-search">
+          <mat-icon class="rounded-search-icon">search</mat-icon>
+          <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
+          <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
         <button type="button"
                 mat-icon-button
-                (click)="deleteKey(item.index)"
-                [matTooltip]="deleteKeyTitle"
+                class="header-action-btn"
+                [matMenuTriggerFor]="sortMenu"
+                matTooltip="Sort"
                 matTooltipPosition="above">
-          <mat-icon>delete</mat-icon>
+          <mat-icon>sort</mat-icon>
         </button>
+        <button type="button"
+                mat-icon-button
+                class="header-action-btn"
+                (click)="toggleFullscreen()"
+                [matTooltip]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+                matTooltipPosition="above">
+          <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+        <mat-menu #sortMenu="matMenu" class="spreadsheet-sort-menu-panel">
+          <button mat-menu-item type="button" (click)="setSortField(null)">
+            <mat-icon *ngIf="sortField === null">check</mat-icon>
+            <span>Default order</span>
+          </button>
+          <button *ngFor="let f of sortFields"
+                  mat-menu-item
+                  type="button"
+                  (click)="setSortField(f.value)">
+            <mat-icon *ngIf="sortField === f.value">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            <span>{{ f.label }}</span>
+          </button>
+        </mat-menu>
       </div>
-    </div>
-    <ng-template #noKeys>
-      <div class="tb-flex no-flex center align-center key-panel">
-        <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeys" class="tb-prompt">
-          No matching keys
-        </span>
-        <ng-template #emptyKeys>
-          <span class="tb-prompt">{{ noKeysText }}</span>
+      <div *ngIf="!isFullscreen && searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
+        {{ filteredControls.length }} of {{ keysFormArray.length }} keys
+      </div>
+
+      <ng-container *ngIf="!isFullscreen; else spreadsheet">
+        <div class="tb-form-panel no-border no-padding key-panel"
+             *ngIf="displayedControls.length; else noKeys"
+             (scroll)="onKeyPanelScroll($event)">
+          <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
+               *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
+            <div class="tb-form-panel stroked tb-flex">
+              <ng-container [formGroup]="item.control">
+                <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
+                  <mat-expansion-panel-header class="flex-wrap">
+                    <mat-panel-title>
+                      <div class="tb-flex">
+                        <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
+                          <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? item.control.get('method').value : item.control.get('tag').value }}</span>
+                        </div>
+                        <div class="title-container">PLC Tag:
+                          <span class="key-label">{{ item.control.get('plcTag').value }}</span>
+                        </div>
+                        <div *ngIf="isRpc && item.control.get('valueType').value" class="title-container">Type:
+                          <span class="key-label">{{ item.control.get('valueType').value }}</span>
+                        </div>
+                      </div>
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <ng-template matExpansionPanelContent>
+                    <div class="tb-form-panel no-border no-padding">
+                      <ng-container *ngIf="!isRpc">
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width tb-required">Key</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="tag" placeholder="temperature">
+                          </mat-form-field>
+                        </div>
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width tb-required">PLC Tag</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="plcTag"
+                                   [placeholder]="isSLC ? 'N7:0' : 'Program:MainProgram.Temperature'">
+                          </mat-form-field>
+                        </div>
+                      </ng-container>
+                      <ng-container *ngIf="isRpc">
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width tb-required">Method</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="method" placeholder="readTemperature">
+                          </mat-form-field>
+                        </div>
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width tb-required">Operation</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <mat-select formControlName="operation">
+                              <mat-option value="read">Read</mat-option>
+                              <mat-option value="write">Write</mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </div>
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width tb-required">PLC Tag</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="plcTag"
+                                   [placeholder]="isSLC ? 'N7:0' : 'MotorSpeed'">
+                          </mat-form-field>
+                        </div>
+                        <div class="tb-form-row column-xs">
+                          <div class="fixed-title-width">Value Type</div>
+                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                            <mat-select formControlName="valueType">
+                              <mat-option [value]="null">Auto</mat-option>
+                              <mat-option *ngFor="let type of dataTypes" [value]="type">
+                                {{ type }}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+                        </div>
+                      </ng-container>
+                      <ng-container *ngIf="!isRpc">
+                        <div class="tb-form-panel stroked tb-slide-toggle">
+                          <mat-expansion-panel class="tb-settings"
+                                               [expanded]="enableScalingControlMap.get(item.control.getRawValue().id)?.value">
+                            <mat-expansion-panel-header class="flex-wrap">
+                              <mat-panel-title>
+                                <mat-slide-toggle
+                                  [formControl]="enableScalingControlMap.get(item.control.getRawValue().id)"
+                                  class="mat-slide"
+                                  (click)="$event.stopPropagation()">
+                                  <mat-label>Scaling</mat-label>
+                                </mat-slide-toggle>
+                              </mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <ng-template matExpansionPanelContent>
+                              <div class="tb-form-row column-xs">
+                                <div class="fixed-title-width">Raw Min</div>
+                                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                  <input matInput type="number" formControlName="rawMin">
+                                </mat-form-field>
+                              </div>
+                              <div class="tb-form-row column-xs">
+                                <div class="fixed-title-width">Raw Max</div>
+                                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                  <input matInput type="number" formControlName="rawMax">
+                                </mat-form-field>
+                              </div>
+                              <div class="tb-form-row column-xs">
+                                <div class="fixed-title-width">Eng Min</div>
+                                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                  <input matInput type="number" formControlName="engMin">
+                                </mat-form-field>
+                              </div>
+                              <div class="tb-form-row column-xs">
+                                <div class="fixed-title-width">Eng Max</div>
+                                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                  <input matInput type="number" formControlName="engMax">
+                                </mat-form-field>
+                              </div>
+                            </ng-template>
+                          </mat-expansion-panel>
+                        </div>
+                        <tb-report-strategy
+                          class="stroked tb-form-panel"
+                          [defaultValue]="ReportStrategyDefaultValue.Key"
+                          formControlName="reportStrategy"
+                          [isExpansionMode]="true"
+                        />
+                      </ng-container>
+                    </div>
+                  </ng-template>
+                </mat-expansion-panel>
+              </ng-container>
+            </div>
+            <button type="button"
+                    mat-icon-button
+                    (click)="deleteKey(item.index)"
+                    [matTooltip]="deleteKeyTitle"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+        <ng-template #noKeys>
+          <div class="tb-flex no-flex center align-center key-panel">
+            <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeys" class="tb-prompt">
+              No matching keys
+            </span>
+            <ng-template #emptyKeys>
+              <span class="tb-prompt">{{ noKeysText }}</span>
+            </ng-template>
+          </div>
         </ng-template>
-      </div>
-    </ng-template>
+      </ng-container>
+
+      <ng-template #spreadsheet>
+        <tb-spreadsheet-keys
+          [keysFormArray]="keysFormArray"
+          [columns]="spreadsheetColumns"
+          [searchFields]="searchFields"
+          [isFullscreen]="isFullscreen"
+          hostSelector="tb-ethernet-ip-data-keys-panel"
+          (fullscreenToggled)="onFullscreenToggled($event)"
+          (addRowRequested)="onAddRowRequested()"
+          (deleteRowsRequested)="onDeleteRowsRequested($event)">
+        </tb-spreadsheet-keys>
+      </ng-template>
+    </div>
   </div>
-</div>
-<div class="flex justify-between pt-4">
-  <button type="button" mat-stroked-button color="primary" (click)="addKey()">
-    {{ addKeyTitle }}
-  </button>
-  <div class="tb-flex flex-end">
-    <button mat-button
-            color="primary"
-            type="button"
-            (click)="cancel()">
-      Cancel
+  <div class="flex justify-between pt-4 footer-actions">
+    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+      {{ addKeyTitle }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            (click)="applyKeysData()"
-            [disabled]="keysFormArray.invalid || !keysFormArray.dirty">
-      Apply
-    </button>
+    <div class="tb-flex flex-end">
+      <button mat-button
+              color="primary"
+              type="button"
+              (click)="cancel()">
+        Cancel
+      </button>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="applyKeysData()"
+              [disabled]="keysFormArray.invalid || !keysFormArray.dirty">
+        Apply
+      </button>
+    </div>
   </div>
 </div>
