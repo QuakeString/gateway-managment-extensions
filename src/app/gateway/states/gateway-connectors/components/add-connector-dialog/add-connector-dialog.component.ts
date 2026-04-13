@@ -79,7 +79,7 @@ export class AddConnectorDialogComponent
     super(store, router, dialogRef);
     this.updateConnectorTypesByVersion();
     this.connectorForm = this.fb.group({
-      type: [ConnectorType.MQTT, []],
+      type: [ConnectorType.MODBUS, []],
       name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],

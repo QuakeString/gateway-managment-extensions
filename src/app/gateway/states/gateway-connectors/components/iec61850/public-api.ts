@@ -18,3 +18,4 @@ export * from './iec61850-basic-config/legacy-iec61850-basic-config.component';
 export * from './iec61850-devices-table/iec61850-devices-table.component';
 export * from './iec61850-device-dialog/iec61850-device-dialog.component';
 export * from './iec61850-data-keys-panel/iec61850-data-keys-panel.component';
+export * from './iec61850-model-browser-dialog/iec61850-model-browser-dialog.component';

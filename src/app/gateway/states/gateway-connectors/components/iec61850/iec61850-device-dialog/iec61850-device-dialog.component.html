@@ -15,7 +15,7 @@
 -->
 <div [formGroup]="deviceForm" class="dialog-mapping">
   <mat-toolbar color="primary">
-    <h2>{{ isEdit ? 'Edit' : 'Add' }} IEC 61850 IED</h2>
+    <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} IEC 61850 IED</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -26,14 +26,14 @@
   <div mat-dialog-content>
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Device Name</div>
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.host' | translate }}" translate>gateway.iec61850-device-name</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="deviceName" placeholder="IEC61850 IED"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'Device name is required'"
+                      [matTooltip]="'gateway.device-name-required' | translate"
                       *ngIf="deviceForm.get('deviceName').hasError('required')
                                            && deviceForm.get('deviceName').touched"
                       class="tb-error">
@@ -49,14 +49,14 @@
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Host</div>
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.host' | translate }}" translate>gateway.iec61850-host</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="host" placeholder="192.168.1.10"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'Host is required'"
+                      [matTooltip]="'gateway.host-required' | translate"
                       *ngIf="deviceForm.get('host').hasError('required')
                                            && deviceForm.get('host').touched"
                       class="tb-error">
@@ -66,7 +66,7 @@
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Port</div>
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.port' | translate }}" translate>gateway.iec61850-port</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput type="number" formControlName="port"/>
@@ -85,42 +85,46 @@
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width">Acquisition Mode</div>
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.acquisition-mode' | translate }}" translate>gateway.iec61850-acquisition-mode</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="acquisitionMode">
-              <mat-option [value]="AcquisitionMode.POLLING">Polling</mat-option>
-              <mat-option [value]="AcquisitionMode.REPORT">Report (BRCB)</mat-option>
+              <mat-option [value]="AcquisitionMode.POLLING">{{ 'gateway.iec61850-polling' | translate }}</mat-option>
+              <mat-option [value]="AcquisitionMode.REPORT">{{ 'gateway.iec61850-report' | translate }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
       </div>
+
+      <!-- Advanced Connection Settings -->
       <div class="tb-form-panel stroked">
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
-            <mat-panel-title>Advanced connection settings</mat-panel-title>
+            <mat-panel-title>
+              <div class="tb-form-panel-title" translate>gateway.iec61850-advanced-settings</div>
+            </mat-panel-title>
           </mat-expansion-panel-header>
-          <div class="tb-form-panel no-border no-padding">
+          <div class="tb-form-panel no-border no-padding padding-top">
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Poll Period (ms)</div>
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.poll-period' | translate }}" translate>gateway.iec61850-poll-period</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="pollPeriod"/>
               </mat-form-field>
             </div>
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Connection Timeout (ms)</div>
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.connection-timeout' | translate }}" translate>gateway.iec61850-connection-timeout</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="connectionTimeout"/>
               </mat-form-field>
             </div>
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Connect Attempts</div>
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.connect-attempt-count' | translate }}" translate>gateway.iec61850-connect-attempts</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="connectAttemptCount"/>
               </mat-form-field>
             </div>
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Wait After Failed (ms)</div>
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.wait-after-failed-attempts' | translate }}" translate>gateway.iec61850-wait-after-failed</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="waitAfterFailedAttemptsMs"/>
               </mat-form-field>
@@ -128,8 +132,163 @@
           </div>
         </mat-expansion-panel>
       </div>
+
+      <!-- Report Configuration (BRCB) - shown only for report mode -->
+      <div class="tb-form-panel stroked" *ngIf="deviceForm.get('acquisitionMode').value === AcquisitionMode.REPORT">
+        <mat-expansion-panel class="tb-settings" [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="tb-form-panel-title" translate>gateway.iec61850-report-config</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding padding-top">
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.rcb-reference' | translate }}" translate>gateway.iec61850-rcb-reference</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="rcbReference" placeholder="simpleIOGenericIO/LLN0$BR$brcb01"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'RCB Reference is required for report mode'"
+                          *ngIf="deviceForm.get('rcbReference').hasError('required')
+                                  && deviceForm.get('rcbReference').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.report-id' | translate }}" translate>gateway.iec61850-report-id</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="reportId"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.integrity-period' | translate }}" translate>gateway.iec61850-integrity-period</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="integrityPeriodMs"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.buffer-time' | translate }}" translate>gateway.iec61850-buffer-time</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="bufferTimeMs"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" translate>gateway.iec61850-trigger-options</div>
+              <div class="tb-flex trigger-options-row">
+                <mat-checkbox formControlName="triggerDataChange"
+                              tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.trigger-data-change' | translate }}">
+                  {{ 'gateway.iec61850-data-change' | translate }}
+                </mat-checkbox>
+                <mat-checkbox formControlName="triggerQualityChange"
+                              tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.trigger-quality-change' | translate }}">
+                  {{ 'gateway.iec61850-quality-change' | translate }}
+                </mat-checkbox>
+                <mat-checkbox formControlName="triggerDataUpdate"
+                              tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.trigger-data-update' | translate }}">
+                  {{ 'gateway.iec61850-data-update' | translate }}
+                </mat-checkbox>
+                <mat-checkbox formControlName="triggerIntegrity"
+                              tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.trigger-integrity' | translate }}">
+                  {{ 'gateway.iec61850-integrity' | translate }}
+                </mat-checkbox>
+                <mat-checkbox formControlName="triggerGI"
+                              tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.trigger-gi' | translate }}">
+                  {{ 'gateway.iec61850-general-interrogation' | translate }}
+                </mat-checkbox>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+
+      <!-- GOOSE Configuration -->
+      <div class="tb-form-panel stroked tb-slide-toggle">
+        <mat-expansion-panel class="tb-settings" [expanded]="deviceForm.get('gooseEnabled').value">
+          <mat-expansion-panel-header class="flex-wrap">
+            <mat-panel-title>
+              <mat-slide-toggle formControlName="gooseEnabled" class="mat-slide justify-start" (click)="$event.stopPropagation()">
+                <mat-label translate>gateway.iec61850-goose-config</mat-label>
+              </mat-slide-toggle>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding padding-top">
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.goose-interface' | translate }}" translate>gateway.iec61850-goose-interface</div>
+              <div class="tb-flex no-gap" style="display: flex; align-items: center; gap: 4px;">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="gooseInterface">
+                    <mat-option *ngFor="let iface of networkInterfaces" [value]="iface.name">
+                      {{ iface.name }}<span *ngIf="iface.ip"> ({{ iface.ip }})</span>
+                    </mat-option>
+                    <mat-option *ngIf="networkInterfaces.length === 0" value="eth0">eth0</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <button mat-icon-button type="button"
+                        matTooltip="Refresh interfaces"
+                        matTooltipPosition="above"
+                        [disabled]="loadingInterfaces"
+                        (click)="fetchNetworkInterfaces()">
+                  <mat-icon>{{ loadingInterfaces ? 'hourglass_empty' : 'refresh' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" translate>gateway.iec61850-goose-subscriptions</div>
+              <button mat-icon-button color="primary"
+                      type="button"
+                      matTooltip="{{ 'gateway.iec61850-add-subscription' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="addGooseSubscription()">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <div *ngIf="gooseSubscriptions.length === 0" class="tb-form-row">
+              <span class="no-data-text" translate>gateway.iec61850-no-subscriptions</span>
+            </div>
+            <div *ngFor="let sub of gooseSubscriptions.controls; let i = index"
+                 class="tb-form-panel stroked goose-subscription-row"
+                 [formGroup]="sub">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.goose-gocb-ref' | translate }}" translate>gateway.iec61850-gocb-reference</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="gocbRef" placeholder="simpleIOGenericIO/LLN0$GO$gcb01"/>
+                  <mat-icon matSuffix
+                            matTooltipPosition="above"
+                            matTooltipClass="tb-error-tooltip"
+                            [matTooltip]="'GoCB Reference is required'"
+                            *ngIf="sub.get('gocbRef').hasError('required')
+                                    && sub.get('gocbRef').touched"
+                            class="tb-error">
+                    warning
+                  </mat-icon>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.goose-app-id' | translate }}" translate>gateway.iec61850-app-id</div>
+                <div class="tb-flex no-gap row">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="appId" placeholder="0001"/>
+                  </mat-form-field>
+                  <button mat-icon-button color="warn"
+                          type="button"
+                          matTooltip="Remove"
+                          matTooltipPosition="above"
+                          (click)="removeGooseSubscription(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+
+      <!-- Data keys: Telemetry -->
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Telemetry</div>
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.data-keys' | translate }}" translate>gateway.iec61850-telemetry</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
             <mat-chip *ngFor="let ts of deviceForm.get('timeseries').value">
@@ -142,7 +301,15 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="browseAndOpen('timeseries')">
+            <mat-icon>device_hub</mat-icon>
+          </button>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="{{ 'action.edit' | translate }}"
                   matTooltipPosition="above"
                   #timeseriesButton
                   (click)="manageKeys($event, timeseriesButton, ValueKey.TIMESERIES)">
@@ -150,8 +317,10 @@
           </button>
         </div>
       </div>
+
+      <!-- Data keys: Attributes -->
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Attributes</div>
+        <div class="fixed-title-width" translate>gateway.iec61850-attributes</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
             <mat-chip *ngFor="let attr of deviceForm.get('attributes').value">
@@ -164,7 +333,15 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="browseAndOpen('attributes')">
+            <mat-icon>device_hub</mat-icon>
+          </button>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="{{ 'action.edit' | translate }}"
                   matTooltipPosition="above"
                   #attributesButton
                   (click)="manageKeys($event, attributesButton, ValueKey.ATTRIBUTES)">
@@ -172,8 +349,10 @@
           </button>
         </div>
       </div>
+
+      <!-- Data keys: Attribute Updates -->
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Attribute Updates</div>
+        <div class="fixed-title-width" translate>gateway.iec61850-attribute-updates</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
             <mat-chip *ngFor="let au of deviceForm.get('attributeUpdates').value">
@@ -186,7 +365,15 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="browseAndOpen('attributeUpdates')">
+            <mat-icon>device_hub</mat-icon>
+          </button>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="{{ 'action.edit' | translate }}"
                   matTooltipPosition="above"
                   #attributeUpdatesButton
                   (click)="manageKeys($event, attributeUpdatesButton, ValueKey.ATTRIBUTES_UPDATES)">
@@ -194,8 +381,10 @@
           </button>
         </div>
       </div>
+
+      <!-- Data keys: RPC Methods -->
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">RPC Methods</div>
+        <div class="fixed-title-width" translate>gateway.iec61850-rpc-methods</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
             <mat-chip *ngFor="let rpc of deviceForm.get('rpc').value">
@@ -208,7 +397,15 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="browseAndOpen('rpc')">
+            <mat-icon>device_hub</mat-icon>
+          </button>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="{{ 'action.edit' | translate }}"
                   matTooltipPosition="above"
                   #rpcButton
                   (click)="manageKeys($event, rpcButton, ValueKey.RPC)">
@@ -222,12 +419,12 @@
     <button mat-button color="primary"
             type="button"
             (click)="cancel()">
-      Cancel
+      {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             (click)="save()"
             [disabled]="deviceForm.invalid || !keysPopupClosed">
-      {{ isEdit ? 'Update' : 'Add' }}
+      {{ (isEdit ? 'action.update' : 'action.add') | translate }}
     </button>
   </div>
 </div>

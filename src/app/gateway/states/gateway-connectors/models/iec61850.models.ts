@@ -106,6 +106,13 @@ export interface IEC61850GooseConfig {
   subscriptions?: IEC61850GooseSubscription[];
 }
 
+export interface IEC61850TlsConfig {
+  enabled: boolean;
+  caCert?: string;
+  clientCert?: string;
+  clientKey?: string;
+}
+
 export interface IEC61850DataAcquisition {
   mode: IEC61850AcquisitionMode;
   reports?: IEC61850ReportConfig[];
@@ -123,6 +130,7 @@ export interface IEC61850DeviceConfig {
   waitAfterFailedAttemptsMs: number;
   reportStrategy?: ReportStrategyConfig;
   dataAcquisition?: IEC61850DataAcquisition;
+  tls?: IEC61850TlsConfig;
   goose?: IEC61850GooseConfig;
   timeseries: IEC61850DataKey[];
   attributes: IEC61850DataKey[];
@@ -139,4 +147,38 @@ export enum IEC61850ValueKey {
   ATTRIBUTES = 'attributes',
   ATTRIBUTES_UPDATES = 'attributeUpdates',
   RPC = 'rpc',
+}
+
+// Model browser types (browseModel RPC response)
+
+export interface IEC61850ModelNode {
+  name: string;
+  logicalNodes?: IEC61850ModelLN[];
+}
+
+export interface IEC61850ModelLN {
+  name: string;
+  dataObjects?: IEC61850ModelDO[];
+}
+
+export interface IEC61850ModelDO {
+  name: string;
+  dataAttributes?: IEC61850ModelDA[];
+}
+
+export interface IEC61850ModelDA {
+  name: string;
+  fc: string;
+  reference: string;
+}
+
+export interface IEC61850FlatDataPoint {
+  reference: string;
+  fc: string;
+  ld: string;
+  ln: string;
+  do: string;
+  da: string;
+  selected?: boolean;
+  existing?: boolean;
 }

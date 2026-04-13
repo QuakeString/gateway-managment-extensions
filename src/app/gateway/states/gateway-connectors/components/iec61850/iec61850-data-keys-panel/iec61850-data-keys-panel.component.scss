@@ -44,6 +44,16 @@
       width: 0;
     }
   }
+
+  .scaling-toggle-row {
+    padding: 8px 16px;
+  }
+
+  .scaling-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 599px) {
@@ -60,6 +70,12 @@
       .key-panel {
         max-height: calc(100vh - 160px);
       }
+    }
+  }
+
+  :host ::ng-deep {
+    .scaling-grid {
+      grid-template-columns: 1fr;
     }
   }
 }

@@ -39,6 +39,50 @@
   .ellipsis-chips-container {
     max-width: 70%;
   }
+
+  .trigger-options-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+  }
+
+  .goose-subscription-row {
+    margin-bottom: 8px;
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  .no-data-text {
+    opacity: 0.5;
+    font-style: italic;
+    padding: 4px 0;
+  }
+
+  .browse-error {
+    color: var(--mdc-theme-error, #f44336);
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
+  .browse-info {
+    font-weight: 500;
+    color: var(--mdc-theme-primary, #305680);
+  }
+
+  .browse-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .browse-results {
+    padding: 4px 0;
+  }
 }
 
 :host ::ng-deep {
@@ -64,6 +108,22 @@
   .mat-mdc-form-field-icon-suffix {
     display: flex;
   }
+
+  .tb-slide-toggle {
+    .mat-expansion-panel-header {
+      &.flex-wrap {
+        .mat-content {
+          overflow: visible;
+        }
+      }
+    }
+  }
+
+  .trigger-options-row {
+    .mat-mdc-checkbox {
+      margin-right: 4px;
+    }
+  }
 }
 
 ::ng-deep .mdc-evolution-chip-set__chips {
@@ -82,6 +142,11 @@
     .mat-mdc-dialog-content {
       height: auto;
       max-height: calc(100vh - 130px);
+    }
+
+    .trigger-options-row {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 }

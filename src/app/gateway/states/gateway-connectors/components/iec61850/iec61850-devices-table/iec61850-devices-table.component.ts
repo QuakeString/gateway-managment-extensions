@@ -21,6 +21,7 @@ import {
   ChangeDetectorRef,
   Component,
   forwardRef,
+  Input,
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -60,6 +61,9 @@ import {
   imports: [CommonModule, SharedModule],
 })
 export class IEC61850DevicesTableComponent implements ControlValueAccessor, Validator {
+
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   devices: IEC61850DeviceConfig[] = [];
   filteredDevices: IEC61850DeviceConfig[] = [];
@@ -135,6 +139,8 @@ export class IEC61850DevicesTableComponent implements ControlValueAccessor, Vali
     const dialogData: IEC61850DeviceDialogData = {
       device: device ? { ...device } : undefined,
       isEdit: index !== undefined,
+      gatewayDeviceId: this.gatewayDeviceId,
+      connectorName: this.connectorName,
     };
     this.dialog.open(IEC61850DeviceDialogComponent, {
       disableClose: true,

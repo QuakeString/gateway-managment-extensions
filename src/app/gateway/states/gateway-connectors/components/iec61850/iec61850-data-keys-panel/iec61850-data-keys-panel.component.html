@@ -93,6 +93,54 @@
                       </mat-select>
                     </mat-form-field>
                   </div>
+                  <ng-container *ngIf="!isRpc">
+                    <div class="tb-form-row column-xs scaling-toggle-row">
+                      <mat-slide-toggle formControlName="scalingEnabled" class="mat-slide">
+                        <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.scaling' | translate }}">
+                          Scaling
+                        </mat-label>
+                      </mat-slide-toggle>
+                    </div>
+                    <div *ngIf="keyGroup.get('scalingEnabled').value"
+                         class="scaling-grid" formGroupName="scaling">
+                      <div class="tb-form-row column-xs">
+                        <div class="fixed-title-width">Raw Min</div>
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput type="number" formControlName="rawMin">
+                        </mat-form-field>
+                      </div>
+                      <div class="tb-form-row column-xs">
+                        <div class="fixed-title-width">Raw Max</div>
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput type="number" formControlName="rawMax">
+                        </mat-form-field>
+                      </div>
+                      <div class="tb-form-row column-xs">
+                        <div class="fixed-title-width">Eng Min</div>
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput type="number" formControlName="engMin">
+                        </mat-form-field>
+                      </div>
+                      <div class="tb-form-row column-xs">
+                        <div class="fixed-title-width">Eng Max</div>
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput type="number" formControlName="engMax">
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="isRpc && keyGroup.get('operation').value === 'control'">
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width">Control Model</div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="controlModel">
+                          <mat-option *ngFor="let cm of controlModelOptions" [value]="cm.value">
+                            {{ cm.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </ng-container>
                 </div>
               </ng-template>
             </mat-expansion-panel>

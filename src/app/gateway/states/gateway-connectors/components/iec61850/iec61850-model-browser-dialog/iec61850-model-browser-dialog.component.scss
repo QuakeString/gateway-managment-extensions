@@ -1,0 +1,133 @@
+/*
+ * Copyright © 2016-2025 The SENTIENT Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  display: block;
+}
+
+.model-browser-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.dialog-content {
+  padding: 16px 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-field {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.point-count {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.no-data-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  opacity: 0.6;
+  border-radius: 4px;
+}
+
+.loading-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  justify-content: center;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--mdc-theme-error, #f44336);
+
+  mat-icon {
+    color: var(--mdc-theme-error, #f44336);
+  }
+}
+
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 50vh;
+  overflow-x: hidden;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.existing-point {
+  opacity: 0.5;
+}
+
+.existing-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #4caf50;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.existing-row {
+  opacity: 0.6;
+}
+
+.fc-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: var(--mdc-theme-primary, #305680);
+  color: white;
+}
+
+.readonly-badge {
+  font-size: 12px;
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.operation-select {
+  width: 100px;
+  font-size: 13px;
+}
+
+@media (max-width: 599px) {
+  .model-browser-dialog {
+    max-height: 100vh;
+  }
+
+  .table-container {
+    max-height: calc(100vh - 250px);
+  }
+}

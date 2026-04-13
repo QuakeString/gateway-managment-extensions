@@ -1,0 +1,165 @@
+<!--
+  Copyright © 2016-2025 The SENTIENT Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="model-browser-dialog">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.iec61850-browse-model' | translate }} —
+      <ng-container [ngSwitch]="targetCategory">
+        <ng-container *ngSwitchCase="'timeseries'">{{ 'gateway.iec61850-add-to-telemetry' | translate }}</ng-container>
+        <ng-container *ngSwitchCase="'attributes'">{{ 'gateway.iec61850-add-to-attributes' | translate }}</ng-container>
+        <ng-container *ngSwitchCase="'attributeUpdates'">{{ 'gateway.iec61850-add-to-attribute-updates' | translate }}</ng-container>
+        <ng-container *ngSwitchCase="'rpc'">{{ 'gateway.iec61850-add-to-rpc' | translate }}</ng-container>
+      </ng-container>
+    </h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="refresh()" type="button"
+            matTooltip="Refresh" matTooltipPosition="below"
+            [disabled]="refreshing">
+      <mat-icon>{{ refreshing ? 'hourglass_empty' : 'refresh' }}</mat-icon>
+    </button>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div mat-dialog-content class="dialog-content">
+    <!-- Search bar -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>{{ 'action.search' | translate }}</mat-label>
+      <input matInput [formControl]="textSearch" placeholder="Filter by reference, FC, logical node...">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <div class="point-count">
+      {{ filteredPoints.length }} {{ 'gateway.of' | translate }} {{ allPoints.length }} {{ 'gateway.iec61850-data-points' | translate }}
+      <span *ngIf="targetCategory === 'attributeUpdates'"> ({{ 'gateway.iec61850-writable-only' | translate }})</span>,
+      {{ selection.selected.length }} {{ 'gateway.selected' | translate }}
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loading" class="loading-message">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'gateway.iec61850-discovering' | translate }}</span>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="loadError && !loading" class="error-message">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadError }}</span>
+    </div>
+
+    <!-- No data state (after successful discovery) -->
+    <div *ngIf="!loading && !loadError && allPoints.length === 0" class="no-data-message">
+      <mat-icon>info</mat-icon>
+      <span>{{ 'gateway.iec61850-no-model-data' | translate }}</span>
+    </div>
+
+    <!-- Data points table -->
+    <div class="table-container" *ngIf="allPoints.length > 0 && !loading">
+      <table mat-table [dataSource]="filteredPoints" class="mat-elevation-z0">
+        <!-- Checkbox Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox (change)="toggleAllRows()"
+                          [checked]="isAllSelected()"
+                          [indeterminate]="selection.hasValue() && !isAllSelected()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let point">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="selection.toggle(point)"
+                          [checked]="selection.isSelected(point)"
+                          [disabled]="isExisting(point)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Reference Column -->
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef>Reference</th>
+          <td mat-cell *matCellDef="let point">
+            <span [class.existing-point]="isExisting(point)">{{ point.reference }}</span>
+            <mat-icon *ngIf="isExisting(point)" class="existing-icon"
+                      matTooltip="{{ 'gateway.iec61850-already-configured' | translate }}">check_circle</mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- FC Column -->
+        <ng-container matColumnDef="fc">
+          <th mat-header-cell *matHeaderCellDef>FC</th>
+          <td mat-cell *matCellDef="let point">
+            <span class="fc-badge">{{ point.fc }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Logical Node Column -->
+        <ng-container matColumnDef="ln">
+          <th mat-header-cell *matHeaderCellDef>LN</th>
+          <td mat-cell *matCellDef="let point">{{ point.ln }}</td>
+        </ng-container>
+
+        <!-- Data Object Column -->
+        <ng-container matColumnDef="do">
+          <th mat-header-cell *matHeaderCellDef>DO</th>
+          <td mat-cell *matCellDef="let point">{{ point.do }}</td>
+        </ng-container>
+
+        <!-- Data Attribute Column -->
+        <ng-container matColumnDef="da">
+          <th mat-header-cell *matHeaderCellDef>DA</th>
+          <td mat-cell *matCellDef="let point">{{ point.da }}</td>
+        </ng-container>
+
+        <!-- Operation Column (RPC mode only) -->
+        <ng-container matColumnDef="operation">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.iec61850-operation' | translate }}</th>
+          <td mat-cell *matCellDef="let point">
+            <mat-select *ngIf="isWritable(point)"
+                        [value]="getOperation(point)"
+                        (selectionChange)="setOperation(point, $event.value)"
+                        (click)="$event.stopPropagation()"
+                        class="operation-select">
+              <mat-option value="read">Read</mat-option>
+              <mat-option value="write">Write</mat-option>
+              <mat-option value="control">Control</mat-option>
+            </mat-select>
+            <span *ngIf="!isWritable(point)" class="readonly-badge">{{ 'gateway.iec61850-read-only' | translate }}</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            (click)="!isExisting(row) && selection.toggle(row)"
+            [class.existing-row]="isExisting(row)"
+            class="cursor-pointer"></tr>
+      </table>
+    </div>
+  </div>
+
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button color="primary"
+            (click)="addSelected()"
+            [disabled]="selection.isEmpty()">
+      {{ 'action.add' | translate }} {{ selection.selected.length }}
+      <ng-container [ngSwitch]="targetCategory">
+        <ng-container *ngSwitchCase="'timeseries'">{{ 'gateway.iec61850-add-to-telemetry' | translate }}</ng-container>
+        <ng-container *ngSwitchCase="'attributes'">{{ 'gateway.iec61850-add-to-attributes' | translate }}</ng-container>
+        <ng-container *ngSwitchCase="'attributeUpdates'">{{ 'gateway.iec61850-add-to-attribute-updates' | translate }}</ng-container>
+        <ng-container *ngSwitchCase="'rpc'">{{ 'gateway.iec61850-add-to-rpc' | translate }}</ng-container>
+      </ng-container>
+    </button>
+  </div>
+</div>

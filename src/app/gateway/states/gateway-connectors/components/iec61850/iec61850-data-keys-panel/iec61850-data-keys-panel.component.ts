@@ -21,6 +21,7 @@ import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
 import {
+  IEC61850ControlModel,
   IEC61850DataKey,
   IEC61850RpcConfig,
   IEC61850ValueKey,
@@ -50,6 +51,14 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
   readonly FC = IEC61850FC;
   readonly valueTypes = Object.values(IEC61850ValueType);
   readonly fcOptions = Object.values(IEC61850FC);
+
+  readonly controlModelOptions = [
+    { value: IEC61850ControlModel.STATUS_ONLY, label: 'Status Only' },
+    { value: IEC61850ControlModel.DIRECT_NORMAL, label: 'Direct Normal' },
+    { value: IEC61850ControlModel.SBO_NORMAL, label: 'SBO Normal' },
+    { value: IEC61850ControlModel.DIRECT_ENHANCED, label: 'Direct Enhanced' },
+    { value: IEC61850ControlModel.SBO_ENHANCED, label: 'SBO Enhanced' },
+  ];
 
   get isRpc(): boolean {
     return this.keyType === IEC61850ValueKey.RPC;
@@ -87,7 +96,13 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
   }
 
   apply(): void {
-    const result = this.keysFormArray.getRawValue();
+    const result = this.keysFormArray.getRawValue().map(key => {
+      if (!key.scalingEnabled) {
+        delete key.scaling;
+      }
+      delete key.scalingEnabled;
+      return key;
+    });
     this.keysDataApplied.emit(result);
   }
 
@@ -106,7 +121,7 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
         fc: [rpc.fc || IEC61850FC.CO],
         valueType: [rpc.valueType || ''],
         operation: [rpc.operation || 'read', [Validators.required]],
-        controlModel: [rpc.controlModel],
+        controlModel: [rpc.controlModel ?? IEC61850ControlModel.DIRECT_NORMAL],
       });
     } else {
       const dk = key as IEC61850DataKey;
@@ -115,6 +130,13 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
         reference: [dk.reference || '', [Validators.required]],
         fc: [dk.fc || IEC61850FC.MX],
         valueType: [dk.valueType || ''],
+        scalingEnabled: [!!dk.scaling],
+        scaling: this.fb.group({
+          rawMin: [dk.scaling?.rawMin ?? 0],
+          rawMax: [dk.scaling?.rawMax ?? 65535],
+          engMin: [dk.scaling?.engMin ?? 0],
+          engMax: [dk.scaling?.engMax ?? 100],
+        }),
       });
     }
 

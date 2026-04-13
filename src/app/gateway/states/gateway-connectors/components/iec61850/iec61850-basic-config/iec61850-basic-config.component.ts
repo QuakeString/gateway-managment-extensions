@@ -16,7 +16,7 @@
 ///     http://www.apache.org/licenses/LICENSE-2.0
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -45,6 +45,9 @@ import { IEC61850DevicesTableComponent } from '../iec61850-devices-table/iec6185
   styleUrls: ['./iec61850-basic-config.component.scss'],
 })
 export class IEC61850BasicConfigComponent extends GatewayConnectorBasicConfigDirective<IEC61850BasicConfig, IEC61850BasicConfig> {
+
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   isLegacy = false;
 
