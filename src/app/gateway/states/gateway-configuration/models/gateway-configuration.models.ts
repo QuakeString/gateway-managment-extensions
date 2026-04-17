@@ -76,6 +76,19 @@ export interface GatewayGeneralConfig {
     inactivityTimeoutSeconds?: number;
     inactivityCheckPeriodSeconds?: number;
   };
+  /**
+   * MQTT connection liveness. The platform should derive its own gateway
+   * inactivity timeout from `keepAliveSeconds` so both ends agree on how
+   * quickly a dead gateway is detected.
+   */
+  connection?: {
+    keepAliveSeconds: number;
+    lastWill: {
+      enabled: boolean;
+      qos?: number;
+      retain?: boolean;
+    };
+  };
   security: GatewayConfigSecurity;
   qos: number;
   reportStrategy: ReportStrategyConfig;

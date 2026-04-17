@@ -269,6 +269,7 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
       minPackSizeToSend: [500, [Validators.required, Validators.min(100), Validators.pattern(numberInputPattern)]],
       handleDeviceRenaming: [true],
       checkingDeviceActivity: this.initCheckingDeviceActivityFormGroup(),
+      connection: this.initConnectionFormGroup(),
       security: [],
       qos: [1],
       reportStrategy: [null]
@@ -280,6 +281,17 @@ export class GatewayBasicConfigurationComponent implements OnChanges, AfterViewI
       checkDeviceInactivity: [false],
       inactivityTimeoutSeconds: [300, [Validators.min(1), Validators.pattern(numberInputPattern)]],
       inactivityCheckPeriodSeconds: [10, [Validators.min(1), Validators.pattern(numberInputPattern)]]
+    });
+  }
+
+  private initConnectionFormGroup(): FormGroup {
+    return this.fb.group({
+      keepAliveSeconds: [30, [Validators.required, Validators.min(10), Validators.max(3600), Validators.pattern(numberInputPattern)]],
+      lastWill: this.fb.group({
+        enabled: [true],
+        qos: [1, [Validators.min(0), Validators.max(2)]],
+        retain: [false]
+      })
     });
   }
 

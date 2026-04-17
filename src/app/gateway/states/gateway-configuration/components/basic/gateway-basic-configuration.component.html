@@ -249,6 +249,26 @@
             </mat-form-field>
           </section>
         </div>
+        <div class="tb-form-panel" formGroupName="connection">
+          <div class="tb-form-panel-title">MQTT connection</div>
+          <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
+            <mat-form-field appearance="outline" class="flex">
+              <mat-label>Keep-alive (seconds)</mat-label>
+              <input matInput type="number" min="10" max="3600"
+                     formControlName="keepAliveSeconds"/>
+              <mat-icon matIconSuffix style="cursor:pointer;"
+                        matTooltip="How often the gateway pings the MQTT broker. The broker declares the gateway dead at ~1.5× this value and fires the Last Will message. The platform should derive its gateway inactivity timeout from this value so both ends agree.">info_outlined
+              </mat-icon>
+            </mat-form-field>
+          </section>
+          <div formGroupName="lastWill" class="tb-form-row no-border no-padding">
+            <mat-slide-toggle class="mat-slide" color="primary" formControlName="enabled"
+                              matTooltip="Arms an MQTT Last Will &amp; Testament so the broker notifies the platform the instant the gateway's socket drops — no waiting for the inactivity timeout."
+                              matTooltipPosition="above">
+              Enable Last Will &amp; Testament
+            </mat-slide-toggle>
+          </div>
+        </div>
         <div class="tb-form-panel no-padding-bottom">
           <div class="tb-form-panel-title" translate>gateway.advanced</div>
           <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
