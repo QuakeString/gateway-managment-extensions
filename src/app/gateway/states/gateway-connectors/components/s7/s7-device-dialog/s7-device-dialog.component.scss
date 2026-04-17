@@ -71,6 +71,52 @@
   align-items: center;
 }
 
+// Time synchronization section — sits outside .tb-form-row so it does not get
+// hit by the .mat-mdc-form-field { width: 0 } rule that collapses the interval
+// input to zero width.
+:host ::ng-deep .time-sync-panel {
+  .ts-inline-hint {
+    margin-left: 8px;
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.6;
+  }
+  .ts-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 4px;
+  }
+  .ts-auto-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    // Reserve enough room for the interval form-field so the row height does
+    // not change when the toggle is flipped on.
+    min-height: 56px;
+  }
+  .ts-auto-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ts-info-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.6;
+    cursor: help;
+  }
+  .ts-interval-field {
+    width: 140px;
+    margin-left: auto;
+  }
+  .ts-button-row {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
 @media (max-width: 599px) {
   :host {
     [mat-dialog-content] > .tb-form-panel {

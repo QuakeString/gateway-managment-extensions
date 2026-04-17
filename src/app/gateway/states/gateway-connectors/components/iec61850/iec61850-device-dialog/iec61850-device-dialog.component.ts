@@ -53,6 +53,7 @@ import {
   IEC61850ModelBrowserResult,
   IEC61850BrowserCategory,
 } from '../iec61850-model-browser-dialog/iec61850-model-browser-dialog.component';
+import { TimeSyncDialogComponent } from '../../../../../shared/components/time-sync-dialog/time-sync-dialog.component';
 
 export interface IEC61850DeviceDialogData {
   device?: IEC61850DeviceConfig;
@@ -105,6 +106,12 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
     gooseEnabled: [false],
     gooseInterface: ['eth0'],
     gooseSubscriptions: this.fb.array([]),
+    timeSync: this.fb.group({
+      enabled: [false],
+      intervalSec: [300, [Validators.min(10)]],
+      targetReference: [''],
+      verified: [false],
+    }),
     timeseries: [[] as IEC61850DataKey[]],
     attributes: [[] as IEC61850DataKey[]],
     attributeUpdates: [[] as IEC61850DataKey[]],
@@ -243,8 +250,51 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
         };
       }
 
+      // Time sync: drop the block entirely when disabled, but keep the verified flag
+      // so reopening the dialog still lets the user re-enable auto sync without another manual read.
+      if (v.timeSync?.enabled) {
+        (result as any).timeSync = {
+          enabled: true,
+          intervalSec: v.timeSync.intervalSec ?? 300,
+          targetReference: v.timeSync.targetReference || '',
+          verified: !!v.timeSync.verified,
+        };
+      } else if (v.timeSync?.verified) {
+        (result as any).timeSync = { enabled: false, verified: true };
+      }
+
       this.dialogRef.close(result);
     }
+  }
+
+  get canSyncTimeNow(): boolean {
+    return !!(this.data.gatewayDeviceId && this.data.connectorName
+              && this.deviceForm.get('deviceName').value);
+  }
+
+  get isTimeSyncVerified(): boolean {
+    return !!this.deviceForm.get('timeSync.verified')?.value;
+  }
+
+  openTimeSyncDialog(): void {
+    if (!this.canSyncTimeNow) return;
+    this.matDialog.open(TimeSyncDialogComponent, {
+      disableClose: true,
+      autoFocus: false,
+      width: '560px',
+      data: {
+        gatewayDeviceId: this.data.gatewayDeviceId,
+        connectorName: this.data.connectorName,
+        deviceName: this.deviceForm.get('deviceName').value,
+        connectorType: 'iec61850',
+      },
+    }).afterClosed().subscribe((synced: boolean) => {
+      if (synced) {
+        this.deviceForm.get('timeSync.verified').setValue(true);
+        this.deviceForm.get('timeSync.verified').markAsDirty();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   browseIed(): void {

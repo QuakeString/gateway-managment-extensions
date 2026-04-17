@@ -79,6 +79,12 @@ export const S7_REDUNDANCY_CAPABLE_MODELS: Set<S7PlcModel> = new Set([
   S7PlcModel.S7_1500,
 ]);
 
+export interface TimeSyncConfig {
+  enabled: boolean;
+  intervalSec?: number;
+  targetReference?: string;   // IEC 61850 only
+}
+
 export interface S7DeviceConfig {
   deviceName: string;
   deviceType: string;
@@ -92,6 +98,7 @@ export interface S7DeviceConfig {
   waitAfterFailedAttemptsMs: number;
   reportStrategy?: ReportStrategyConfig;
   redundancy?: S7RedundancyConfig;
+  timeSync?: TimeSyncConfig;
   timeseries: S7DataKey[];
   attributes: S7DataKey[];
   attributeUpdates: S7DataKey[];

@@ -23,7 +23,7 @@ import {
   Renderer2,
   ViewContainerRef,
 } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -37,10 +37,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
 import { S7DataKey, S7DeviceConfig, S7PlcModel, S7RedundancyConfig, S7RpcConfig, S7ValueKey, S7_REDUNDANCY_CAPABLE_MODELS } from '../../../models/public-api';
 import { S7DataKeysPanelComponent } from '../s7-data-keys-panel/s7-data-keys-panel.component';
+import { TimeSyncDialogComponent } from '../../../../../shared/components/time-sync-dialog/time-sync-dialog.component';
 
 export interface S7DeviceDialogData {
   device?: S7DeviceConfig;
   isEdit: boolean;
+  gatewayDeviceId?: string;
+  connectorName?: string;
 }
 
 @Component({
@@ -85,6 +88,11 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       heartbeatTimeoutMs: [300, [Validators.min(50), Validators.max(5000)]],
       failureThreshold: [2, [Validators.min(1), Validators.max(10)]],
     }),
+    timeSync: this.fb.group({
+      enabled: [false],
+      intervalSec: [300, [Validators.min(10)]],
+      verified: [false],
+    }),
     timeseries: [[] as S7DataKey[]],
     attributes: [[] as S7DataKey[]],
     attributeUpdates: [[] as S7DataKey[]],
@@ -104,6 +112,7 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
+    private matDialog: MatDialog,
   ) {
     super(store, router, dialogRef);
     this.isEdit = data.isEdit;
@@ -151,8 +160,46 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       if (!result.redundancy?.enabled) {
         delete result.redundancy;
       }
+      // Drop the timeSync block entirely when disabled — but keep the verified flag
+      // so reopening the dialog still lets the user re-enable auto sync without another manual read.
+      const ts: any = result.timeSync;
+      if (ts && !ts.enabled && !ts.verified) {
+        delete result.timeSync;
+      } else if (ts && !ts.enabled) {
+        (result as any).timeSync = { enabled: false, verified: true };
+      }
       this.dialogRef.close(result);
     }
+  }
+
+  get canSyncTimeNow(): boolean {
+    return !!(this.data.gatewayDeviceId && this.data.connectorName
+              && this.deviceForm.get('deviceName').value);
+  }
+
+  get isTimeSyncVerified(): boolean {
+    return !!this.deviceForm.get('timeSync.verified')?.value;
+  }
+
+  openTimeSyncDialog(): void {
+    if (!this.canSyncTimeNow) return;
+    this.matDialog.open(TimeSyncDialogComponent, {
+      disableClose: true,
+      autoFocus: false,
+      width: '560px',
+      data: {
+        gatewayDeviceId: this.data.gatewayDeviceId,
+        connectorName: this.data.connectorName,
+        deviceName: this.deviceForm.get('deviceName').value,
+        connectorType: 's7',
+      },
+    }).afterClosed().subscribe((synced: boolean) => {
+      if (synced) {
+        this.deviceForm.get('timeSync.verified').setValue(true);
+        this.deviceForm.get('timeSync.verified').markAsDirty();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   manageKeys($event: Event, matButton: MatButton, keysType: S7ValueKey): void {

@@ -21,6 +21,7 @@ import {
   ElementRef,
   forwardRef,
   inject,
+  Input,
   ViewChild,
 } from '@angular/core';
 import {
@@ -62,6 +63,9 @@ import {
   imports: [CommonModule, SharedModule],
 })
 export class S7DevicesTableComponent implements ControlValueAccessor, Validator {
+
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   readonly displayedColumns = ['deviceName', 'host', 'model', 'tags', 'actions'];
 
@@ -125,7 +129,11 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
   addDevice(): void {
     this.dialog.open<S7DeviceDialogComponent, S7DeviceDialogData, S7DeviceConfig>(
       S7DeviceDialogComponent, {
-        data: { isEdit: false },
+        data: {
+          isEdit: false,
+          gatewayDeviceId: this.gatewayDeviceId,
+          connectorName: this.connectorName,
+        },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,
@@ -142,7 +150,12 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
   editDevice(index: number): void {
     this.dialog.open<S7DeviceDialogComponent, S7DeviceDialogData, S7DeviceConfig>(
       S7DeviceDialogComponent, {
-        data: { device: this.devices[index], isEdit: true },
+        data: {
+          device: this.devices[index],
+          isEdit: true,
+          gatewayDeviceId: this.gatewayDeviceId,
+          connectorName: this.connectorName,
+        },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,

@@ -1,0 +1,87 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<mat-toolbar color="primary">
+  <h2>Set Device Date &amp; Time</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button (click)="close()" type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="time-sync-dialog-content">
+
+  <div *ngIf="loading && !info" class="ts-loading">
+    <mat-spinner diameter="32"></mat-spinner>
+    <span>Reading device time…</span>
+  </div>
+
+  <div *ngIf="info && !loading" class="ts-info">
+    <div class="ts-row">
+      <div class="ts-label">System time</div>
+      <div class="ts-value">{{ systemTimeDisplay }}</div>
+    </div>
+    <div class="ts-row ts-device-row">
+      <div class="ts-label">Device time</div>
+      <div class="ts-value">
+        <ng-container *ngIf="useSystemTime || !deviceTimeAvailable">{{ deviceTimeDisplay }}</ng-container>
+        <div class="ts-datetime-inputs" *ngIf="!useSystemTime && deviceTimeAvailable">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="ts-date-field">
+            <input matInput type="date" [(ngModel)]="customDate" [disabled]="syncing"/>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="ts-time-field">
+            <input matInput type="time" step="1" [(ngModel)]="customTime" [disabled]="syncing"/>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+    <div class="ts-row" *ngIf="deviceTimeAvailable && useSystemTime">
+      <div class="ts-label">Drift</div>
+      <div class="ts-value" [class.ts-drift-warn]="driftIsLarge">
+        {{ driftDisplay }}
+        <span *ngIf="driftDisplay !== '—'" class="ts-drift-note">
+          ({{ driftBehind ? 'device behind' : 'device ahead' }})
+        </span>
+      </div>
+    </div>
+    <div class="ts-checkbox-row">
+      <mat-checkbox [(ngModel)]="useSystemTime" [disabled]="syncing">
+        Take datetime from system
+      </mat-checkbox>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="ts-error">
+    <mat-icon>error</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+</div>
+
+<div mat-dialog-actions class="tb-dialog-actions">
+  <button mat-button (click)="refresh()" [disabled]="loading || syncing" type="button">
+    Refresh
+  </button>
+  <span class="flex-1"></span>
+  <button mat-button (click)="close()" [disabled]="syncing" type="button">
+    Cancel
+  </button>
+  <button mat-raised-button color="primary"
+          (click)="apply()"
+          [disabled]="loading || syncing || !info || (!useSystemTime && (!customDate || !customTime))"
+          type="button">
+    <mat-icon *ngIf="syncing" class="ts-spinner-icon">hourglass_empty</mat-icon>
+    {{ syncing ? 'Applying…' : 'Apply' }}
+  </button>
+</div>

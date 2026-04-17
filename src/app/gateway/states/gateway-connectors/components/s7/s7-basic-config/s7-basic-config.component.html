@@ -18,6 +18,8 @@
     <ng-container [ngTemplateOutlet]="generalTabContent"/>
   </mat-tab>
   <mat-tab label="Devices*">
-    <tb-s7-devices-table formControlName="devices"/>
+    <tb-s7-devices-table formControlName="devices"
+                         [gatewayDeviceId]="gatewayDeviceId"
+                         [connectorName]="connectorName"/>
   </mat-tab>
 </mat-tab-group>

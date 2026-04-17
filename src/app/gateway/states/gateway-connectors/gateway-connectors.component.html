@@ -304,6 +304,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              [gatewayDeviceId]="device?.id"
+              [connectorName]="connectorForm.get('name')?.value"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -321,6 +323,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              [gatewayDeviceId]="device?.id"
+              [connectorName]="connectorForm.get('name')?.value"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>

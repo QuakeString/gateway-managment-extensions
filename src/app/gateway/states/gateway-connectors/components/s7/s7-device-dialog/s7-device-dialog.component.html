@@ -216,6 +216,49 @@
           </div>
         </mat-expansion-panel>
       </div>
+      <div class="tb-form-panel stroked time-sync-panel" formGroupName="timeSync">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Time synchronization
+              <span *ngIf="deviceForm.get('timeSync.enabled').value"
+                    class="ts-inline-hint">
+                (auto every {{ deviceForm.get('timeSync.intervalSec').value }}s)
+              </span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="ts-body">
+            <div class="ts-auto-row">
+              <span class="ts-auto-label">
+                Auto sync
+                <mat-icon class="material-icons ts-info-icon"
+                          matTooltip="Push gateway time to PLC periodically. Requires a successful manual sync first to confirm the PLC accepts clock writes."
+                          matTooltipPosition="above">info_outline</mat-icon>
+              </span>
+              <mat-slide-toggle formControlName="enabled"
+                                [disabled]="!isTimeSyncVerified"
+                                [matTooltip]="isTimeSyncVerified ? '' : 'Set the device date/time manually first to verify the PLC supports clock writes.'"></mat-slide-toggle>
+              <mat-form-field *ngIf="deviceForm.get('timeSync.enabled').value"
+                              class="ts-interval-field"
+                              appearance="outline"
+                              subscriptSizing="dynamic">
+                <mat-label>Interval (s)</mat-label>
+                <input matInput type="number" formControlName="intervalSec" min="10"/>
+              </mat-form-field>
+            </div>
+            <div class="ts-button-row">
+              <button mat-stroked-button type="button"
+                      color="primary"
+                      [disabled]="!canSyncTimeNow"
+                      [matTooltip]="canSyncTimeNow ? 'Read and set the PLC clock' : 'Save the device first to enable manual sync'"
+                      (click)="openTimeSyncDialog()">
+                <mat-icon>schedule</mat-icon>
+                Set date time
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
       <div class="tb-form-row space-between tb-flex">
         <div class="fixed-title-width">Timeseries</div>
         <div class="tb-flex ellipsis-chips-container">

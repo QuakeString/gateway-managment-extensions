@@ -119,6 +119,12 @@ export interface IEC61850DataAcquisition {
   polledDataPoints?: { reference: string; fc: IEC61850FC }[];
 }
 
+export interface IEC61850TimeSyncConfig {
+  enabled: boolean;
+  intervalSec?: number;
+  targetReference?: string;
+}
+
 export interface IEC61850DeviceConfig {
   deviceName: string;
   deviceType: string;
@@ -132,6 +138,7 @@ export interface IEC61850DeviceConfig {
   dataAcquisition?: IEC61850DataAcquisition;
   tls?: IEC61850TlsConfig;
   goose?: IEC61850GooseConfig;
+  timeSync?: IEC61850TimeSyncConfig;
   timeseries: IEC61850DataKey[];
   attributes: IEC61850DataKey[];
   attributeUpdates: IEC61850DataKey[];

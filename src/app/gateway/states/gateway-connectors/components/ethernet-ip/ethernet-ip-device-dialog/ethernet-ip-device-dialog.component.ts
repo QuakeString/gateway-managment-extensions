@@ -23,7 +23,7 @@ import {
   Renderer2,
   ViewContainerRef,
 } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -39,7 +39,6 @@ import {
   EthernetIPDeviceConfig, EthernetIPPlcType, EthernetIPDataKey, EthernetIPRpcConfig,
   EthernetIPValueKey, ETHERNET_IP_LOGIX_TYPES, ETHERNET_IP_LOGIX_DRIVER_TYPES,
 } from '../../../models/public-api';
-import { MatDialog } from '@angular/material/dialog';
 import { EthernetIPDataKeysPanelComponent } from '../ethernet-ip-data-keys-panel/ethernet-ip-data-keys-panel.component';
 import {
   EthernetIPTagBrowserDialogComponent,
@@ -47,11 +46,14 @@ import {
   EthernetIPTagBrowserResult,
   PlcTagDefinition,
 } from '../ethernet-ip-tag-browser-dialog/ethernet-ip-tag-browser-dialog.component';
+import { TimeSyncDialogComponent } from '../../../../../shared/components/time-sync-dialog/time-sync-dialog.component';
 
 export interface EthernetIPDeviceDialogData {
   device?: EthernetIPDeviceConfig;
   isEdit: boolean;
   browsedTags?: PlcTagDefinition[];
+  gatewayDeviceId?: string;
+  connectorName?: string;
 }
 
 @Component({
@@ -85,6 +87,11 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
     pollPeriod: [5000, [Validators.required, Validators.min(100)]],
     connectAttemptCount: [3, [Validators.required, Validators.min(1)]],
     waitAfterFailedAttemptsMs: [30000, [Validators.required, Validators.min(1000)]],
+    timeSync: this.fb.group({
+      enabled: [false],
+      intervalSec: [300, [Validators.min(10)]],
+      verified: [false],
+    }),
     timeseries: [[] as EthernetIPDataKey[]],
     attributes: [[] as EthernetIPDataKey[]],
     attributeUpdates: [[] as EthernetIPDataKey[]],
@@ -130,8 +137,45 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
 
   save(): void {
     if (this.deviceForm.valid) {
-      this.dialogRef.close(this.deviceForm.value as unknown as EthernetIPDeviceConfig);
+      const result = this.deviceForm.value as unknown as EthernetIPDeviceConfig;
+      const ts: any = (result as any).timeSync;
+      if (ts && !ts.enabled && !ts.verified) {
+        delete (result as any).timeSync;
+      } else if (ts && !ts.enabled) {
+        (result as any).timeSync = { enabled: false, verified: true };
+      }
+      this.dialogRef.close(result);
     }
+  }
+
+  get canSyncTimeNow(): boolean {
+    return !!(this.data.gatewayDeviceId && this.data.connectorName
+              && this.deviceForm.get('deviceName').value);
+  }
+
+  get isTimeSyncVerified(): boolean {
+    return !!this.deviceForm.get('timeSync.verified')?.value;
+  }
+
+  openTimeSyncDialog(): void {
+    if (!this.canSyncTimeNow) return;
+    this.matDialog.open(TimeSyncDialogComponent, {
+      disableClose: true,
+      autoFocus: false,
+      width: '560px',
+      data: {
+        gatewayDeviceId: this.data.gatewayDeviceId,
+        connectorName: this.data.connectorName,
+        deviceName: this.deviceForm.get('deviceName').value,
+        connectorType: 'ethernet_ip',
+      },
+    }).afterClosed().subscribe((synced: boolean) => {
+      if (synced) {
+        this.deviceForm.get('timeSync.verified').setValue(true);
+        this.deviceForm.get('timeSync.verified').markAsDirty();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   openTagBrowser(targetCategory: 'timeseries' | 'attributes'): void {

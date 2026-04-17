@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, forwardRef } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -43,6 +43,9 @@ import { S7DevicesTableComponent } from '../s7-devices-table/s7-devices-table.co
   styleUrls: ['./s7-basic-config.component.scss'],
 })
 export class S7BasicConfigComponent extends GatewayConnectorBasicConfigDirective<S7BasicConfig, S7BasicConfig> {
+
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   isLegacy = false;
 

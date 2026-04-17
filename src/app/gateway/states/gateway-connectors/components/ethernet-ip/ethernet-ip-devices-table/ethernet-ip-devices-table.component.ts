@@ -21,6 +21,7 @@ import {
   ElementRef,
   forwardRef,
   inject,
+  Input,
   ViewChild,
 } from '@angular/core';
 import {
@@ -68,6 +69,9 @@ import {
   imports: [CommonModule, SharedModule],
 })
 export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Validator {
+
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   readonly displayedColumns = ['deviceName', 'host', 'plcType', 'tags', 'actions'];
 
@@ -131,7 +135,11 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
   addDevice(): void {
     this.dialog.open<EthernetIPDeviceDialogComponent, EthernetIPDeviceDialogData, EthernetIPDeviceConfig>(
       EthernetIPDeviceDialogComponent, {
-        data: { isEdit: false },
+        data: {
+          isEdit: false,
+          gatewayDeviceId: this.gatewayDeviceId,
+          connectorName: this.connectorName,
+        },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,
@@ -148,7 +156,12 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
   editDevice(index: number): void {
     this.dialog.open<EthernetIPDeviceDialogComponent, EthernetIPDeviceDialogData, EthernetIPDeviceConfig>(
       EthernetIPDeviceDialogComponent, {
-        data: { device: this.devices[index], isEdit: true },
+        data: {
+          device: this.devices[index],
+          isEdit: true,
+          gatewayDeviceId: this.gatewayDeviceId,
+          connectorName: this.connectorName,
+        },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,

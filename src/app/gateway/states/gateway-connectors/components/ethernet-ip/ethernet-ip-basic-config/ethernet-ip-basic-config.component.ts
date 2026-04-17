@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, forwardRef } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -43,6 +43,9 @@ import { EthernetIPDevicesTableComponent } from '../ethernet-ip-devices-table/et
   styleUrls: ['./ethernet-ip-basic-config.component.scss'],
 })
 export class EthernetIPBasicConfigComponent extends GatewayConnectorBasicConfigDirective<EthernetIPBasicConfig, EthernetIPBasicConfig> {
+
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   isLegacy = false;
 

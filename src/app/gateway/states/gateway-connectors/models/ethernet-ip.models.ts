@@ -60,6 +60,11 @@ export interface EthernetIPRpcConfig {
   operation: 'read' | 'write';
 }
 
+export interface EthernetIPTimeSyncConfig {
+  enabled: boolean;
+  intervalSec?: number;
+}
+
 export interface EthernetIPDeviceConfig {
   deviceName: string;
   deviceType: string;
@@ -71,6 +76,7 @@ export interface EthernetIPDeviceConfig {
   connectAttemptCount: number;
   waitAfterFailedAttemptsMs: number;
   reportStrategy?: ReportStrategyConfig;
+  timeSync?: EthernetIPTimeSyncConfig;
   timeseries: EthernetIPDataKey[];
   attributes: EthernetIPDataKey[];
   attributeUpdates: EthernetIPDataKey[];
