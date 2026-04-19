@@ -132,6 +132,13 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
     if (!securityInfo) {
       const defaultSecurity = {type: SecurityType.ANONYMOUS};
       this.securityFormGroup.reset(defaultSecurity, {emitEvent: false});
+      // Initial state has `username` required (for BASIC) but no value — if we
+      // don't disable the unused validators now, the form is silently invalid
+      // until the user interacts with the type dropdown (which triggers the
+      // valueChanges subscription that normally calls updateValidators). That
+      // previously blocked Save on fresh OPC-UA / OPC-DA forms even though
+      // every visible field was filled.
+      this.updateValidators(SecurityType.ANONYMOUS);
     } else {
       if (!securityInfo.type) {
         securityInfo.type = SecurityType.ANONYMOUS;
