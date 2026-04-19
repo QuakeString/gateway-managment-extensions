@@ -1,0 +1,71 @@
+:host .opc-import-content {
+  min-width: 640px;
+  max-width: 860px;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.opc-import-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.opc-import-filename {
+  font-family: "Roboto Mono", monospace;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.opc-import-target {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.opc-import-error {
+  color: #ef5350;
+  font-size: 13px;
+}
+
+.opc-import-columns-title {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.opc-import-columns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.opc-import-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  .sep { opacity: 0.35; }
+  a { text-decoration: underline; opacity: 0.8; }
+}
+
+.opc-import-invalid {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid rgba(127,127,127,0.25);
+  border-radius: 4px;
+  padding: 8px;
+
+  table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  th, td { text-align: left; padding: 2px 6px; border-bottom: 1px dashed rgba(127,127,127,0.15); }
+  th { opacity: 0.7; font-weight: 500; }
+  .err { color: #e57373; }
+}
+
+.opc-import-invalid-more {
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.5;
+  padding-top: 6px;
+}

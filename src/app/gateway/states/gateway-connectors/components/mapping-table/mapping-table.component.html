@@ -83,6 +83,28 @@
                       (click)="deleteMapping($event, i)">
                 <tb-icon>delete</tb-icon>
               </button>
+              <!-- Import/Export menu — OPC-UA only for now. Each mapping row
+                   represents one logical device with its own attributes +
+                   timeseries lists, which is what import/export acts on. -->
+              <ng-container *ngIf="mappingType === mappingTypeEnum.OPCUA">
+                <button mat-icon-button
+                        [matMenuTriggerFor]="opcMenu"
+                        (click)="$event.stopPropagation()"
+                        matTooltip="More"
+                        matTooltipPosition="above">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #opcMenu="matMenu" xPosition="before">
+                  <button mat-menu-item (click)="exportOpcTags(i)">
+                    <mat-icon>download</mat-icon>
+                    <span>Export Tags</span>
+                  </button>
+                  <button mat-menu-item (click)="importOpcTags(i)">
+                    <mat-icon>upload</mat-icon>
+                    <span>Import Tags</span>
+                  </button>
+                </mat-menu>
+              </ng-container>
             </ng-template>
             <div class="lt-lg:!hidden flex flex-1 flex-row items-stretch justify-end"
                  [style]="{ minWidth: '96px', textAlign: 'center'}">

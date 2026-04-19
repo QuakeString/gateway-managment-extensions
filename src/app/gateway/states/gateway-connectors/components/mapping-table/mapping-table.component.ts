@@ -57,6 +57,11 @@ import {
 } from '../../models/public-api';
 import { TruncateWithTooltipDirective } from '../../../../shared/directives/public-api';
 import { MappingDialogComponent } from '../public-api';
+import {
+  OpcUaTagImportDialogComponent,
+  OpcUaTagImportDialogData,
+  OpcUaTagImportResult,
+} from '../opc/opc-ua-tag-import-dialog/opc-ua-tag-import-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull, DialogService } from '@core/public-api';
 import { CommonModule } from '@angular/common';
 import { TbTableDatasource, coerceBoolean, SharedModule } from '@shared/public-api';
@@ -256,6 +261,69 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
     if (data?.length) {
       data.forEach((mapping: ConnectorMapping) => this.mappingFormGroup.push(this.fb.control(mapping)));
     }
+  }
+
+  /**
+   * Export the attributes + timeseries lists of one OPC-UA mapping row to a
+   * CSV file (`key, value, section, type`) and trigger a browser download.
+   * The CSV round-trips back through `importOpcTags()` — the column names
+   * match the dialog's auto-detect heuristics.
+   */
+  exportOpcTags(index: number): void {
+    const mapping: any = this.mappingFormGroup.at(index)?.value;
+    if (!mapping) return;
+
+    const rows: string[] = ['key,value,section,type'];
+    const escape = (v: any) => {
+      const s = (v ?? '').toString();
+      // Commas in NodeId segments (rare but possible in strings) need quoting.
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    for (const t of (mapping.timeseries || [])) {
+      rows.push([escape(t.key), escape(t.value), 'timeseries', escape(t.type || '')].join(','));
+    }
+    for (const a of (mapping.attributes || [])) {
+      rows.push([escape(a.key), escape(a.value), 'attributes', escape(a.type || '')].join(','));
+    }
+
+    const name = mapping.deviceInfo?.deviceNameExpression || `opcua-mapping-${index + 1}`;
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}-tags.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Open the OPC-UA import dialog for one mapping row. Result's rows are
+   * appended to the row's attributes + timeseries lists in-place — we
+   * intentionally don't dedupe keys here, to match how Add-Key works.
+   */
+  importOpcTags(index: number): void {
+    const ctrl = this.mappingFormGroup.at(index);
+    if (!ctrl) return;
+    const mapping: any = ctrl.value;
+    const mappingName = mapping?.deviceInfo?.deviceNameExpression || `mapping ${index + 1}`;
+
+    this.dialog.open<OpcUaTagImportDialogComponent, OpcUaTagImportDialogData, OpcUaTagImportResult>(
+      OpcUaTagImportDialogComponent, {
+        data: { mappingName },
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        autoFocus: false,
+      },
+    ).afterClosed().pipe(take(1), takeUntil(this.destroy$)).subscribe(result => {
+      if (!result) return;
+      const updated: any = {
+        ...mapping,
+        attributes: [...(mapping.attributes || []), ...result.attributes],
+        timeseries: [...(mapping.timeseries || []), ...result.timeseries],
+      };
+      ctrl.patchValue(updated);
+      this.mappingFormGroup.markAsDirty();
+    });
   }
 
   private getMappingValue(value: ConnectorMapping): MappingValue {
