@@ -272,7 +272,7 @@
               <div class="tb-flex no-gap" style="display: flex; align-items: center; gap: 4px;">
                 <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                   <mat-select formControlName="gooseInterface">
-                    <mat-option *ngFor="let iface of networkInterfaces" [value]="iface.name">
+                    <mat-option *ngFor="let iface of (networkInterfaces | slice: 0 : 50)" [value]="iface.name">
                       {{ iface.name }}<span *ngIf="iface.ip"> ({{ iface.ip }})</span>
                     </mat-option>
                     <mat-option *ngIf="networkInterfaces.length === 0" value="eth0">eth0</mat-option>
@@ -343,7 +343,7 @@
         <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.iec61850.data-keys' | translate }}" translate>gateway.iec61850-telemetry</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
-            <mat-chip *ngFor="let ts of deviceForm.get('timeseries').value">
+            <mat-chip *ngFor="let ts of (deviceForm.get('timeseries').value | slice: 0 : 50)">
               {{ ts.tag || ts.reference }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -375,7 +375,7 @@
         <div class="fixed-title-width" translate>gateway.iec61850-attributes</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
-            <mat-chip *ngFor="let attr of deviceForm.get('attributes').value">
+            <mat-chip *ngFor="let attr of (deviceForm.get('attributes').value | slice: 0 : 50)">
               {{ attr.tag || attr.reference }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -407,7 +407,7 @@
         <div class="fixed-title-width" translate>gateway.iec61850-attribute-updates</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
-            <mat-chip *ngFor="let au of deviceForm.get('attributeUpdates').value">
+            <mat-chip *ngFor="let au of (deviceForm.get('attributeUpdates').value | slice: 0 : 50)">
               {{ au.tag || au.reference }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -439,7 +439,7 @@
         <div class="fixed-title-width" translate>gateway.iec61850-rpc-methods</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
-            <mat-chip *ngFor="let rpc of deviceForm.get('rpc').value">
+            <mat-chip *ngFor="let rpc of (deviceForm.get('rpc').value | slice: 0 : 50)">
               {{ rpc.method }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">

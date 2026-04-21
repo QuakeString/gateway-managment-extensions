@@ -39,7 +39,7 @@
         <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.rest.http-methods' | translate }}">{{ 'gateway.rest.http-methods' | translate }}</div>
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="HTTPMethods" multiple>
-            @for (method of httpMethods; track method) {
+            @for (method of (httpMethods | slice: 0 : 50); track method) {
               <mat-option [value]="method">{{ method }}</mat-option>
             }
           </mat-select>
@@ -53,7 +53,7 @@
         <div class="tb-form-row space-between tb-flex">
           <div class="fixed-title-width">{{ 'gateway.payload-type' | translate }}</div>
           <tb-toggle-select formControlName="type" appearance="fill">
-            @for (type of converterTypes; track type) {
+            @for (type of (converterTypes | slice: 0 : 50); track type) {
               <tb-toggle-option [value]="type">{{ RestConvertorTypeTranslationsMap.get(type) | translate }}</tb-toggle-option>
             }
           </tb-toggle-select>
@@ -86,7 +86,7 @@
                 <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
                 <div class="tb-flex max-w-70%">
                   <mat-chip-listbox [tbEllipsisChipList]="converterAttributes" class="tb-flex gw-chip-list">
-                    @for (attribute of converterAttributes; track attribute) {
+                    @for (attribute of (converterAttributes | slice: 0 : 50); track attribute) {
                       <mat-chip><div tbTruncateWithTooltip>{{ attribute }}</div></mat-chip>
                     }
                     <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -108,7 +108,7 @@
                 <div class="fixed-title-width" translate>gateway.timeseries</div>
                 <div class="tb-flex max-w-70%">
                   <mat-chip-listbox class="tb-flex gw-chip-list" [tbEllipsisChipList]="converterTelemetry">
-                    @for (telemetry of converterTelemetry; track telemetry) {
+                    @for (telemetry of (converterTelemetry | slice: 0 : 50); track telemetry) {
                       <mat-chip><div tbTruncateWithTooltip>{{ telemetry }}</div></mat-chip>
                     }
                     <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -149,7 +149,7 @@
                   <div class="fixed-title-width">{{ 'gateway.keys' | translate }}</div>
                   <div class="tb-flex ellipsis-chips-container">
                     <mat-chip-listbox [tbEllipsisChipList]="customKeys" class="tb-flex gw-chip-list">
-                      <mat-chip *ngFor="let key of customKeys">
+                      <mat-chip *ngFor="let key of (customKeys | slice: 0 : 50)">
                         <div tbTruncateWithTooltip>{{ key }}</div>
                       </mat-chip>
                       <mat-chip class="mat-mdc-chip ellipsis-chip">

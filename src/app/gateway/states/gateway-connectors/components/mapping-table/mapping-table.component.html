@@ -27,6 +27,19 @@
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
         </button>
+        <!-- OPC-UA only: browse the live server's Object nodes and add each
+             selection as a new mapping row. Disabled until the connector is
+             saved (needs gatewayDeviceId + connectorName to route RPC). -->
+        <button *ngIf="mappingType === mappingTypeEnum.OPCUA"
+                mat-icon-button
+                [disabled]="!gatewayDeviceId || !connectorName"
+                (click)="discoverOpcDevices()"
+                [matTooltip]="(!gatewayDeviceId || !connectorName)
+                  ? 'Save the connector first, then use this to pick device nodes.'
+                  : 'Discover device nodes on the OPC-UA server'"
+                matTooltipPosition="above">
+          <mat-icon>account_tree</mat-icon>
+        </button>
         <button mat-icon-button
                 (click)="enterFilterMode()"
                 matTooltip="{{ 'action.search' | translate }}"
@@ -94,6 +107,12 @@
                         matTooltipPosition="above">
                   <mat-icon>more_vert</mat-icon>
                 </button>
+                <!-- Browse server → timeseries / attributes lived here
+                     originally but it's awkward at row level — user has
+                     to pick a section before they've seen the node tree.
+                     Moved into the per-section browse buttons inside the
+                     mapping edit dialog, matching IEC 61850's pattern.
+                     This menu is now import/export only. -->
                 <mat-menu #opcMenu="matMenu" xPosition="before">
                   <button mat-menu-item (click)="exportOpcTags(i)">
                     <mat-icon>download</mat-icon>
@@ -106,8 +125,11 @@
                 </mat-menu>
               </ng-container>
             </ng-template>
+            <!-- minWidth was sized for 2 icon-buttons (edit + delete); the
+                 OPC-UA 3-dot menu added a third button so the edit icon
+                 got clipped. Widen the container so all three fit. -->
             <div class="lt-lg:!hidden flex flex-1 flex-row items-stretch justify-end"
-                 [style]="{ minWidth: '96px', textAlign: 'center'}">
+                 [style]="{ minWidth: mappingType === mappingTypeEnum.OPCUA ? '144px' : '96px', textAlign: 'center'}">
               <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
             </div>
             <div class="gt-md:!hidden">
@@ -131,6 +153,16 @@
                 (click)="manageMapping($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
           <span>{{ 'gateway.add-mapping' | translate }}</span>
+        </button>
+        <!-- OPC-UA: offer auto-discovery next to the manual add, so operators
+             don't need to hand-type the device-node pattern if the connector
+             is already saved and connected. -->
+        <button *ngIf="mappingType === mappingTypeEnum.OPCUA && gatewayDeviceId && connectorName"
+                mat-button
+                class="connector"
+                (click)="discoverOpcDevices()">
+          <mat-icon class="tb-mat-96">account_tree</mat-icon>
+          <span>Discover from server</span>
         </button>
       </section>
     </div>

@@ -15,7 +15,12 @@
 ///
 
 import { Component, Inject, OnDestroy, Renderer2, ViewContainerRef } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  OpcUaNodeBrowserDialogComponent,
+  OpcUaNodeBrowserDialogData,
+  OpcUaNodeBrowserDialogResult,
+} from '../opc/opc-ua-node-browser-dialog/opc-ua-node-browser-dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState, deleteNullProperties } from '@core/public-api';
 import { FormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -130,10 +135,55 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private matDialog: MatDialog) {
     super(store, router, dialogRef);
 
     this.createMappingForm();
+  }
+
+  /**
+   * Open the OPC-UA node browser filtered to the given section, then
+   * merge picked Variable nodes into that section's form control.
+   * Mirrors the IEC 61850 device-dialog's `browseAndOpen` pattern —
+   * each of timeseries/attributes/attribute-updates gets its own
+   * browse entry point instead of a single row-level browse menu.
+   *
+   * For attribute-updates we reuse the browser's 'attributes' mode
+   * (Variables) since the data shape is identical; the result is just
+   * written into the `attributes_updates` form control.
+   */
+  browseOpcuaNodes(section: 'timeseries' | 'attributes' | 'attribute_updates'): void {
+    if (!this.data.gatewayDeviceId || !this.data.connectorName) {
+      return;
+    }
+    const formKey = section === 'attribute_updates' ? 'attributes_updates' : section;
+    const browserTarget = section === 'attribute_updates' ? 'attributes' : section;
+    const current: Array<{ key: string; value: string; type: string }> =
+      this.mappingForm.get(formKey)?.value || [];
+    const existingValues = current.map(t => t.value).filter(Boolean);
+
+    this.matDialog.open<
+      OpcUaNodeBrowserDialogComponent,
+      OpcUaNodeBrowserDialogData,
+      OpcUaNodeBrowserDialogResult
+    >(OpcUaNodeBrowserDialogComponent, {
+      data: {
+        gatewayDeviceId: this.data.gatewayDeviceId,
+        connectorName: this.data.connectorName,
+        targetSection: browserTarget as 'timeseries' | 'attributes',
+        existingValues,
+      },
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      autoFocus: false,
+      width: '900px',
+    }).afterClosed().subscribe(result => {
+      if (!result?.tags?.length) return;
+      const ctrl = this.mappingForm.get(formKey);
+      ctrl?.patchValue([...current, ...result.tags]);
+      ctrl?.markAsDirty();
+    });
   }
 
   get converterAttributes(): Array<string> {

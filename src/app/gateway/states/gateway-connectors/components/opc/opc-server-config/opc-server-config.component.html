@@ -28,6 +28,22 @@
         warning
       </mat-icon>
     </mat-form-field>
+    <!-- Opens the unified discovery dialog. The dialog owns the URL input
+         + Discover/Scan/Cancel buttons; this button is just a launcher. -->
+    <button mat-stroked-button
+            type="button"
+            style="margin-left:8px;min-width:120px"
+            [disabled]="!gatewayDeviceId || !connectorName"
+            [matTooltip]="(!gatewayDeviceId || !connectorName) ? 'Save the connector first, then try again.' : 'Discover endpoints, devices and keys.'"
+            matTooltipPosition="above"
+            (click)="discoverEndpoints()">
+      <mat-icon>wifi_find</mat-icon>
+      Discover
+    </button>
+  </div>
+  <div *ngIf="discoverError" class="tb-form-row" style="padding-left:calc(var(--mdc-text-field-label-padding-top, 12px) + 8px)">
+    <div class="fixed-title-width"></div>
+    <div class="tb-flex" style="color:#e57373;font-size:12px;">{{ discoverError }}</div>
   </div>
   <div class="tb-form-row column-xs">
     <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.opc-timeout' | translate }}">

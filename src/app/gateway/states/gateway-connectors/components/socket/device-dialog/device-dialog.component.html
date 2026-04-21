@@ -87,7 +87,7 @@
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="encoding">
-              <mat-option *ngFor="let encoding of socketEncoding" [value]="encoding">{{ encoding.toUpperCase() }}
+              <mat-option *ngFor="let encoding of (socketEncoding | slice: 0 : 50)" [value]="encoding">{{ encoding.toUpperCase() }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -105,7 +105,7 @@
         <div class="fixed-title-width" translate>gateway.timeseries</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceFormGroup.get('telemetry').value">
-            <mat-chip *ngFor="let telemetry of deviceFormGroup.get('telemetry').value">
+            <mat-chip *ngFor="let telemetry of (deviceFormGroup.get('telemetry').value | slice: 0 : 50)">
               {{ telemetry.key }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -127,7 +127,7 @@
         <div class="fixed-title-width" translate>gateway.attributes</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('attributes').value" class="tb-flex">
-            <mat-chip *ngFor="let attribute of deviceFormGroup.get('attributes').value">
+            <mat-chip *ngFor="let attribute of (deviceFormGroup.get('attributes').value | slice: 0 : 50)">
               {{ attribute.key }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -149,7 +149,7 @@
         <div class="fixed-title-width" translate>gateway.attribute-requests</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('attributeRequests').value" class="tb-flex">
-            <mat-chip *ngFor="let request of deviceFormGroup.get('attributeRequests').value">
+            <mat-chip *ngFor="let request of (deviceFormGroup.get('attributeRequests').value | slice: 0 : 50)">
               {{ request.type }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -171,7 +171,7 @@
         <div class="fixed-title-width" translate>gateway.attribute-updates</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('attributeUpdates').value" class="tb-flex">
-            <mat-chip *ngFor="let attribute of deviceFormGroup.get('attributeUpdates').value">
+            <mat-chip *ngFor="let attribute of (deviceFormGroup.get('attributeUpdates').value | slice: 0 : 50)">
               {{ attribute.encoding }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -193,7 +193,7 @@
         <div class="fixed-title-width" translate>gateway.rpc-methods</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('serverSideRpc').value" class="tb-flex">
-            <mat-chip *ngFor="let rpc of deviceFormGroup.get('serverSideRpc').value">
+            <mat-chip *ngFor="let rpc of (deviceFormGroup.get('serverSideRpc').value | slice: 0 : 50)">
               {{ rpc.methodRPC }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">

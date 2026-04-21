@@ -221,6 +221,8 @@
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               [withReportStrategy]="connectorForm.get('configVersion').value | withReportStrategy"
+              [gatewayDeviceId]="device?.id"
+              [connectorName]="connectorForm.get('name').value"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -229,6 +231,8 @@
                 formControlName="basicConfig"
                 [generalTabContent]="generalTabContent"
                 [withReportStrategy]="connectorForm.get('configVersion').value | withReportStrategy"
+                [gatewayDeviceId]="device?.id"
+                [connectorName]="connectorForm.get('name').value"
               />
             </ng-template>
           </ng-container>

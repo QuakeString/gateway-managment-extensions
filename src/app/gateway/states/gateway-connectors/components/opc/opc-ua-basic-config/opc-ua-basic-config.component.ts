@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, ViewChild } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   MappingType,
@@ -61,6 +61,16 @@ import { GatewayConnectorBasicConfigDirective } from '../../../abstract/public-a
 export class OpcUaBasicConfigComponent extends GatewayConnectorBasicConfigDirective<OPCBasicConfig_v3_5_2, OPCBasicConfig_v3_5_2> {
 
   @Input() @coerceBoolean() withReportStrategy = true;
+  // Propagated down to the server-config + mapping-table so their child
+  // dialogs (endpoint discover, node browser, tag import) can reach the
+  // live gateway connector via the platform's two-way RPC channel.
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
+
+  /** ViewChild handle so we can append discovered devices directly into
+   *  the mapping form via mapping-table's own append-only API instead of
+   *  clearing/repushing the whole FormControl value. */
+  @ViewChild(MappingTableComponent) mappingTable?: MappingTableComponent;
 
   mappingTypes = MappingType;
   isLegacy = false;
@@ -84,5 +94,41 @@ export class OpcUaBasicConfigComponent extends GatewayConnectorBasicConfigDirect
       server: value.server,
       mapping: value.mapping,
     };
+  }
+
+  /**
+   * Called when the discovery dialog returns a list of Object nodes to add
+   * as device mappings, each carrying the keys the operator ticked inside
+   * it. Each device becomes a new OPC-UA mapping row anchored to that
+   * NodeId, with ticked Variable children prefilled as timeseries tags.
+   * The operator can add/remove more tags later via the mapping row's
+   * 3-dot menu → Browse.
+   */
+  appendDiscoveredDevices(devices: Array<{
+    nodeId: string;
+    displayName: string;
+    tags: Array<{ key: string; value: string; type: string }>;
+  }>): void {
+    if (!devices?.length) return;
+    const newMappings = devices.map(d => ({
+      // Path form is easier to read than a numeric NodeId (`ns=2;i=1`)
+      // and survives if the server renumbers its namespace. The scan
+      // dialog only lists top-level Object nodes under /Objects, so the
+      // path is always `Root\.Objects\.<DisplayName>` — the connector
+      // splits that string on `\.` (see opcua_connector.find_nodes).
+      deviceNodeSource: 'path',
+      deviceNodePattern: `Root\\.Objects\\.${d.displayName}`,
+      deviceInfo: {
+        deviceNameExpressionSource: 'constant',
+        deviceNameExpression: d.displayName,
+        deviceProfileExpressionSource: 'constant',
+        deviceProfileExpression: 'default',
+      },
+      attributes: [],
+      timeseries: d.tags || [],
+      rpc_methods: [],
+      attributes_updates: [],
+    })) as any[];
+    this.mappingTable?.addMappings(newMappings);
   }
 }

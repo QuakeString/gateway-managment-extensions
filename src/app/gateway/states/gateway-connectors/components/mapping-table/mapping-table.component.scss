@@ -49,10 +49,15 @@
       }
 
       .table-container {
-        overflow: auto;
+        /* overflow-x: auto gives the user a horizontal scrollbar when
+           the action column doesn't fit (OPC-UA rows carry edit +
+           delete + 3-dot, ~144px) — previously the 3-dot got clipped
+           on narrower viewports with no way to reach it. */
+        overflow-x: auto;
+        overflow-y: auto;
         .mat-mdc-table {
           table-layout: fixed;
-          min-width: 450px;
+          min-width: 560px;
 
           .table-value-column {
             padding: 0 12px;
@@ -61,6 +66,13 @@
             &.request-column {
               width: 35%;
             }
+          }
+          /* Reserve enough width for the 3-button action group so the
+             3-dot menu never gets clipped behind the scroll edge. */
+          .mat-column-actions,
+          .cdk-column-actions {
+            min-width: 160px;
+            width: 160px;
           }
         }
       }

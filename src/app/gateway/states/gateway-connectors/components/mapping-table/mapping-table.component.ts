@@ -62,6 +62,11 @@ import {
   OpcUaTagImportDialogData,
   OpcUaTagImportResult,
 } from '../opc/opc-ua-tag-import-dialog/opc-ua-tag-import-dialog.component';
+import {
+  OpcUaNodeBrowserDialogComponent,
+  OpcUaNodeBrowserDialogData,
+  OpcUaNodeBrowserDialogResult,
+} from '../opc/opc-ua-node-browser-dialog/opc-ua-node-browser-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull, DialogService } from '@core/public-api';
 import { CommonModule } from '@angular/common';
 import { TbTableDatasource, coerceBoolean, SharedModule } from '@shared/public-api';
@@ -95,6 +100,11 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   @Input()
   @coerceBoolean()
   withReportStrategy = true;
+
+  /** Forwarded from the connector config so per-row actions (browse / import)
+   *  can invoke RPCs against the live gateway. */
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   @Input()
   set mappingType(value: MappingType) {
@@ -210,6 +220,10 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
         value,
         buttonTitle: isUndefinedOrNull(index) ?  'action.add' : 'action.apply',
         withReportStrategy: this.withReportStrategy,
+        // OPC-UA "Browse server" inside the edit dialog needs these
+        // to route the node-browser RPC — unused for other protocols.
+        gatewayDeviceId: this.gatewayDeviceId,
+        connectorName: this.connectorName,
       }
     }).afterClosed()
       .pipe(take(1), takeUntil(this.destroy$))
@@ -264,6 +278,28 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   }
 
   /**
+   * Public append-only entry point for parents that discover mappings out
+   * of band (e.g. OPC-UA Discover dialog in server-config). Going through
+   * the FormControl setValue path would clear-then-repush every existing
+   * row and cascade valueChanges up the whole form tree — heavy enough
+   * to freeze the page when a device carries many keys. This bypasses
+   * that and mirrors the in-component `discoverOpcDevices` flow.
+   */
+  addMappings(newMappings: ConnectorMapping[]): void {
+    if (!newMappings?.length) return;
+    // Push silently so N pushes don't fire N cascading valueChanges up
+    // the form tree — each carries the whole FormArray value (growing
+    // 100 → 200 → … → 2200 tags), and the chain propagates through
+    // basic-config → connector form → outer form. With 2000-key devices
+    // that's what freezes the UI after Apply. One final
+    // updateValueAndValidity fires a single valueChanges with the final
+    // value, same net effect, O(1) cost.
+    newMappings.forEach(m => this.mappingFormGroup.push(this.fb.control(m), { emitEvent: false }));
+    this.mappingFormGroup.updateValueAndValidity();
+    this.mappingFormGroup.markAsDirty();
+  }
+
+  /**
    * Export the attributes + timeseries lists of one OPC-UA mapping row to a
    * CSV file (`key, value, section, type`) and trigger a browser download.
    * The CSV round-trips back through `importOpcTags()` — the column names
@@ -294,6 +330,118 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
     a.download = `${name}-tags.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Open the node browser in `devices` mode — operator picks Object nodes
+   * on the server, each selection becomes a new OPC-UA mapping row anchored
+   * to that node. Device name defaults to the node's display name. Operator
+   * can refine device/name patterns later via the Edit (pencil) button.
+   */
+  discoverOpcDevices(): void {
+    if (!this.gatewayDeviceId || !this.connectorName) {
+      this.dialogService.alert(
+        this.translate.instant('gateway.save-connector-first-title') || 'Save connector first',
+        this.translate.instant('gateway.save-connector-first-body')
+        || 'Save the connector, then use Discover from server — the node browser needs a live gateway connection.',
+      ).subscribe();
+      return;
+    }
+
+    // Compute already-mapped device-node paths so the dialog can dim them.
+    const existingDeviceNodes = (this.mappingFormGroup.value as any[])
+      .map(m => m?.deviceNodePattern || '')
+      .filter(Boolean);
+
+    this.dialog.open<
+      OpcUaNodeBrowserDialogComponent,
+      OpcUaNodeBrowserDialogData,
+      OpcUaNodeBrowserDialogResult
+    >(OpcUaNodeBrowserDialogComponent, {
+      data: {
+        gatewayDeviceId: this.gatewayDeviceId,
+        connectorName: this.connectorName,
+        targetSection: 'devices',
+        existingValues: existingDeviceNodes,
+      },
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      autoFocus: false,
+    }).afterClosed().pipe(take(1), takeUntil(this.destroy$)).subscribe(result => {
+      if (!result || !result.devices?.length) return;
+      const newMappings: any[] = result.devices.map(d => ({
+        // Path form (Root\.Objects\.<Name>) is easier to read than the
+        // numeric NodeId and survives server namespace renumbering — the
+        // connector splits this on `\.` to resolve nodes at runtime.
+        deviceNodeSource: 'path',
+        deviceNodePattern: `Root\\.Objects\\.${d.displayName}`,
+        deviceInfo: {
+          deviceNameExpressionSource: 'constant',
+          deviceNameExpression: d.displayName,
+          deviceProfileExpressionSource: 'constant',
+          deviceProfileExpression: 'default',
+        },
+        attributes: [],
+        timeseries: [],
+        rpc_methods: [],
+        attributes_updates: [],
+      }));
+      this.pushDataAsFormArrays(newMappings);
+      this.mappingFormGroup.markAsDirty();
+    });
+  }
+
+  /**
+   * Open the OPC-UA node browser for the given mapping row — operator picks
+   * Variable nodes from the live server's address space, and they're
+   * appended to the row's timeseries list. Needs the connector saved first
+   * (gatewayDeviceId + connectorName wired through) so the RPC can route.
+   */
+  browseOpcNodes(index: number, section: 'timeseries' | 'attributes' = 'timeseries'): void {
+    if (!this.gatewayDeviceId || !this.connectorName) {
+      this.dialogService.alert(
+        this.translate.instant('gateway.save-connector-first-title') || 'Save connector first',
+        this.translate.instant('gateway.save-connector-first-body')
+        || 'Save the connector, then reopen this menu — the node browser needs a live gateway connection.',
+      ).subscribe();
+      return;
+    }
+
+    const ctrl = this.mappingFormGroup.at(index);
+    if (!ctrl) return;
+    const mapping: any = ctrl.value;
+
+    // Prefill existingValues so the dialog can dim already-mapped nodes.
+    const existingValues = [
+      ...(mapping.timeseries || []),
+      ...(mapping.attributes || []),
+    ].map((t: any) => t.value).filter(Boolean);
+
+    this.dialog.open<
+      OpcUaNodeBrowserDialogComponent,
+      OpcUaNodeBrowserDialogData,
+      OpcUaNodeBrowserDialogResult
+    >(OpcUaNodeBrowserDialogComponent, {
+      data: {
+        gatewayDeviceId: this.gatewayDeviceId,
+        connectorName: this.connectorName,
+        targetSection: section,
+        existingValues,
+      },
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      autoFocus: false,
+    }).afterClosed().pipe(take(1), takeUntil(this.destroy$)).subscribe(result => {
+      if (!result || !result.tags?.length) return;
+      const updated: any = { ...mapping };
+      if (result.targetSection === 'attributes') {
+        updated.attributes = [...(mapping.attributes || []), ...result.tags];
+      } else {
+        updated.timeseries = [...(mapping.timeseries || []), ...result.tags];
+      }
+      ctrl.patchValue(updated);
+      this.mappingFormGroup.markAsDirty();
+    });
   }
 
   /**

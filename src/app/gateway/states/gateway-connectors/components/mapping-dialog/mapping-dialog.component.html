@@ -643,14 +643,32 @@
           <div class="tb-form-row space-between tb-flex">
             <div class="fixed-title-width" translate>gateway.attributes</div>
             <div class="tb-flex ellipsis-chips-container">
+              <!-- Slice the *ngFor to ~50 — the directive hides
+                   overflow via display:none, so rendering 2000 chips
+                   only to hide 1990 blew up the initial dialog width
+                   and cost a measurable reflow pass. The directive
+                   still gets the full array so "+N more" stays right. -->
               <mat-chip-listbox [tbEllipsisChipList]="opcAttributes" class="tb-flex">
-                <mat-chip *ngFor="let attribute of opcAttributes">
+                <mat-chip *ngFor="let attribute of (opcAttributes | slice: 0 : 50)">
                   {{ attribute }}
                 </mat-chip>
                 <mat-chip class="mat-mdc-chip ellipsis-chip">
                   <label class="ellipsis-text"></label>
                 </mat-chip>
               </mat-chip-listbox>
+              <!-- Browse the live server for Variable nodes and append
+                   them into this section — mirrors IEC 61850's
+                   device-dialog pattern. Disabled when gateway/connector
+                   context isn't known (connector not yet saved). -->
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Browse server"
+                      matTooltipPosition="above"
+                      [disabled]="!data.gatewayDeviceId || !data.connectorName"
+                      (click)="browseOpcuaNodes('attributes')">
+                <mat-icon>account_tree</mat-icon>
+              </button>
               <button type="button"
                       mat-icon-button
                       color="primary"
@@ -666,13 +684,22 @@
             <div class="fixed-title-width" translate>gateway.timeseries</div>
             <div class="tb-flex ellipsis-chips-container">
               <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="opcTelemetry">
-                <mat-chip *ngFor="let telemetry of opcTelemetry">
+                <mat-chip *ngFor="let telemetry of (opcTelemetry | slice: 0 : 50)">
                   {{ telemetry }}
                 </mat-chip>
                 <mat-chip class="mat-mdc-chip ellipsis-chip">
                   <label class="ellipsis-text"></label>
                 </mat-chip>
               </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Browse server"
+                      matTooltipPosition="above"
+                      [disabled]="!data.gatewayDeviceId || !data.connectorName"
+                      (click)="browseOpcuaNodes('timeseries')">
+                <mat-icon>account_tree</mat-icon>
+              </button>
               <button type="button"
                       mat-icon-button
                       color="primary"
@@ -688,13 +715,22 @@
             <div class="fixed-title-width" translate>gateway.attribute-updates</div>
             <div class="tb-flex ellipsis-chips-container">
               <mat-chip-listbox [tbEllipsisChipList]="opcAttributesUpdates" class="tb-flex">
-                <mat-chip *ngFor="let attribute of opcAttributesUpdates">
+                <mat-chip *ngFor="let attribute of (opcAttributesUpdates | slice: 0 : 50)">
                   {{ attribute }}
                 </mat-chip>
                 <mat-chip class="mat-mdc-chip ellipsis-chip">
                   <label class="ellipsis-text"></label>
                 </mat-chip>
               </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Browse server"
+                      matTooltipPosition="above"
+                      [disabled]="!data.gatewayDeviceId || !data.connectorName"
+                      (click)="browseOpcuaNodes('attribute_updates')">
+                <mat-icon>account_tree</mat-icon>
+              </button>
               <button type="button"
                       mat-icon-button
                       color="primary"
@@ -710,7 +746,7 @@
             <div class="fixed-title-width" translate>gateway.rpc-methods</div>
             <div class="tb-flex ellipsis-chips-container">
               <mat-chip-listbox [tbEllipsisChipList]="opcRpcMethods" class="tb-flex">
-                <mat-chip *ngFor="let attribute of opcRpcMethods">
+                <mat-chip *ngFor="let attribute of (opcRpcMethods | slice: 0 : 50)">
                   {{ attribute }}
                 </mat-chip>
                 <mat-chip class="mat-mdc-chip ellipsis-chip">

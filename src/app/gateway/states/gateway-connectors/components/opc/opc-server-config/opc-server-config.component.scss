@@ -19,3 +19,46 @@
   height: 100%;
   display: block;
 }
+
+.opc-endpoint-list {
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(127, 127, 127, 0.25);
+  border-radius: 4px;
+  padding: 8px 10px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.opc-endpoint-header {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.opc-endpoint-row {
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background-color .12s;
+}
+.opc-endpoint-row:hover {
+  background-color: rgba(0, 128, 128, 0.08);
+}
+
+.opc-endpoint-url {
+  font-family: "Roboto Mono", monospace;
+  font-size: 13px;
+}
+
+.opc-endpoint-meta {
+  font-size: 11px;
+  opacity: 0.75;
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+
+  .opc-endpoint-policy {
+    font-weight: 500;
+  }
+}

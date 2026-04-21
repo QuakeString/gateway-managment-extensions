@@ -59,6 +59,8 @@ import { OpcVersionMappingUtil } from '../../../utils/public-api';
 export class OpcUaLegacyBasicConfigComponent extends GatewayConnectorBasicConfigDirective<OPCBasicConfig_v3_5_2, OPCLegacyBasicConfig> {
 
   @Input() @coerceBoolean() withReportStrategy = true;
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   mappingTypes = MappingType;
   isLegacy = true;

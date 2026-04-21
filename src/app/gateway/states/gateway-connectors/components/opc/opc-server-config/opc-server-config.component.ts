@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnDestroy, Output } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  OpcUaScanDialogComponent,
+  OpcUaScanDialogData,
+  OpcUaScanDialogResult,
+} from '../opc-ua-scan-dialog/opc-ua-scan-dialog.component';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -43,6 +49,7 @@ import { takeUntil } from 'rxjs/operators';
 import {
   SecurityConfigComponent
 } from '../../security-config/security-config.component';
+import { DeviceService } from '@core/public-api';
 
 @Component({
   selector: 'tb-opc-server-config',
@@ -76,6 +83,23 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
   @coerceBoolean()
   hideNewFields: boolean = false;
 
+  /** Threaded down from the connector form so we can invoke RPCs against the
+   *  already-running gateway — needed by the Discover Endpoints button. */
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
+
+  /** Devices (with their picked tags) returned from the discovery dialog —
+   *  the parent basic-config appends them to the mapping form. Server-
+   *  config stays focused on the server tab's own fields; device rows
+   *  live on the Data mapping tab. */
+  @Output() devicesDiscovered = new EventEmitter<Array<{
+    nodeId: string;
+    displayName: string;
+    tags: Array<{ key: string; value: string; type: string }>;
+  }>>();
+
+  discoverError: string | null = null;
+
   securityPolicyTypes = SecurityPolicyTypes;
   SecurityMode = SecurityMode;
   serverConfigFormGroup: UntypedFormGroup;
@@ -85,7 +109,12 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private deviceService: DeviceService,
+    private dialog: MatDialog,
+    private cd: ChangeDetectorRef,
+  ) {
     this.serverConfigFormGroup = this.fb.group({
       url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
@@ -129,6 +158,67 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
     return this.serverConfigFormGroup.valid ? null : {
       serverConfigFormGroup: { valid: false }
     };
+  }
+
+  /**
+   * Just opens the unified discovery dialog — the dialog itself owns the
+   * URL input, Discover/Scan buttons, and cancel. The button here has no
+   * loading state: opening a dialog is instant, and the dialog can be
+   * closed any time.
+   *
+   * On apply the dialog returns `{endpointUrl, securityPolicy, devices}`;
+   * URL + security get written into the form, devices (+ their picked
+   * keys) are emitted upward so basic-config can append them to the
+   * mapping form as new device rows.
+   */
+  discoverEndpoints(): void {
+    if (!this.gatewayDeviceId || !this.connectorName) {
+      this.discoverError = 'Save the connector first, then click Discover.';
+      return;
+    }
+    this.discoverError = null;
+    const url = this.serverConfigFormGroup.get('url')?.value || '';
+
+    this.dialog.open<
+      OpcUaScanDialogComponent,
+      OpcUaScanDialogData,
+      OpcUaScanDialogResult
+    >(OpcUaScanDialogComponent, {
+      data: {
+        gatewayDeviceId: this.gatewayDeviceId,
+        connectorName: this.connectorName,
+        initialUrl: url || undefined,
+        existingDeviceNodes: [],
+      },
+      // Fixed outer width + max-height so the dialog doesn't resize
+      // based on inner content on desktop. `tb-fullscreen-dialog`
+      // panel class flips the dialog to 100vw/100vh on mobile via
+      // Sentient's global styles — mobile media query in the dialog's
+      // own SCSS handles layout reflow (split becomes rows, etc.).
+      width: '900px',
+      maxWidth: '92vw',
+      height: 'auto',
+      maxHeight: '85vh',
+      disableClose: false,
+      // `opc-scan-dialog-panel` is the hook the scan dialog's SCSS uses
+      // to force full-screen on xs + sm breakpoints (tb-fullscreen-
+      // dialog only activates < 600px, but the dialog also needs it
+      // up to 959px / tablets).
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'opc-scan-dialog-panel'],
+      autoFocus: false,
+    }).afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.serverConfigFormGroup.get('url')?.setValue(result.endpointUrl);
+      if (result.securityPolicy
+          && this.securityPolicyTypes.some(p => p.value === result.securityPolicy)) {
+        this.serverConfigFormGroup.get('security')?.setValue(result.securityPolicy);
+      }
+      this.serverConfigFormGroup.markAsDirty();
+      if (result.devices?.length) {
+        this.devicesDiscovered.emit(result.devices);
+      }
+      this.cd.markForCheck();
+    });
   }
 
   writeValue(serverConfig: ServerConfig): void {

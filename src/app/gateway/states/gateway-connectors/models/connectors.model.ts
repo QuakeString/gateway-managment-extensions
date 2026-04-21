@@ -150,6 +150,11 @@ export interface MappingInfo {
   value: {[key: string]: any};
   buttonTitle: string;
   withReportStrategy: boolean;
+  /** Pass-through for OPC-UA so the mapping-dialog's per-section
+   *  "Browse server" buttons can route the node-browser RPC to the
+   *  right gateway + connector. Undefined for non-OPC-UA mappings. */
+  gatewayDeviceId?: string;
+  connectorName?: string;
 }
 
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingValue | ConverterConnectorMapping;

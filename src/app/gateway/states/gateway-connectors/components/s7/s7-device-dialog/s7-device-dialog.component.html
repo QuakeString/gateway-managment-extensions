@@ -89,7 +89,7 @@
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="model">
-              <mat-option *ngFor="let model of plcModels" [value]="model">
+              <mat-option *ngFor="let model of (plcModels | slice: 0 : 50)" [value]="model">
                 {{ model }}
               </mat-option>
             </mat-select>
@@ -263,7 +263,7 @@
         <div class="fixed-title-width">Timeseries</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
-            <mat-chip *ngFor="let ts of deviceForm.get('timeseries').value">
+            <mat-chip *ngFor="let ts of (deviceForm.get('timeseries').value | slice: 0 : 50)">
               {{ ts.tag }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -285,7 +285,7 @@
         <div class="fixed-title-width">Attributes</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
-            <mat-chip *ngFor="let attr of deviceForm.get('attributes').value">
+            <mat-chip *ngFor="let attr of (deviceForm.get('attributes').value | slice: 0 : 50)">
               {{ attr.tag }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -307,7 +307,7 @@
         <div class="fixed-title-width">Attribute Updates</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
-            <mat-chip *ngFor="let au of deviceForm.get('attributeUpdates').value">
+            <mat-chip *ngFor="let au of (deviceForm.get('attributeUpdates').value | slice: 0 : 50)">
               {{ au.tag }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -329,7 +329,7 @@
         <div class="fixed-title-width">RPC Methods</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
-            <mat-chip *ngFor="let rpc of deviceForm.get('rpc').value">
+            <mat-chip *ngFor="let rpc of (deviceForm.get('rpc').value | slice: 0 : 50)">
               {{ rpc.method }}
             </mat-chip>
             <mat-chip class="mat-mdc-chip ellipsis-chip">

@@ -1,0 +1,289 @@
+<!--
+  Copyright © 2016-2025 The Sentient Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+-->
+<div class="scan-dialog">
+  <mat-toolbar color="primary">
+    <h2>Discover OPC-UA server</h2>
+    <span class="flex-1"></span>
+    <!-- In-app help popup — clicking the icon opens a markdown-rendered
+         dialog loaded from assets/help/en_US/widget/lib/gateway/...
+         matching the S7 "Address Examples" / Modbus data-keys popup
+         pattern. -->
+    <div class="help-icon"
+         [tb-help-popup]="'widget/lib/gateway/opcua-discover_fn'"
+         tb-help-popup-placement="bottom"
+         [tb-help-popup-style]="{maxWidth: '720px'}">
+    </div>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div mat-dialog-content class="dialog-content">
+
+    <!-- ============================ ACTION BAR ============================ -->
+    <!-- Single row. When a probe/scan is in flight, the URL field shows an
+         inline status via matSuffix (so the action row height stays
+         constant — no layout jitter) and a warn-coloured X button appears
+         at the end to cancel. -->
+    <div class="action-bar">
+      <mat-form-field appearance="outline" class="url-field"
+                      subscriptSizing="dynamic" floatLabel="always">
+        <mat-label>Endpoint URL</mat-label>
+        <input matInput
+               [formControl]="urlInput"
+               placeholder="opc.tcp://host:4840"
+               (keyup.enter)="discoverFromInput()">
+      </mat-form-field>
+
+      <button mat-stroked-button
+              type="button"
+              class="action-btn"
+              [disabled]="probing || scanning || !urlInput.value?.trim()"
+              (click)="discoverFromInput()">
+        <mat-icon>wifi_find</mat-icon>
+        Discover
+      </button>
+
+      <button mat-stroked-button
+              type="button"
+              class="action-btn"
+              [disabled]="probing || scanning"
+              (click)="scanNetwork()">
+        <mat-icon>travel_explore</mat-icon>
+        Scan network
+      </button>
+    </div>
+
+    <!-- Collapsible status row. Always present in the DOM — only
+         max-height + opacity transition on the `--visible` class, so
+         the opening/closing animates smoothly and the surrounding
+         layout never jumps. Hosts both the in-flight indicator AND
+         the post-scan error message. -->
+    <div class="status-row" [class.status-row--visible]="probing || scanning || !!globalError">
+      <ng-container *ngIf="probing || scanning">
+        <mat-spinner diameter="16"></mat-spinner>
+        <span class="status-text">{{ probing ? 'Probing ' + (urlInput.value || '') : 'Scanning LDS / mDNS…' }}</span>
+      </ng-container>
+      <ng-container *ngIf="!probing && !scanning && globalError">
+        <mat-icon class="status-error-icon">error_outline</mat-icon>
+        <span class="status-text">{{ globalError }}</span>
+      </ng-container>
+      <span class="flex-1"></span>
+      <button *ngIf="probing || scanning || globalError"
+              mat-icon-button
+              type="button"
+              class="cancel-x-inline"
+              matTooltip="Cancel"
+              matTooltipPosition="above"
+              (click)="probing ? cancelProbe() : (scanning ? cancelScan() : dismissError())">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="split">
+      <!-- =========================== LEFT PANEL =========================== -->
+      <div class="left-panel">
+        <div class="panel-header">
+          <span class="panel-title">Available servers</span>
+          <span class="flex-1"></span>
+          <span class="counts" *ngIf="servers.length > 0">{{ servers.length }}</span>
+        </div>
+
+        <div *ngIf="!probing && !scanning && servers.length === 0" class="panel-empty">
+          <mat-icon>info</mat-icon>
+          <span>Enter a URL and hit Discover, or tap Scan network.</span>
+        </div>
+
+        <div class="server-list">
+          <div class="server-card"
+               *ngFor="let server of servers; trackBy: trackServer"
+               [class.server-card-selected]="server.id === selectedServerId"
+               (click)="selectServer(server)">
+            <mat-icon class="server-icon">dns</mat-icon>
+            <div class="server-title">
+              <div class="server-name">{{ server.applicationName || server.applicationUri || 'Unnamed server' }}</div>
+              <div class="server-endpoint">{{ server.endpointUrl || server.discoveryUrls?.[0] || '(no endpoint)' }}</div>
+            </div>
+            <span class="origin-badge" [class.origin-scan]="server.origin === 'scan'">
+              {{ server.origin === 'scan' ? 'LDS' : 'URL' }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="warnings.length > 0" class="warnings">
+          <details>
+            <summary>{{ warnings.length }} warning{{ warnings.length === 1 ? '' : 's' }}</summary>
+            <ul>
+              <li *ngFor="let w of warnings">{{ w }}</li>
+            </ul>
+          </details>
+        </div>
+      </div>
+
+      <!-- =========================== RIGHT PANEL =========================== -->
+      <div class="right-panel">
+        <ng-container *ngIf="selectedServer as srv; else noSelection">
+          <div class="panel-header">
+            <span class="panel-title truncate">{{ srv.applicationName || srv.applicationUri || 'Server' }}</span>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-label">Endpoint URL</div>
+            <div class="meta-value mono">{{ srv.endpointUrl || '—' }}</div>
+
+            <ng-container *ngIf="srv.applicationUri">
+              <div class="meta-label">Application URI</div>
+              <div class="meta-value mono">{{ srv.applicationUri }}</div>
+            </ng-container>
+
+            <ng-container *ngIf="srv.productUri">
+              <div class="meta-label">Product URI</div>
+              <div class="meta-value mono">{{ srv.productUri }}</div>
+            </ng-container>
+
+            <div class="meta-label">Security</div>
+            <div class="meta-value">
+              <span class="policy-badge">{{ shortPolicy(srv.securityPolicyUri) }}</span>
+              <span class="mode-badge" *ngIf="srv.securityMode">{{ srv.securityMode }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="srv.endpoints.length > 1" class="endpoint-picker">
+            <div class="endpoint-picker-label">Select endpoint / security:</div>
+            <div class="endpoint-row"
+                 *ngFor="let ep of srv.endpoints; let i = index"
+                 [class.endpoint-row-selected]="i === srv.selectedEndpointIndex"
+                 (click)="pickEndpoint(i)">
+              <mat-icon class="endpoint-radio">{{ i === srv.selectedEndpointIndex ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+              <span class="policy-badge">{{ shortPolicy(ep.securityPolicyUri) }}</span>
+              <span class="mode-badge">{{ ep.securityMode }}</span>
+              <span *ngIf="ep.securityLevel" class="level-badge">lvl {{ ep.securityLevel }}</span>
+              <span class="flex-1"></span>
+              <span class="mono endpoint-url">{{ ep.endpointUrl }}</span>
+            </div>
+          </div>
+
+          <div class="devices-section">
+            <div class="devices-header">
+              <span>Devices &amp; keys</span>
+              <span class="flex-1"></span>
+              <span class="selected-counts">
+                {{ selectedDeviceCount() }} device{{ selectedDeviceCount() === 1 ? '' : 's' }} ·
+                {{ selectedTagCount() }} key{{ selectedTagCount() === 1 ? '' : 's' }}
+              </span>
+            </div>
+
+            <div *ngIf="srv.objects.length === 0" class="panel-empty">
+              <mat-icon>info</mat-icon>
+              <span>No Object nodes found under /Objects (or anonymous browse was rejected).</span>
+            </div>
+
+            <div class="device-row-wrap" *ngFor="let obj of srv.objects; trackBy: trackObject">
+              <div class="device-row"
+                   [class.device-row-selected]="obj.selected"
+                   [class.disabled]="isExisting(obj)">
+                <mat-checkbox [checked]="obj.selected"
+                              [disabled]="isExisting(obj)"
+                              (click)="$event.stopPropagation()"
+                              (change)="toggleDeviceSelect(obj)">
+                </mat-checkbox>
+                <button mat-icon-button
+                        class="chevron-btn"
+                        [disabled]="isExisting(obj)"
+                        (click)="$event.stopPropagation(); toggleDeviceExpand(obj)">
+                  <!-- Loading uses a CSS-rotated icon instead of
+                       mat-progress-spinner — at these small sizes the
+                       material spinner renders as an asymmetric arc. -->
+                  <mat-icon *ngIf="!obj.loading">{{ obj.expanded ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                  <mat-icon *ngIf="obj.loading" class="spin-icon">sync</mat-icon>
+                </button>
+                <mat-icon class="node-class-icon">folder</mat-icon>
+                <span class="device-name" [class.existing-point]="isExisting(obj)">{{ obj.displayName }}</span>
+                <mat-icon *ngIf="isExisting(obj)" class="existing-icon" matTooltip="Already mapped">check_circle</mat-icon>
+                <span class="flex-1"></span>
+                <span class="mono device-nodeid">{{ obj.nodeId }}</span>
+              </div>
+
+              <!-- Always rendered so expand/collapse animates smoothly —
+                   the `--open` class toggles max-height + padding, which
+                   cascades up through the right-panel into the dialog
+                   height without a sudden jump. -->
+              <div class="tags-list" [class.tags-list--open]="obj.expanded">
+                <div *ngIf="obj.loadError" class="tag-error">
+                  <mat-icon>error_outline</mat-icon>
+                  <span>{{ obj.loadError }}</span>
+                </div>
+
+                <div *ngIf="obj.loaded && !obj.loadError && (!obj.tags || obj.tags.length === 0)"
+                     class="tag-empty">
+                  No Variable nodes under this Object.
+                </div>
+
+                <div *ngIf="obj.tags && obj.tags.length > 0" class="tag-header">
+                  <mat-checkbox [checked]="allTagsSelected(obj)"
+                                (change)="toggleAllTags(obj)">
+                    Select all ({{ obj.tags.length }})
+                  </mat-checkbox>
+                </div>
+
+                <!-- Plain scroll — virtual scroll kept fighting CDK's
+                     prebuilt CSS + the expand animation's measurement
+                     timing. The dialog itself was never slow; post-
+                     Apply slowness was a different bug (batched push
+                     fixed it). Rendering 2000 mat-checkbox rows is fine
+                     with OnPush CD — the browser only paints what the
+                     scroll viewport shows. -->
+                <div *ngIf="obj.tags && obj.tags.length > 0" class="tags-viewport">
+                  <div class="tag-row"
+                       *ngFor="let tag of obj.tags; trackBy: trackTag"
+                       (click)="toggleTagSelect(tag, obj)">
+                    <mat-checkbox [checked]="tag.selected"
+                                  (click)="$event.stopPropagation()"
+                                  (change)="toggleTagSelect(tag, obj)">
+                    </mat-checkbox>
+                    <mat-icon class="node-class-icon">data_usage</mat-icon>
+                    <span class="tag-name">{{ tag.displayName }}</span>
+                    <span *ngIf="tag.dataType" class="dtype-badge">{{ tag.dataType }}</span>
+                    <span class="flex-1"></span>
+                    <span class="mono tag-nodeid">{{ tag.nodeId }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #noSelection>
+          <div class="panel-empty centered">
+            <span>Select a server on the left to see its endpoints, devices and keys.</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <div mat-dialog-actions class="actions-bar">
+    <button mat-button
+            (click)="clearResults()"
+            [disabled]="probing || scanning || (servers.length === 0 && !globalError)">
+      Reset
+    </button>
+    <span class="flex-1"></span>
+    <button mat-button color="primary" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button color="primary"
+            (click)="apply()"
+            [disabled]="!selectedServer || !selectedServer.endpointUrl">
+      {{ 'action.apply' | translate }}
+      <ng-container *ngIf="selectedServer">
+        — server{{ selectedDeviceCount() > 0 ? ' + ' + selectedDeviceCount() + ' device' + (selectedDeviceCount() === 1 ? '' : 's') : '' }}{{ selectedTagCount() > 0 ? ' + ' + selectedTagCount() + ' key' + (selectedTagCount() === 1 ? '' : 's') : '' }}
+      </ng-container>
+    </button>
+  </div>
+</div>

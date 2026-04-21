@@ -1,0 +1,741 @@
+/*
+ * Two-panel (master/detail) discovery dialog.
+ *
+ * Component uses ViewEncapsulation.None so this stylesheet can reach
+ * the Material overlay wrapper (`.opc-scan-dialog-panel` is the
+ * panelClass on MatDialog.open). All rules below are unique to this
+ * dialog — class names aren't reused anywhere else in the project, so
+ * leakage is low even without encapsulation. If you add new generic
+ * class names (like `.row`, `.header`) — prefix them.
+ */
+
+/* ------- full-screen override for xs + sm breakpoints (< 960px) -------
+ * tb-fullscreen-dialog only kicks in at < 600px (its media query in
+ * Sentient styles.scss is scoped to the mat-lt-sm breakpoint).
+ * Tablets (600-959) would keep the 900px / 92vw sizing and clip the
+ * toolbar buttons on the right. These rules make the dialog occupy
+ * the full viewport across both xs and sm.
+ */
+@media (max-width: 959px) {
+  .opc-scan-dialog-panel {
+    min-width: 100vw !important;
+    max-width: 100vw !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    position: absolute !important;
+    inset: 0 !important;
+
+    .mat-mdc-dialog-container {
+      width: 100%;
+      height: 100%;
+      max-height: 100vh;
+
+      > :first-child,
+      form {
+        min-width: 100% !important;
+        height: 100%;
+      }
+
+      .mat-mdc-dialog-content {
+        max-height: 100%;
+      }
+    }
+  }
+}
+
+.scan-dialog {
+  display: flex;
+  flex-direction: column;
+  /* Mirror IEC 61850 model-browser-dialog's pattern: max-height on the
+     outer shell, explicit max-height on the scrollable inner (.split),
+     rest takes natural size. Avoids fighting Material's default
+     mat-dialog-content max-height. */
+  max-height: 85vh;
+}
+
+.flex-1 { flex: 1; }
+.mono { font-family: "Roboto Mono", monospace; font-size: 11px; }
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dialog-content {
+  padding: 10px 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ---------------------- shared rotating-icon spinner ------------------ */
+/* mat-progress-spinner at ≤16px renders as a visually asymmetric arc on
+   most themes — a rotating `sync` icon reads cleaner at any size. */
+.spin-icon {
+  animation: spin-rotate 1s linear infinite;
+}
+@keyframes spin-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* --------------------------- action bar ------------------------------- */
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.url-field {
+  flex: 1;
+  min-width: 220px;
+
+  /* Shrink the outlined form field to match the ~40px stroked-button
+     height so everything on the action row lines up flush. */
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 40px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+}
+
+.inline-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 4px;
+  opacity: 0.85;
+}
+
+.inline-status-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* Default mat-icon-button sizing — the row is tall enough to host it. */
+.cancel-x-inline {
+  color: var(--mdc-theme-error, #f44336);
+}
+
+.action-btn {
+  height: 40px;
+  line-height: 40px;
+  min-width: 120px;
+}
+
+.counts { font-size: 11px; opacity: 0.6; }
+
+/* Dialog actions — Reset on the left, Cancel/Apply on the right. */
+.actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --------------------------- status row ------------------------------- */
+/* Collapsible below-URL row for in-flight indicator + post-scan error.
+   Always in DOM; the `--visible` class opens it smoothly. Using `height`
+   (not `max-height`) so every intermediate value actually renders — a
+   `max-height` transition over a shorter content gave a visibly-sudden
+   collapse. Row is tall enough (52px) to host mat-icon-button's default
+   40px hover/focus circle without clipping. */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  /* Faint tinted background using the accent hue — rgba so the dialog
+     surface shows through. Border-radius + subtle 1px border give the
+     row a "chip" feel without competing with the real content below. */
+  background: rgba(38, 166, 154, 0.08);
+  border: 1px solid rgba(38, 166, 154, 0.18);
+  border-radius: 6px;
+  transition: height 260ms ease,
+              opacity 220ms ease,
+              padding 260ms ease,
+              margin-top 260ms ease;
+  color: var(--tb-primary, #26a69a);
+  font-size: 13px;
+
+  &.status-row--visible {
+    height: 44px;
+    opacity: 1;
+    padding: 6px 12px;
+    margin-top: 2px;
+  }
+
+  mat-spinner { flex-shrink: 0; }
+}
+
+.status-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-error-icon {
+  color: var(--mdc-theme-error, #f44336);
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* When error is shown, swap the row tint from primary to warn so the
+   faint background matches the content. */
+.status-row:has(.status-error-icon) {
+  color: var(--mdc-theme-error, #f44336);
+  background: rgba(244, 67, 54, 0.08);
+  border-color: rgba(244, 67, 54, 0.24);
+}
+
+/* --------------------------- split layout ----------------------------- */
+.split {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr;
+  gap: 10px;
+  /* Explicit max-height on the scrollable area — the two panels inside
+     cap themselves to this height and scroll internally, so expanding
+     a device's key list cannot push the dialog taller. Mirrors IEC
+     61850 model-browser-dialog's `.table-container { max-height: 50vh }`. */
+  max-height: 55vh;
+}
+
+.left-panel,
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Grid items default to min-width: auto — a long string inside would
+     stretch the column past its 1fr allocation. Explicit `min-width: 0`
+     locks the column to the allocated track. */
+  min-width: 0;
+  max-height: 55vh;
+  overflow-y: auto;
+  border: 1px solid rgba(127, 127, 127, 0.25);
+  border-radius: 6px;
+  /* Inherit the dialog's surface colour so dark/light themes match. */
+  background: transparent;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+  min-height: 38px;
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Matches Sentient's `.no-data-message` / `.loading-message` pattern —
+   inherit default font size (14px), opacity 0.6, generous padding. Small
+   font + low opacity read as "system chrome" and feel out of place next
+   to other dialog bodies. */
+.panel-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  opacity: 0.6;
+
+  &.centered {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    gap: 12px;
+    flex: 1;
+
+    mat-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      opacity: 0.55;
+    }
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    /* Without flex-shrink:0 the icon gets squeezed/clipped by the flex
+       row when the panel is narrow — you see only half the glyph. */
+    flex-shrink: 0;
+  }
+}
+
+/* ---------------------------- left panel ------------------------------ */
+.server-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.server-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+
+  &:hover { background: rgba(0, 0, 0, 0.04); }
+}
+
+.server-card-selected {
+  background: rgba(38, 166, 154, 0.12);
+  border-color: var(--tb-primary, #26a69a);
+}
+
+.server-icon {
+  color: var(--tb-primary, #26a69a);
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.server-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.server-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.server-endpoint {
+  font-family: "Roboto Mono", monospace;
+  font-size: 10px;
+  opacity: 0.65;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.origin-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.25);
+  opacity: 0.8;
+
+  &.origin-scan {
+    background: var(--tb-primary, #26a69a);
+    color: #fff;
+    opacity: 0.95;
+  }
+}
+
+.warnings {
+  padding: 6px 10px 10px;
+  font-size: 11px;
+  flex-shrink: 0;
+
+  summary { cursor: pointer; opacity: 0.7; }
+
+  /* When many probes fail the list is long — cap the height and let it
+     scroll instead of overflowing the left panel. */
+  ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    opacity: 0.75;
+    max-height: 140px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+  }
+}
+
+/* ---------------------------- right panel ----------------------------- */
+/* overflow-y: auto already set on the shared .right-panel rule above. */
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 4px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.15);
+  font-size: 12px;
+}
+
+.meta-label { opacity: 0.65; }
+.meta-value {
+  min-width: 0;
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Filled pill — reserved for strongly-identifying metadata (security
+   policy). */
+.policy-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: var(--tb-primary, #26a69a);
+  color: white;
+}
+
+/* Outlined pill with primary hue — lower visual weight than a filled
+   pill. Matches Sentient's standard chip styling for low-emphasis
+   labels so the many key-type badges in a tag list don't dominate
+   the row. */
+.dtype-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: transparent;
+  color: var(--tb-primary, #26a69a);
+  border: 1px solid var(--tb-primary, #26a69a);
+}
+
+.mode-badge,
+.level-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  opacity: 0.75;
+}
+
+.endpoint-picker {
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.15);
+}
+
+.endpoint-picker-label {
+  font-size: 12px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover { background: rgba(0, 0, 0, 0.04); }
+}
+
+.endpoint-row-selected { background: rgba(38, 166, 154, 0.12); }
+
+.endpoint-radio {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--tb-primary, #26a69a);
+}
+
+.endpoint-url {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+/* devices + keys */
+.devices-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  /* No `overflow: hidden` — when a device row expands, the tags
+     viewport (260px tall) would be clipped by this section and the
+     inner list would be invisible. The right-panel's own overflow-y
+     handles the outer scroll. */
+}
+
+.devices-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.15);
+}
+
+.selected-counts { font-size: 11px; opacity: 0.7; }
+
+.device-row-wrap {
+  border-bottom: 1px solid rgba(127, 127, 127, 0.08);
+}
+
+.device-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+
+  &:hover { background: rgba(0, 0, 0, 0.03); }
+  &.disabled { opacity: 0.55; }
+}
+
+.device-row-selected { background: rgba(38, 166, 154, 0.08); }
+
+.chevron-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  line-height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.node-class-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.65;
+}
+
+.device-name,
+.tag-name { font-size: 13px; }
+
+.device-nodeid,
+.tag-nodeid {
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.existing-point { opacity: 0.5; }
+.existing-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #4caf50;
+  margin-left: 4px;
+}
+
+/* tags section inside expanded device — collapsed by default with a
+   max-height transition so expanding / collapsing animates the dialog's
+   height smoothly through the chain (tags-list → devices-section →
+   right-panel → dialog). 320px covers the header + 260px viewport. */
+.tags-list {
+  max-height: 0;
+  padding: 0 6px 0 52px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.02);
+  transition: max-height 300ms ease, padding 300ms ease;
+}
+
+.tags-list--open {
+  max-height: 320px;
+  padding: 4px 6px 6px 52px;
+}
+
+.tag-header {
+  padding: 4px 6px;
+  font-size: 11px;
+  opacity: 0.75;
+  border-bottom: 1px dashed rgba(127, 127, 127, 0.2);
+  margin-bottom: 4px;
+}
+
+/* Plain-scroll tag list. Native `overflow-y: auto` with a capped
+   height — browser renders all rows but only paints what's visible.
+   On OnPush components, this is fast enough for a few thousand rows. */
+.tags-viewport {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+  height: 32px;          /* matches [itemSize]="32" in HTML */
+  min-height: 32px;      /* stops flex shrink inside the cdk wrapper */
+  width: 100%;
+  border-radius: 4px;
+  cursor: pointer;
+  box-sizing: border-box;
+  flex-shrink: 0;
+
+  &:hover { background: rgba(0, 0, 0, 0.04); }
+}
+
+.tag-empty {
+  padding: 8px 6px;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.tag-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  color: var(--mdc-theme-error, #f44336);
+  font-size: 12px;
+
+  mat-icon {
+    color: var(--mdc-theme-error, #f44336);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ---------------------- tablet / sm breakpoint (600–959) ----------------
+ * Project uses Angular Flex-Layout breakpoints (xs <600, sm 600–959,
+ * md 960–1279, lg 1280–1919, xl ≥1920). Desktop styles above already
+ * work through md+; sm needs a shorter left-panel track, buttons that
+ * wrap when combined text runs wider than the URL + action row, and
+ * slightly reduced padding. Panels stay side-by-side.
+ */
+@media (min-width: 600px) and (max-width: 959px) {
+  .scan-dialog {
+    max-height: 100vh;
+    height: 100%;
+    width: 100%;
+  }
+  .dialog-content { padding: 10px 12px; gap: 6px; }
+
+  .action-bar { flex-wrap: wrap; }
+  .url-field { flex: 1 0 100%; }
+  .action-btn { flex: 1 1 auto; min-width: 140px; }
+
+  .split {
+    grid-template-columns: minmax(200px, 240px) 1fr;
+    max-height: 60vh;
+    gap: 8px;
+  }
+
+  .left-panel,
+  .right-panel {
+    max-height: 60vh;
+  }
+
+  /* Tighter meta-grid label column, no wrap on badge row. */
+  .meta-grid {
+    grid-template-columns: 96px 1fr;
+    padding: 6px 10px;
+  }
+
+  .tags-viewport {
+    max-height: 220px;
+  }
+
+  .device-nodeid { max-width: 160px; }
+  .tag-nodeid { max-width: 140px; }
+}
+
+/* ---------------------- mobile / xs breakpoint (<600) -------------------
+ * `tb-fullscreen-dialog` already stretches the MatDialog container to
+ * 100vw/100vh on narrow viewports (Sentient global styles). We just
+ * need the inner layout to reflow so the two panels stack vertically
+ * and the content uses the full height.
+ */
+@media (max-width: 599px) {
+  .scan-dialog {
+    max-height: 100vh;
+    height: 100%;
+    width: 100%;
+  }
+
+  .dialog-content {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  /* Action bar: URL input first, buttons wrap underneath. */
+  .action-bar {
+    flex-wrap: wrap;
+  }
+  .url-field {
+    flex: 1 0 100%;
+    min-width: 0;
+  }
+  .action-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Split becomes stacked: server list on top, detail below. Each pane
+     gets its own cap so neither bully-scrolls the page. */
+  .split {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    max-height: none;
+    gap: 8px;
+  }
+
+  .left-panel {
+    max-height: 28vh;
+  }
+
+  .right-panel {
+    max-height: calc(100vh - 340px);
+  }
+
+  /* Hide the mono NodeId column on narrow screens — not enough width
+     for it plus the name + type badge. */
+  .device-nodeid,
+  .tag-nodeid {
+    display: none;
+  }
+
+  /* Meta grid stacks label/value so long URIs wrap cleanly. */
+  .meta-grid {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .meta-label {
+    font-weight: 500;
+    margin-top: 6px;
+  }
+
+  /* Tags list caps lower to leave room for the devices above it. */
+  .tags-viewport {
+    max-height: 180px;
+  }
+}
