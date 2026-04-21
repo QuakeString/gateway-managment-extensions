@@ -38,7 +38,7 @@
                   ? 'Save the connector first, then use this to pick device nodes.'
                   : 'Discover device nodes on the OPC-UA server'"
                 matTooltipPosition="above">
-          <mat-icon>account_tree</mat-icon>
+          <mat-icon>wifi_find</mat-icon>
         </button>
         <button mat-icon-button
                 (click)="enterFilterMode()"
@@ -68,7 +68,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div class="table-container">
+    <div class="table-container" [class.is-empty]="dataSource.isEmpty() | async">
       <table mat-table [dataSource]="dataSource">
         <ng-container [matColumnDef]="column.def" *ngFor="let column of mappingColumns; let i = index">
           <mat-header-cell *matHeaderCellDef class="table-value-column"
@@ -148,21 +148,22 @@
         <mat-row *matRowDef="let mapping; columns: displayedColumns;"></mat-row>
       </table>
       <section [class.!hidden]="textSearchMode || (dataSource.isEmpty() | async) === false"
-               class="mat-headline-5 tb-absolute-fill tb-add-new items-center justify-center">
+               class="mat-headline-5 tb-absolute-fill tb-add-new empty-state items-center justify-center">
         <button mat-button class="connector"
                 (click)="manageMapping($event)">
-          <mat-icon class="tb-mat-96">add</mat-icon>
+          <mat-icon class="empty-state-icon">add</mat-icon>
           <span>{{ 'gateway.add-mapping' | translate }}</span>
         </button>
         <!-- OPC-UA: offer auto-discovery next to the manual add, so operators
              don't need to hand-type the device-node pattern if the connector
-             is already saved and connected. -->
+             is already saved and connected. `wifi_find` matches the Discover
+             button in the Server tab so the iconography is consistent. -->
         <button *ngIf="mappingType === mappingTypeEnum.OPCUA && gatewayDeviceId && connectorName"
                 mat-button
                 class="connector"
                 (click)="discoverOpcDevices()">
-          <mat-icon class="tb-mat-96">account_tree</mat-icon>
-          <span>Discover from server</span>
+          <mat-icon class="empty-state-icon">wifi_find</mat-icon>
+          <span>Discover</span>
         </button>
       </section>
     </div>

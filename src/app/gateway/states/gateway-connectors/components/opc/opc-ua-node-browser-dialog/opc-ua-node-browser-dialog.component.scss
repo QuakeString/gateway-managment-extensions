@@ -9,6 +9,11 @@
   display: flex;
   flex-direction: column;
   max-height: 85vh;
+  /* Sized here (not in MatDialog.open config) so all three call-sites
+     get the same behaviour. Capped at 75vw per feedback — wide enough
+     for mono NodeIds, narrow enough to not dominate the screen. */
+  width: 900px;
+  max-width: 75vw;
 }
 
 .flex-1 { flex: 1; }
@@ -61,36 +66,109 @@
   overflow-y: auto;
   max-height: 55vh;
   overflow-x: hidden;
+
+  /* Stop mat-table from distributing columns evenly — pin the narrow
+     columns to their content width so Node absorbs all the extra
+     space. Previously NodeId and Type had ~30vw of dead padding. */
+  .mat-mdc-table {
+    width: 100%;
+    table-layout: auto;
+
+    .mat-column-select,
+    .cdk-column-select {
+      width: 56px;
+      max-width: 56px;
+    }
+    .mat-column-nodeId,
+    .cdk-column-nodeId {
+      width: auto;
+      max-width: 280px;
+      white-space: nowrap;
+    }
+    .mat-column-dataType,
+    .cdk-column-dataType {
+      width: 100px;
+      max-width: 100px;
+    }
+  }
 }
 
 .cursor-pointer { cursor: pointer; }
 
-/* Tree-as-table styling */
+/* Dialog-actions bar — Refresh on the left, Cancel/Add on the right. */
+.actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; margin-right: 4px; }
+}
+
+/* Tree-as-table styling. Inner `.name-row` is the flex container so
+   we don't touch the `<td>`'s display (setting that to flex breaks
+   mat-table's column layout — cells collapse with invisible content). */
+.name-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .tree-chevron {
   display: inline-flex;
-  width: 28px;
-  vertical-align: middle;
+  flex-shrink: 0;
+  width: 32px;
+  margin-right: 4px;
+  justify-content: center;
 }
+
 .chevron-btn {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  line-height: 24px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  line-height: 28px;
   padding: 0;
+  /* Shrink the MDC state layer (hover/focus ring) so it doesn't bleed
+     onto the folder icon next door. */
+  --mdc-icon-button-state-layer-size: 28px;
+
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  /* Animated disclosure — the chevron rotates from → to ▼ over 180ms. */
+  .chevron-icon {
+    transition: transform 180ms ease;
+    transform: rotate(0deg);
+  }
+  &.expanded .chevron-icon {
+    transform: rotate(90deg);
+  }
+
+  /* Spinning `sync` icon replacing mat-progress-spinner at these
+     small sizes. */
+  .chevron-loading {
+    animation: node-browser-spin 900ms linear infinite;
+    color: var(--tb-primary, #26a69a);
+  }
+}
+
+@keyframes node-browser-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .node-class-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  opacity: 0.65;
-  vertical-align: middle;
-  margin-right: 6px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.8;
+  margin-right: 8px;
 }
 
 .node-name {
-  vertical-align: middle;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .node-load-error {
@@ -109,13 +187,17 @@
   max-width: 320px;
 }
 
+/* Outlined pill with Sentient's --tb-primary (teal) — low visual
+   weight so a column full of Type badges doesn't dominate the row.
+   Matches opc-ua-scan-dialog's .dtype-badge for consistency. */
 .dtype-badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 1px 8px;
   border-radius: 12px;
   font-size: 11px;
-  background: var(--mdc-theme-primary, #305680);
-  color: white;
+  background: transparent;
+  color: var(--tb-primary, #26a69a);
+  border: 1px solid var(--tb-primary, #26a69a);
 }
 
 .class-badge {

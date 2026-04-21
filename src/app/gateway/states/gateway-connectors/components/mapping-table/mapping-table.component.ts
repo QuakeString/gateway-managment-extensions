@@ -364,6 +364,8 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
         targetSection: 'devices',
         existingValues: existingDeviceNodes,
       },
+      // Dialog width is set inside the component's SCSS now (900px)
+      // so all three open-sites pick up the same sizing.
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       autoFocus: false,

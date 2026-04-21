@@ -75,6 +75,60 @@
             width: 160px;
           }
         }
+
+        /* When there are no mappings the table header is redundant —
+           the empty-state cards ("Add mapping" / "Discover from server")
+           already explain what to do. Hide the header row to declutter. */
+        &.is-empty {
+          .mat-mdc-header-row,
+          mat-header-row,
+          .mat-header-row {
+            display: none;
+          }
+        }
+      }
+
+      /* Empty-state cards. Icon stacked above the label, both cards
+         same width so they feel like siblings, real gap between them.
+         The button's MDC label wrapper is inline-flex + center by
+         default — need ::ng-deep at a broader scope to force column. */
+      .tb-add-new.empty-state {
+        gap: 24px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+
+        button.connector,
+        button.mat-mdc-button.connector {
+          width: 220px !important;
+          height: 140px !important;
+          padding: 16px !important;
+        }
+
+        .empty-state-icon {
+          font-size: 48px !important;
+          width: 48px !important;
+          height: 48px !important;
+          margin: 0 !important;
+        }
+
+        /* Force the MDC button's internal label + everything inside it
+           into a vertical stack. These selectors reach through Material's
+           shadow-ish structure; ::ng-deep is the only practical hook
+           without ViewEncapsulation.None. */
+        ::ng-deep button.connector .mdc-button__label,
+        ::ng-deep button.connector .mat-mdc-button-persistent-ripple ~ .mdc-button__label,
+        ::ng-deep button.connector > span {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 12px !important;
+          width: 100% !important;
+          height: 100% !important;
+          white-space: normal !important;
+        }
       }
 
       .ellipsis {

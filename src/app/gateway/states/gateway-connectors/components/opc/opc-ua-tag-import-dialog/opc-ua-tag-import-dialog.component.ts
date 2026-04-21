@@ -49,7 +49,10 @@ interface ParsedTag {
   error: string;
 }
 
-const TYPE_DEFAULT = 'string';
+// OPC-UA source-type fallback for rows where the CSV didn't carry a
+// usable value — matches OPCUaSourceType.IDENTIFIER since the value
+// column in exports is always a NodeId.
+const TYPE_DEFAULT = 'identifier';
 
 @Component({
   selector: 'tb-opc-ua-tag-import-dialog',
@@ -200,7 +203,22 @@ export class OpcUaTagImportDialogComponent {
     this.parsedTags = this.rawRows.map(row => {
       const key = (row[keyCol] ?? '').toString().trim();
       const value = (row[valueCol] ?? '').toString().trim();
-      const type = (typeCol ? (row[typeCol] ?? '').toString().trim() : '') || TYPE_DEFAULT;
+      // For OPC-UA the key row's `type` field binds to the Source
+      // mat-select (path / identifier / constant), NOT the data type.
+      // If the CSV carries a valid source-type value use it; otherwise
+      // infer from the `value` shape — `ns=…` is an identifier, a
+      // backslash-dot path is 'path', else 'constant'.
+      const rawType = typeCol ? (row[typeCol] ?? '').toString().trim().toLowerCase() : '';
+      let type: string;
+      if (rawType === 'path' || rawType === 'identifier' || rawType === 'constant') {
+        type = rawType;
+      } else if (value.startsWith('ns=')) {
+        type = 'identifier';
+      } else if (value.includes('\\.')) {
+        type = 'path';
+      } else {
+        type = 'constant';
+      }
       const rawSection = sectionCol ? (row[sectionCol] ?? '').toString().trim().toLowerCase() : '';
       let section: 'attributes' | 'timeseries';
       if (rawSection.startsWith('attr')) {

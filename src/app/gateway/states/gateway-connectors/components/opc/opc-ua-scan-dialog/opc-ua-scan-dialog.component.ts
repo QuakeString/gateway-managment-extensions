@@ -186,6 +186,27 @@ export class OpcUaScanDialogComponent implements OnDestroy {
     this.cd.markForCheck();
   }
 
+  /** Maps gateway backend error payloads to user-facing text. Any
+   *  routing-style failure (404, no error string, or common "not
+   *  found / disabled / unreachable" wording) collapses to a single
+   *  actionable prompt — "enable the connector". Only surfaces the
+   *  raw error when the backend returned something specific the
+   *  operator can act on (e.g. "Invalid node id"). */
+  private translateBackendError(body: any): string {
+    const raw = ((body?.error as string | undefined) || '').trim();
+    const lower = raw.toLowerCase();
+    const routingIssue = !raw
+      || lower.includes('not found')
+      || lower.includes('not connected')
+      || lower.includes('disabled')
+      || lower.includes('unreachable')
+      || body?.code === 404;
+    if (routingIssue) {
+      return 'Connector is disabled or not responding. Enable it in the Connectors list and try again.';
+    }
+    return raw;
+  }
+
   get selectedServer(): ScanServer | undefined {
     return this.servers.find(s => s.id === this.selectedServerId);
   }
@@ -212,8 +233,8 @@ export class OpcUaScanDialogComponent implements OnDestroy {
       next: (res: any) => {
         this.probing = false;
         const body = res?.result ?? res ?? {};
-        if (body.success === false) {
-          this.globalError = body.error || 'Probe failed.';
+        if (body.success === false || body.error) {
+          this.globalError = this.translateBackendError(body);
           this.cd.markForCheck();
           return;
         }
@@ -225,7 +246,7 @@ export class OpcUaScanDialogComponent implements OnDestroy {
       },
       error: () => {
         this.probing = false;
-        this.globalError = 'Gateway unreachable or connector not running.';
+        this.globalError = 'Connector is disabled or not responding. Enable it in the Connectors list and try again.';
         this.cd.markForCheck();
       },
     });
@@ -247,8 +268,8 @@ export class OpcUaScanDialogComponent implements OnDestroy {
       next: (res: any) => {
         this.scanning = false;
         const body = res?.result ?? res ?? {};
-        if (body.success === false) {
-          this.globalError = body.error || 'Scan failed.';
+        if (body.success === false || body.error) {
+          this.globalError = this.translateBackendError(body);
           this.cd.markForCheck();
           return;
         }
@@ -257,7 +278,7 @@ export class OpcUaScanDialogComponent implements OnDestroy {
       },
       error: () => {
         this.scanning = false;
-        this.globalError = 'Gateway unreachable or connector not running.';
+        this.globalError = 'Connector is disabled or not responding. Enable it in the Connectors list and try again.';
         this.cd.markForCheck();
       },
     });
@@ -392,8 +413,8 @@ export class OpcUaScanDialogComponent implements OnDestroy {
         obj.loading = false;
         obj.loaded = true;
         const body = res?.result ?? res ?? {};
-        if (body?.success === false) {
-          obj.loadError = body.error || 'Browse failed';
+        if (body?.success === false || body?.error) {
+          obj.loadError = this.translateBackendError(body);
           this.cd.markForCheck();
           return;
         }
@@ -413,7 +434,7 @@ export class OpcUaScanDialogComponent implements OnDestroy {
       error: () => {
         obj.loading = false;
         obj.loaded = true;
-        obj.loadError = 'Gateway unreachable';
+        obj.loadError = 'Connector is disabled or not responding.';
         this.cd.markForCheck();
       },
     });
@@ -481,7 +502,7 @@ export class OpcUaScanDialogComponent implements OnDestroy {
           .map(t => ({
             key: t.displayName || t.browseName,
             value: t.nodeId,
-            type: this.mapDataType(t.dataType),
+            type: this.mapSourceType(t.dataType),
           })),
       }));
 
@@ -520,13 +541,12 @@ export class OpcUaScanDialogComponent implements OnDestroy {
     return t.nodeId;
   }
 
-  private mapDataType(dt?: string): string {
-    if (!dt) return 'string';
-    const lower = dt.toLowerCase();
-    if (lower.includes('float') || lower.includes('double')) return 'float';
-    if (lower.includes('int') || lower.includes('byte') || lower.includes('uint')) return 'integer';
-    if (lower.includes('bool')) return 'boolean';
-    return 'string';
+  /** For OPC-UA tags the keys-panel Source mat-select binds to the
+   *  `type` field using OPCUaSourceType values ('path' | 'identifier' |
+   *  'constant'). We return fully-qualified NodeIds from the browse
+   *  (e.g. `ns=2;s=Sensor_0001`) so `'identifier'` is the right source. */
+  private mapSourceType(_dt?: string): string {
+    return 'identifier';
   }
 
   shortPolicy(uri: string): string {

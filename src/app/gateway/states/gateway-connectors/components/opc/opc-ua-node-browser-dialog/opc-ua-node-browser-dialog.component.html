@@ -17,11 +17,6 @@
       </ng-container>
     </h2>
     <span class="flex-1"></span>
-    <button mat-icon-button (click)="refresh()" type="button"
-            matTooltip="Refresh" matTooltipPosition="below"
-            [disabled]="refreshing">
-      <mat-icon>{{ refreshing ? 'hourglass_empty' : 'refresh' }}</mat-icon>
-    </button>
     <button mat-icon-button (click)="cancel()" type="button">
       <mat-icon>close</mat-icon>
     </button>
@@ -67,11 +62,24 @@
             </mat-checkbox>
           </th>
           <td mat-cell *matCellDef="let node">
+            <!-- Variable (or Object in devices mode) — normal
+                 one-row-per-checkbox behaviour. -->
             <mat-checkbox *ngIf="isSelectable(node)"
                           (click)="$event.stopPropagation()"
                           (change)="selection.toggle(node)"
                           [checked]="selection.isSelected(node)"
                           [disabled]="isExisting(node)">
+            </mat-checkbox>
+            <!-- Object in tag mode — a tri-state "select all children"
+                 checkbox so the operator can pick every Variable under
+                 a device with one click. -->
+            <mat-checkbox *ngIf="isChildrenSelector(node)"
+                          (click)="$event.stopPropagation()"
+                          (change)="toggleChildrenSelect(node)"
+                          [checked]="allChildrenSelected(node)"
+                          [indeterminate]="!allChildrenSelected(node) && anyChildrenSelected(node)"
+                          matTooltip="Select all keys under this device"
+                          matTooltipPosition="right">
             </mat-checkbox>
           </td>
         </ng-container>
@@ -81,25 +89,38 @@
           <th mat-header-cell *matHeaderCellDef>Node</th>
           <td mat-cell *matCellDef="let node"
               [style.padding-left.px]="12 + node.depth * 18">
-            <span class="tree-chevron">
-              <button *ngIf="node.raw.hasChildren"
-                      mat-icon-button
-                      class="chevron-btn"
-                      (click)="toggleExpand(node, $event)">
-                <mat-icon *ngIf="!node.loading">{{ node.expanded ? 'expand_more' : 'chevron_right' }}</mat-icon>
-                <mat-progress-spinner *ngIf="node.loading" diameter="14" mode="indeterminate"></mat-progress-spinner>
-              </button>
-            </span>
-            <mat-icon class="node-class-icon">{{
-              node.raw.nodeClass === 'Variable' ? 'data_usage' :
-              node.raw.nodeClass === 'Method'   ? 'functions'  :
-              node.raw.nodeClass === 'Object'   ? 'folder'     :
-                                                  'subdirectory_arrow_right'
-            }}</mat-icon>
-            <span class="node-name" [class.existing-point]="isExisting(node)">{{ node.raw.displayName }}</span>
-            <mat-icon *ngIf="isExisting(node)" class="existing-icon"
-                      matTooltip="Already mapped">check_circle</mat-icon>
-            <span *ngIf="node.loadError" class="node-load-error">{{ node.loadError }}</span>
+            <!-- Flex row wrapper so chevron + icon + name stay on one
+                 line. Wrapping the content (not the `<td>`) keeps the
+                 table-cell's own display untouched so mat-table column
+                 sizing still works. -->
+            <div class="name-row">
+              <span class="tree-chevron">
+                <button *ngIf="node.raw.hasChildren"
+                        mat-icon-button
+                        class="chevron-btn"
+                        [class.expanded]="node.expanded"
+                        (click)="toggleExpand(node, $event)">
+                  <!-- Single icon that rotates 90° on expand (CSS
+                       transition) instead of swapping `chevron_right` /
+                       `expand_more` which read as a jarring icon flip. -->
+                  <mat-icon *ngIf="!node.loading" class="chevron-icon">chevron_right</mat-icon>
+                  <!-- mat-progress-spinner at ≤16px renders as an
+                       asymmetric arc; a CSS-rotated `sync` icon reads
+                       cleaner (same trick as the scan dialog). -->
+                  <mat-icon *ngIf="node.loading" class="chevron-loading">sync</mat-icon>
+                </button>
+              </span>
+              <mat-icon class="node-class-icon">{{
+                node.raw.nodeClass === 'Variable' ? 'data_usage' :
+                node.raw.nodeClass === 'Method'   ? 'functions'  :
+                node.raw.nodeClass === 'Object'   ? 'folder'     :
+                                                    'subdirectory_arrow_right'
+              }}</mat-icon>
+              <span class="node-name" [class.existing-point]="isExisting(node)">{{ node.raw.displayName }}</span>
+              <mat-icon *ngIf="isExisting(node)" class="existing-icon"
+                        matTooltip="Already mapped">check_circle</mat-icon>
+              <span *ngIf="node.loadError" class="node-load-error">{{ node.loadError }}</span>
+            </div>
           </td>
         </ng-container>
 
@@ -127,7 +148,17 @@
     </div>
   </div>
 
-  <div mat-dialog-actions class="justify-end">
+  <div mat-dialog-actions class="actions-bar">
+    <!-- Refresh is a destructive-ish action (re-fetches the whole
+         tree), belongs on the left alongside other utilities; Cancel /
+         Add stay on the right where confirmation actions live. -->
+    <button mat-button
+            (click)="refresh()"
+            [disabled]="refreshing">
+      <mat-icon>{{ refreshing ? 'hourglass_empty' : 'refresh' }}</mat-icon>
+      Refresh
+    </button>
+    <span class="flex-1"></span>
     <button mat-button color="primary" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
     <button mat-raised-button color="primary"
             (click)="apply()"

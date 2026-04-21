@@ -190,6 +190,58 @@ export class OpcUaNodeBrowserDialogComponent {
     this.cd.markForCheck();
   }
 
+  // -- Per-device "select all" ----------------------------------------
+  // When browsing in 'timeseries' / 'attributes' mode, only Variable
+  // nodes are selectable individually. Objects (devices) get a
+  // tri-state checkbox that toggles every loaded Variable descendant
+  // in one click — matching the Discover dialog's per-device picker.
+
+  /** Tag mode only: a device / Object-class node should show a "select
+   *  all its children" checkbox rather than being individually
+   *  selectable. Device mode keeps its existing one-per-row behaviour. */
+  isChildrenSelector(node: TreeNode): boolean {
+    return this.data.targetSection !== 'devices'
+        && node.raw.nodeClass === 'Object'
+        && node.children.some(c => c.raw.nodeClass === 'Variable');
+  }
+
+  /** Selectable Variable descendants (recursive) that are loaded
+   *  under this tree node — skips children that haven't been expanded
+   *  yet because the sub-browse hasn't run. */
+  private selectableDescendants(node: TreeNode): TreeNode[] {
+    const out: TreeNode[] = [];
+    const walk = (n: TreeNode) => {
+      for (const c of n.children) {
+        if (c.raw.nodeClass === 'Variable' && !this.isExisting(c)) {
+          out.push(c);
+        }
+        if (c.loaded) walk(c);
+      }
+    };
+    walk(node);
+    return out;
+  }
+
+  allChildrenSelected(node: TreeNode): boolean {
+    const kids = this.selectableDescendants(node);
+    return kids.length > 0 && kids.every(c => this.selection.isSelected(c));
+  }
+
+  anyChildrenSelected(node: TreeNode): boolean {
+    return this.selectableDescendants(node).some(c => this.selection.isSelected(c));
+  }
+
+  toggleChildrenSelect(node: TreeNode): void {
+    const kids = this.selectableDescendants(node);
+    if (kids.length === 0) return;
+    if (this.allChildrenSelected(node)) {
+      kids.forEach(c => this.selection.deselect(c));
+    } else {
+      kids.forEach(c => this.selection.select(c));
+    }
+    this.cd.markForCheck();
+  }
+
   apply(): void {
     if (this.data.targetSection === 'devices') {
       const devices: OpcUaDeviceSelection[] = this.selection.selected
@@ -206,7 +258,7 @@ export class OpcUaNodeBrowserDialogComponent {
       .map(n => ({
         key: n.raw.displayName || n.raw.browseName,
         value: n.raw.nodeId,
-        type: this.mapDataType(n.raw.dataType),
+        type: this.mapSourceType(n.raw.dataType),
       }));
     this.dialogRef.close({ tags, targetSection: this.data.targetSection });
   }
@@ -263,23 +315,38 @@ export class OpcUaNodeBrowserDialogComponent {
       this.deviceService.sendTwoWayRpcCommand(this.data.gatewayDeviceId, rpcBody).subscribe({
         next: (res: any) => {
           const body = res?.result ?? res ?? {};
-          if (body?.success === false) {
-            reject(new Error(body.error || 'Browse failed'));
+          const rawErr = body?.error as string | undefined;
+          // Any error response from the gateway almost always means the
+          // connector isn't responding — either disabled, unsaved, or
+          // crashed. Surface the same "enable the connector" prompt in
+          // all cases unless the backend returned a specific actionable
+          // error about nodes/paths etc. (those would have `success: false`
+          // AND a non-routing error string).
+          if (body?.success === false || rawErr) {
+            const routingIssue = !rawErr
+              || rawErr.toLowerCase().includes('not found')
+              || rawErr.toLowerCase().includes('not connected')
+              || rawErr.toLowerCase().includes('disabled')
+              || rawErr.toLowerCase().includes('unreachable')
+              || body?.code === 404;
+            reject(new Error(routingIssue
+              ? 'Connector is disabled or not responding. Enable it in the Connectors list and try again.'
+              : rawErr || 'Browse failed'));
             return;
           }
           resolve(body.children || []);
         },
-        error: () => reject(new Error('Gateway unreachable or connector not running')),
+        error: () => reject(new Error('Connector is disabled or not responding. Enable it in the Connectors list and try again.')),
       });
     });
   }
 
-  private mapDataType(dt?: string): string {
-    if (!dt) return 'string';
-    const lower = dt.toLowerCase();
-    if (lower.includes('float') || lower.includes('double')) return 'float';
-    if (lower.includes('int') || lower.includes('byte') || lower.includes('uint')) return 'integer';
-    if (lower.includes('bool')) return 'boolean';
-    return 'string';
+  /** For OPC-UA tags the keys-panel Source mat-select binds to the
+   *  `type` field using OPCUaSourceType values ('path' | 'identifier' |
+   *  'constant'). Since we're returning a resolved NodeId from the
+   *  browse, `'identifier'` is always the right source type — the
+   *  value column is literally `ns=...;s/i=...`. */
+  private mapSourceType(_dt?: string): string {
+    return 'identifier';
   }
 }

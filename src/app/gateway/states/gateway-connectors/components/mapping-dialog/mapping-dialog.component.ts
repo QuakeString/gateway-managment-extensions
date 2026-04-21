@@ -177,7 +177,6 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       autoFocus: false,
-      width: '900px',
     }).afterClosed().subscribe(result => {
       if (!result?.tags?.length) return;
       const ctrl = this.mappingForm.get(formKey);
