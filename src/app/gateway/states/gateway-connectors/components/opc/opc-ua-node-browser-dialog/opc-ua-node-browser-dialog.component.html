@@ -14,6 +14,7 @@
         <ng-container *ngSwitchCase="'timeseries'">Add to Timeseries</ng-container>
         <ng-container *ngSwitchCase="'attributes'">Add to Attributes</ng-container>
         <ng-container *ngSwitchCase="'devices'">Discover Devices</ng-container>
+        <ng-container *ngSwitchCase="'rpc_methods'">Add RPC Methods</ng-container>
       </ng-container>
     </h2>
     <span class="flex-1"></span>
@@ -30,10 +31,13 @@
     </mat-form-field>
 
     <div class="point-count">
-      {{ displayNodes.length }} visible · {{ selectableVisibleCount }}
-      {{ data.targetSection === 'devices' ? 'object' : 'variable' }}{{ selectableVisibleCount === 1 ? '' : 's' }}
+      {{ displayNodes.length }} <ng-container *ngIf="totalMatches > displayNodes.length">of {{ totalMatches }}</ng-container> visible ·
+      {{ selectableVisibleCount }}
+      {{ data.targetSection === 'devices' ? 'object'
+         : (data.targetSection === 'rpc_methods' ? 'node' : 'variable') }}{{ selectableVisibleCount === 1 ? '' : 's' }}
       selectable · {{ selection.selected.length }} selected
     </div>
+
 
     <div *ngIf="loading" class="loading-message">
       <mat-spinner diameter="24"></mat-spinner>
@@ -50,7 +54,9 @@
       <span>Server returned no nodes under /Objects.</span>
     </div>
 
-    <div class="table-container" *ngIf="rootChildren.length > 0 && !loading">
+    <div class="table-container"
+         *ngIf="rootChildren.length > 0 && !loading"
+         (scroll)="onTableScroll($event)">
       <table mat-table [dataSource]="displayNodes" [trackBy]="trackByNodeId" class="mat-elevation-z0">
 
         <!-- Select column -->
@@ -94,7 +100,12 @@
                  table-cell's own display untouched so mat-table column
                  sizing still works. -->
             <div class="name-row">
-              <span class="tree-chevron">
+              <!-- Collapse the chevron wrapper for rows without
+                   children so leaf Variable rows don't carry a 36px
+                   phantom indent. Expandable rows keep the reserved
+                   space so their content aligns with collapsed-row
+                   siblings at the same depth. -->
+              <span class="tree-chevron" [class.no-chevron]="!node.raw.hasChildren">
                 <button *ngIf="node.raw.hasChildren"
                         mat-icon-button
                         class="chevron-btn"
@@ -130,7 +141,65 @@
           <td mat-cell *matCellDef="let node" class="nodeid-col">{{ node.raw.nodeId }}</td>
         </ng-container>
 
-        <!-- DataType column -->
+        <!-- Variable-as (Read / Write / Both) column, RPC mode only.
+             Header cell hosts the BULK toggle — new selections inherit
+             its value at the moment they're selected, so flipping it
+             later only affects future picks (selection.changed sub in
+             the TS freezes the row value on add). Data cell shows a
+             per-row override toggle for selected Variable rows. -->
+        <ng-container matColumnDef="rpcMode">
+          <!-- Master toggle — sets the default direction for every
+               new Variable selection. Replaces the "Variable as" label
+               because the device-scoped browse tree often has no
+               Object row to host a per-device toggle. Per-device
+               Object toggles (when visible) still override this. -->
+          <th mat-header-cell *matHeaderCellDef class="rpc-mode-header">
+            <tb-toggle-select class="rpc-toggle"
+                              appearance="fill"
+                              disablePagination
+                              [(ngModel)]="rpcBulkMode"
+                              matTooltip="Default direction for every new Variable selection — get, set, or both"
+                              matTooltipPosition="above">
+              <tb-toggle-option value="get">R</tb-toggle-option>
+              <tb-toggle-option value="set">W</tb-toggle-option>
+              <tb-toggle-option value="both">R/W</tb-toggle-option>
+            </tb-toggle-select>
+          </th>
+          <td mat-cell *matCellDef="let node" class="rpc-mode-cell"
+              (click)="$event.stopPropagation()">
+            <!-- Object (device) row — always-visible, always-clickable
+                 pill toggle that sets the default direction for this
+                 device's Variable children when they're selected. Not
+                 tied to the row's own checkbox state. -->
+            <tb-toggle-select *ngIf="node.raw.nodeClass === 'Object'
+                                     && node.children.length > 0"
+                              class="rpc-toggle"
+                              appearance="fill"
+                              disablePagination
+                              [ngModel]="deviceMode(node)"
+                              (ngModelChange)="setDeviceMode(node, $event)">
+              <tb-toggle-option value="get">R</tb-toggle-option>
+              <tb-toggle-option value="set">W</tb-toggle-option>
+              <tb-toggle-option value="both">R/W</tb-toggle-option>
+            </tb-toggle-select>
+            <!-- Variable row — per-row toggle, visible only when the
+                 row is selected. Default is frozen at selection time
+                 from the parent device's current toggle. -->
+            <tb-toggle-select *ngIf="node.raw.nodeClass === 'Variable'
+                                     && selection.isSelected(node)"
+                              class="rpc-toggle"
+                              appearance="fill"
+                              disablePagination
+                              [ngModel]="rpcVariableOverrides.get(node.raw.nodeId) ?? deviceModeFor(node)"
+                              (ngModelChange)="rpcVariableOverrides.set(node.raw.nodeId, $event)">
+              <tb-toggle-option value="get">R</tb-toggle-option>
+              <tb-toggle-option value="set">W</tb-toggle-option>
+              <tb-toggle-option value="both">R/W</tb-toggle-option>
+            </tb-toggle-select>
+          </td>
+        </ng-container>
+
+        <!-- DataType column — plain badge as before. -->
         <ng-container matColumnDef="dataType">
           <th mat-header-cell *matHeaderCellDef>Type</th>
           <td mat-cell *matCellDef="let node">

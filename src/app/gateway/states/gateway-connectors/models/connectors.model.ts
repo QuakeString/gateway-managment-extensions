@@ -138,6 +138,19 @@ export enum MappingType {
 export interface RpcMethod {
   method: string;
   arguments: ValueType[];
+  /** OPC-UA only: NodeId of the Variable this method reads/writes.
+   *  Present on entries produced by the discovery dialog so the driver
+   *  can route Variable-bound method calls without requiring the
+   *  platform to pass the NodeId at runtime — matching the
+   *  IEC 61850 / Modbus / S7 whitelist-carries-identity model. */
+  nodeId?: string;
+  /** OPC-UA only: which OPC-UA operation this method maps to.
+   *  Authoritative — the driver does NOT parse the method name.
+   *  Matches the S7 `S7RpcConfig.operation` field exactly. */
+  operation?: 'read' | 'write';
+  /** OPC-UA only: the target value type (maps to MappingValueType) —
+   *  used for `write` ops to coerce the caller's value. */
+  valueType?: string;
 }
 
 export interface LegacyRpcMethod {

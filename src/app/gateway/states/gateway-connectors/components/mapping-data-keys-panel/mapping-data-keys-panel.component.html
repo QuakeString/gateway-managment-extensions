@@ -189,6 +189,51 @@
                       </mat-icon>
                     </mat-form-field>
                   </div>
+                  <!-- OPC-UA only: discovery-imported entries carry
+                       {nodeId, operation, valueType} — same shape as
+                       S7's S7RpcConfig. Shown when an operation is
+                       bound; the driver trusts these fields rather
+                       than parsing the method name. -->
+                  <ng-container *ngIf="item.control.get('operation')?.value">
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width"
+                           matTooltip="OPC-UA NodeId this method reads from or writes to."
+                           matTooltipPosition="above">
+                        NodeId
+                      </div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput formControlName="nodeId" spellcheck="false"/>
+                      </mat-form-field>
+                    </div>
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width"
+                           matTooltip="Read fetches the current value from the NodeId. Write sets it from the caller's argument."
+                           matTooltipPosition="above">
+                        Operation
+                      </div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="operation">
+                          <mat-option value="read">Read</mat-option>
+                          <mat-option value="write">Write</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="tb-form-row column-xs">
+                      <div class="fixed-title-width"
+                           matTooltip="Value type used to coerce the caller's value before writing. Ignored for Read."
+                           matTooltipPosition="above">
+                        Value type
+                      </div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="valueType">
+                          <mat-option value="string">string</mat-option>
+                          <mat-option value="integer">integer</mat-option>
+                          <mat-option value="double">double</mat-option>
+                          <mat-option value="boolean">boolean</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </ng-container>
                   <div class="tb-form-panel stroked tb-flex">
                     <mat-expansion-panel class="tb-settings">
                       <mat-expansion-panel-header class="flex flex-wrap">

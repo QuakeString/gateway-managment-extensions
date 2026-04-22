@@ -137,7 +137,13 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     if (this.keysType === MappingKeysType.RPC_METHODS) {
       dataKeyFormGroup = this.fb.group({
         method: ['', [Validators.required]],
-        arguments: [[], []]
+        arguments: [[], []],
+        // OPC-UA only — carried through when the entry was imported
+        // from the discovery dialog; blank for manually-added methods
+        // (those still call an OPC-UA Method node by name).
+        nodeId: [null],
+        operation: [null],
+        valueType: [null]
       });
     } else if (this.keysType === MappingKeysType.CUSTOM) {
       dataKeyFormGroup = this.fb.group({
@@ -228,7 +234,14 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
         if (this.keysType === MappingKeysType.RPC_METHODS) {
           dataKeyFormGroup = this.fb.group({
             method: [(keyData as RpcMethodsMapping).method, [Validators.required]],
-            arguments: [[...(keyData as RpcMethodsMapping).arguments], []]
+            arguments: [[...(keyData as RpcMethodsMapping).arguments], []],
+            // Preserved round-trip — discovery-imported OPC-UA entries
+            // carry {nodeId, operation, valueType}; manually-added or
+            // legacy entries stay null and the driver falls back to
+            // calling an OPC-UA Method node by name.
+            nodeId: [(keyData as any).nodeId ?? null],
+            operation: [(keyData as any).operation ?? null],
+            valueType: [(keyData as any).valueType ?? null]
           });
         } else if (this.keysType === MappingKeysType.CUSTOM) {
           const { key, value } = keyData;

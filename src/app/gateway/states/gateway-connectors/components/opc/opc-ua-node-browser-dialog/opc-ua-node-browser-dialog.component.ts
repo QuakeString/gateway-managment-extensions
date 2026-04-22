@@ -16,7 +16,7 @@
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SharedModule } from '@shared/public-api';
 import { DeviceService } from '@core/public-api';
@@ -42,6 +42,9 @@ interface TreeNode {
   loaded: boolean;
   loadError?: string;
   children: TreeNode[];
+  /** Back-pointer to the parent — so a Variable can look up its owning
+   *  device (Object) for inherit-the-device-mode logic in RPC mode. */
+  parent?: TreeNode;
 }
 
 export interface OpcUaNodeBrowserDialogData {
@@ -49,11 +52,21 @@ export interface OpcUaNodeBrowserDialogData {
   connectorName: string;
   /** Target controls which node class is selectable + how the result is returned.
    *   - 'timeseries' | 'attributes' → Variable nodes, result carries `tags`.
-   *   - 'devices' → Object nodes (subtree anchors), result carries `devices`. */
-  targetSection: 'timeseries' | 'attributes' | 'devices';
-  /** Existing values (NodeIds for tags, or device-node paths) so already-mapped
-   *  entries render dimmed. */
+   *   - 'devices'                   → Object nodes (subtree anchors),
+   *                                   result carries `devices`.
+   *   - 'rpc_methods'               → Method nodes, result carries
+   *                                   `rpcMethods` ready to push into
+   *                                   the mapping's rpc_methods array. */
+  targetSection: 'timeseries' | 'attributes' | 'devices' | 'rpc_methods';
+  /** Existing values so already-mapped entries render dimmed: NodeIds
+   *  for tags/rpc-methods, device-node paths for devices. */
   existingValues: string[];
+  /** Mapping's `deviceNodePattern` (identifier or absolute path). When
+   *  present, the browse tree roots at this device's subtree instead
+   *  of /Objects — so tags/attrs dialogs only list keys that actually
+   *  belong to the device being edited. Unused in 'devices' mode
+   *  (picking devices needs the whole /Objects tree). */
+  rootDevicePattern?: string;
 }
 
 export interface OpcUaDeviceSelection {
@@ -61,10 +74,27 @@ export interface OpcUaDeviceSelection {
   displayName: string;
 }
 
+export interface OpcUaRpcMethodSelection {
+  method: string;
+  arguments: Array<{ type: string; value: string | number | boolean }>;
+  /** NodeId of the Variable this method targets. Stored in the
+   *  whitelist so the OPC-UA connector can route the call without the
+   *  platform supplying it at runtime. Absent for Method-node entries
+   *  (those invoke an actual OPC-UA Method). */
+  nodeId?: string;
+  /** Operation this method maps to — authoritative, the driver does
+   *  NOT parse the method name. Mirrors S7's `S7RpcConfig.operation`. */
+  operation?: 'read' | 'write';
+  /** Value type for writes — the connector coerces the caller's
+   *  value to this type before writing. */
+  valueType?: string;
+}
+
 export interface OpcUaNodeBrowserDialogResult {
   tags?: Array<{ key: string; value: string; type: string }>;
   devices?: OpcUaDeviceSelection[];
-  targetSection: 'timeseries' | 'attributes' | 'devices';
+  rpcMethods?: OpcUaRpcMethodSelection[];
+  targetSection: 'timeseries' | 'attributes' | 'devices' | 'rpc_methods';
 }
 
 @Component({
@@ -73,11 +103,11 @@ export interface OpcUaNodeBrowserDialogResult {
   styleUrls: ['./opc-ua-node-browser-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SharedModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SharedModule],
 })
 export class OpcUaNodeBrowserDialogComponent {
 
-  displayedColumns = ['select', 'name', 'nodeId', 'dataType'];
+  displayedColumns: string[] = [];
   rootChildren: TreeNode[] = [];
   displayNodes: TreeNode[] = [];
 
@@ -86,6 +116,60 @@ export class OpcUaNodeBrowserDialogComponent {
   loading = true;
   refreshing = false;
   loadError: string | null = null;
+
+  /** Visible-row cap — rendering 2000 mat-rows at once freezes the
+   *  browser. We render the first N matching rows and show a "Show
+   *  more / Show all" button. The operator can also search to narrow
+   *  the set. */
+  private static readonly DEFAULT_VISIBLE_CAP = 300;
+  visibleCap = OpcUaNodeBrowserDialogComponent.DEFAULT_VISIBLE_CAP;
+  totalMatches = 0;
+
+  /** RPC mode only. Per-device default — lives on the device (Object)
+   *  row in the table, keyed by the device's NodeId. Newly-selected
+   *  Variables under that device inherit this value at the moment of
+   *  selection. */
+  rpcDeviceModes = new Map<string, 'get' | 'set' | 'both'>();
+
+  /** RPC mode only. Per-Variable override, keyed by NodeId — lets the
+   *  operator flip a single row's direction without touching the
+   *  device-level default. Frozen at selection time. */
+  rpcVariableOverrides = new Map<string, 'get' | 'set' | 'both'>();
+
+  /** Default direction for a device when the operator hasn't chosen
+   *  one yet. */
+  private static readonly DEFAULT_RPC_MODE: 'get' | 'set' | 'both' = 'get';
+
+  /** Master default shown in the column header — applies to every
+   *  newly-selected Variable whose visible tree ancestor chain has no
+   *  Object row (the common case now that the browse dialog roots at
+   *  the mapping's device). Per-device Object toggles override it when
+   *  present (tag-mode with a tree that does include Objects). */
+  rpcBulkMode: 'get' | 'set' | 'both' = OpcUaNodeBrowserDialogComponent.DEFAULT_RPC_MODE;
+
+  /** Default for a given Variable: nearest ancestor Object's toggle if
+   *  one exists in the visible tree, otherwise the master header
+   *  toggle — so operators always have exactly one place to flip a
+   *  bulk direction, regardless of browse-root depth. */
+  deviceModeFor(node: TreeNode): 'get' | 'set' | 'both' {
+    let p = node.parent;
+    while (p) {
+      if (p.raw.nodeClass === 'Object') {
+        return this.rpcDeviceModes.get(p.raw.nodeId) ?? this.rpcBulkMode;
+      }
+      p = p.parent;
+    }
+    return this.rpcBulkMode;
+  }
+
+  /** Exposed to the template for the device row's own toggle. */
+  deviceMode(node: TreeNode): 'get' | 'set' | 'both' {
+    return this.rpcDeviceModes.get(node.raw.nodeId) ?? OpcUaNodeBrowserDialogComponent.DEFAULT_RPC_MODE;
+  }
+
+  setDeviceMode(node: TreeNode, value: 'get' | 'set' | 'both'): void {
+    this.rpcDeviceModes.set(node.raw.nodeId, value);
+  }
 
   private existingSet: Set<string>;
 
@@ -96,6 +180,31 @@ export class OpcUaNodeBrowserDialogComponent {
     private cd: ChangeDetectorRef,
   ) {
     this.existingSet = new Set((data.existingValues || []).map(v => v?.trim()).filter(Boolean));
+
+    // RPC mode gets an extra "Variable as" column between NodeId and
+    // the type badge. That column hosts the bulk toggle (in its header)
+    // and a per-row override toggle (in cells for selected Variables).
+    this.displayedColumns = data.targetSection === 'rpc_methods'
+      ? ['select', 'name', 'nodeId', 'rpcMode', 'dataType']
+      : ['select', 'name', 'nodeId', 'dataType'];
+
+    // Freeze each Variable's rpc direction at the moment of selection
+    // using its parent device's current default — so flipping the
+    // device toggle afterwards only affects *future* picks, never
+    // ones already in the set. Deselection clears the override.
+    this.selection.changed.subscribe(change => {
+      if (data.targetSection !== 'rpc_methods') return;
+      for (const n of change.added) {
+        if (n.raw.nodeClass === 'Variable'
+            && !this.rpcVariableOverrides.has(n.raw.nodeId)) {
+          this.rpcVariableOverrides.set(n.raw.nodeId, this.deviceModeFor(n));
+        }
+      }
+      for (const n of change.removed) {
+        this.rpcVariableOverrides.delete(n.raw.nodeId);
+      }
+    });
+
     this.refresh();
     this.textSearch.valueChanges.subscribe(() => this.rebuildDisplay());
   }
@@ -106,6 +215,7 @@ export class OpcUaNodeBrowserDialogComponent {
     this.loadError = null;
     this.rootChildren = [];
     this.selection.clear();
+    this.visibleCap = OpcUaNodeBrowserDialogComponent.DEFAULT_VISIBLE_CAP;
     this.cd.markForCheck();
 
     this.loadChildren(null).then(children => {
@@ -134,7 +244,7 @@ export class OpcUaNodeBrowserDialogComponent {
       node.loading = true;
       this.rebuildDisplay();
       this.loadChildren(node.raw.nodeId).then(children => {
-        node.children = children.map(n => this.wrap(n, node.depth + 1));
+        node.children = children.map(n => this.wrap(n, node.depth + 1, node));
         node.loaded = true;
         node.loading = false;
         this.rebuildDisplay();
@@ -149,11 +259,17 @@ export class OpcUaNodeBrowserDialogComponent {
   }
 
   /** Selectable node classes depend on the target:
-   *   - Tag modes → Variable nodes (they hold values).
-   *   - Device mode → Object nodes (they're subtree anchors). */
+   *   - Tag modes      → Variable nodes (they hold values).
+   *   - Device mode    → Object nodes (subtree anchors).
+   *   - RPC-methods    → Method nodes (OPC-UA Call) AND Variable
+   *                      nodes (each becomes a `get`/`set` whitelist
+   *                      entry for read/write RPC). */
   isSelectable(node: TreeNode): boolean {
     if (this.data.targetSection === 'devices') {
       return node.raw.nodeClass === 'Object';
+    }
+    if (this.data.targetSection === 'rpc_methods') {
+      return node.raw.nodeClass === 'Method' || node.raw.nodeClass === 'Variable';
     }
     return node.raw.nodeClass === 'Variable';
   }
@@ -253,6 +369,54 @@ export class OpcUaNodeBrowserDialogComponent {
       this.dialogRef.close({ devices, targetSection: 'devices' });
       return;
     }
+    if (this.data.targetSection === 'rpc_methods') {
+      // Matches the IEC 61850 model browser's naming — `get_<name>` /
+      // `set_<name>` so each entry in the rpc_methods whitelist is
+      // self-identifying. Without this, repeated selections would
+      // collapse into duplicate `get` / `set` rows that the operator
+      // can't tell apart later.
+      //   - Variable + 'get'  → `get_<sanitized>` with no arguments (read)
+      //   - Variable + 'set'  → `set_<sanitized>` with one argument of
+      //                          the matching MappingValueType (pre-
+      //                          filled so the user sees a typed
+      //                          template, not an empty row)
+      //   - Variable + 'both' → both entries above
+      //   - Method            → the method's own displayName, verbatim
+      const rpcMethods: OpcUaRpcMethodSelection[] = [];
+      for (const n of this.selection.selected) {
+        if (!this.isSelectable(n)) continue;
+        if (n.raw.nodeClass === 'Method') {
+          rpcMethods.push({
+            method: n.raw.displayName || n.raw.browseName,
+            arguments: [],
+          });
+          continue;
+        }
+        const tagName = this.toRpcTagName(n.raw.displayName || n.raw.browseName);
+        const mode = this.rpcVariableOverrides.get(n.raw.nodeId) ?? this.deviceModeFor(n);
+        const argTemplate = this.defaultArgumentFor(n.raw.dataType);
+        if (mode === 'get' || mode === 'both') {
+          rpcMethods.push({
+            method: `get_${tagName}`,
+            arguments: [],
+            nodeId: n.raw.nodeId,
+            operation: 'read',
+            valueType: argTemplate.type,
+          });
+        }
+        if (mode === 'set' || mode === 'both') {
+          rpcMethods.push({
+            method: `set_${tagName}`,
+            arguments: [argTemplate],
+            nodeId: n.raw.nodeId,
+            operation: 'write',
+            valueType: argTemplate.type,
+          });
+        }
+      }
+      this.dialogRef.close({ rpcMethods, targetSection: 'rpc_methods' });
+      return;
+    }
     const tags = this.selection.selected
       .filter(n => this.isSelectable(n))
       .map(n => ({
@@ -275,10 +439,11 @@ export class OpcUaNodeBrowserDialogComponent {
     return this.displayNodes.filter(n => this.isSelectable(n) && !this.isExisting(n)).length;
   }
 
-  private wrap(raw: BrowsedNode, depth: number): TreeNode {
+  private wrap(raw: BrowsedNode, depth: number, parent?: TreeNode): TreeNode {
     return {
       raw,
       depth,
+      parent,
       expanded: false,
       loading: false,
       loaded: false,
@@ -301,14 +466,51 @@ export class OpcUaNodeBrowserDialogComponent {
       }
     };
     push(this.rootChildren);
-    this.displayNodes = out;
+    this.totalMatches = out.length;
+    // Cap the rendered window — mat-table is O(n) per cell binding and
+    // renders everything in one pass, so 2000+ rows freeze the thread
+    // on first paint AND again each time Angular CD walks the rows.
+    this.displayNodes = out.slice(0, this.visibleCap);
     this.cd.markForCheck();
   }
 
+  /** "Show more" — step the cap forward; "Show all" — drop the cap. */
+  increaseVisibleCap(step = OpcUaNodeBrowserDialogComponent.DEFAULT_VISIBLE_CAP): void {
+    this.visibleCap = Math.min(this.totalMatches, this.visibleCap + step);
+    this.rebuildDisplay();
+  }
+
+  showAll(): void {
+    this.visibleCap = this.totalMatches || Number.POSITIVE_INFINITY;
+    this.rebuildDisplay();
+  }
+
+  /** Infinite-scroll-ish: bump the cap when the operator nears the
+   *  bottom of the table. Avoids requiring an explicit click on Show
+   *  more to continue paging through the address space. */
+  onTableScroll(event: Event): void {
+    if (this.visibleCap >= this.totalMatches) return;
+    const el = event.target as HTMLElement;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceFromBottom < 200) {
+      this.increaseVisibleCap();
+    }
+  }
+
   private loadChildren(parentNodeId: string | null): Promise<BrowsedNode[]> {
+    // Root-level call (parentNodeId null) + a device pattern from the
+    // mapping → ask the backend to resolve the pattern and root the
+    // tree there. Subsequent expansions use the returned child NodeIds
+    // directly, so `devicePattern` is only set on the initial request.
+    const isRoot = !parentNodeId;
+    const useDevicePattern = isRoot
+      && !!this.data.rootDevicePattern
+      && this.data.targetSection !== 'devices';
     const rpcBody = {
       method: 'opcua_browseNode',
-      params: parentNodeId ? { nodeId: parentNodeId } : {},
+      params: useDevicePattern
+        ? { devicePattern: this.data.rootDevicePattern }
+        : (parentNodeId ? { nodeId: parentNodeId } : {}),
       timeout: 15000,
     };
     return new Promise((resolve, reject) => {
@@ -348,5 +550,30 @@ export class OpcUaNodeBrowserDialogComponent {
    *  value column is literally `ns=...;s/i=...`. */
   private mapSourceType(_dt?: string): string {
     return 'identifier';
+  }
+
+  /** Strip characters that would break a method name (spaces, dots,
+   *  colons, slashes) so `get_<displayName>` stays a valid identifier —
+   *  the same rationale as IEC 61850's `${ln}_${do}_${da}` tag builder. */
+  private toRpcTagName(name: string): string {
+    return (name || 'var').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'var';
+  }
+
+  /** Pre-fill the single argument slot on a `set_<name>` RPC entry with
+   *  a typed template so the operator sees a ready-to-edit row instead
+   *  of "No arguments". OPC-UA built-in type names map onto the four
+   *  MappingValueType buckets the keys panel already knows about. */
+  private defaultArgumentFor(dataType?: string): { type: string; value: string | number | boolean } {
+    const dt = (dataType || '').toLowerCase();
+    if (dt === 'boolean') {
+      return { type: 'boolean', value: false };
+    }
+    if (dt.startsWith('int') || dt.startsWith('uint') || dt === 'byte' || dt === 'sbyte') {
+      return { type: 'integer', value: 0 };
+    }
+    if (dt === 'float' || dt === 'double') {
+      return { type: 'double', value: 0 };
+    }
+    return { type: 'string', value: '' };
   }
 }

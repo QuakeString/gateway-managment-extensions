@@ -14,6 +14,10 @@
      for mono NodeIds, narrow enough to not dominate the screen. */
   width: 900px;
   max-width: 75vw;
+  /* Never let the dialog itself overflow horizontally — horizontal
+     scrolling happens INSIDE the table-container, not on the page
+     underneath the dialog. */
+  overflow-x: hidden;
 }
 
 .flex-1 { flex: 1; }
@@ -32,7 +36,7 @@
 
 .point-count {
   font-size: 12px;
-  opacity: 0.6;
+  opacity: 0.7;
   margin-bottom: 8px;
 }
 
@@ -63,21 +67,36 @@
 
 .table-container {
   flex: 1;
-  overflow-y: auto;
+  /* Both axes scroll — vertical when there are many rows, horizontal
+     when the dialog is narrower than the table's min-width. */
+  overflow: auto;
   max-height: 55vh;
-  overflow-x: hidden;
 
-  /* Stop mat-table from distributing columns evenly — pin the narrow
-     columns to their content width so Node absorbs all the extra
-     space. Previously NodeId and Type had ~30vw of dead padding. */
   .mat-mdc-table {
-    width: 100%;
+    /* `min-width` guarantees the table claims enough space for all
+       columns; when the dialog is wider, the table grows to fill. On
+       narrow dialogs the table overflows the container and the
+       horizontal scrollbar on `.table-container` takes over. Every
+       column keeps its content, nothing gets hidden. */
+    min-width: 780px;
     table-layout: auto;
 
     .mat-column-select,
     .cdk-column-select {
       width: 56px;
       max-width: 56px;
+    }
+    /* Align the Name column's header text flush with the data cells.
+       Material's default 16px left-padding on cells pushed "Node" to
+       the right while the data cells set their own padding via an
+       inline style — the two ended up mismatched. The 12px inset is
+       enough to contain the chevron button's hover state layer
+       (Angular Material ignores `--mdc-icon-button-state-layer-size`
+       on older themes, so we plan for the default ~40px layer
+       instead of the 28px value we'd prefer). */
+    .mat-column-name,
+    .cdk-column-name {
+      padding-left: 12px;
     }
     .mat-column-nodeId,
     .cdk-column-nodeId {
@@ -89,6 +108,12 @@
     .cdk-column-dataType {
       width: 100px;
       max-width: 100px;
+    }
+    .mat-column-rpcMode,
+    .cdk-column-rpcMode {
+      width: 200px;
+      max-width: 220px;
+      text-align: right;
     }
   }
 }
@@ -121,6 +146,14 @@
   justify-content: center;
 }
 
+/* Leaf rows (no children): collapse the chevron slot so the node
+   icon starts flush with the cell's left edge, rather than leaving
+   a 36px blank where an invisible disclosure would be. */
+.tree-chevron.no-chevron {
+  width: 0;
+  margin-right: 0;
+}
+
 .chevron-btn {
   width: 28px;
   height: 28px;
@@ -130,6 +163,19 @@
   /* Shrink the MDC state layer (hover/focus ring) so it doesn't bleed
      onto the folder icon next door. */
   --mdc-icon-button-state-layer-size: 28px;
+  /* Belt and braces — some Angular Material themes don't honour
+     the state-layer-size token so the hover halo renders at the
+     default ~40px and gets clipped by the left-side cell boundary.
+     Clamp both the persistent state layer and the ripple container
+     to the button box explicitly. */
+  .mat-mdc-button-persistent-ripple,
+  .mat-mdc-button-ripple,
+  .mat-ripple {
+    inset: 0 !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+  }
 
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
@@ -190,6 +236,32 @@
 /* Outlined pill with Sentient's --tb-primary (teal) — low visual
    weight so a column full of Type badges doesn't dominate the row.
    Matches opc-ua-scan-dialog's .dtype-badge for consistency. */
+/* Variable-as column — only visible in RPC mode. Header hosts the
+   bulk toggle with the "Variable as" label beside it; data cell shows
+   the same toggle (per-row, frozen at select-time by the TS). Use
+   Material's default mat-button-toggle-group look so it matches any
+   Sentient global theming without inventing a private pill style. */
+.rpc-mode-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rpc-mode-label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.rpc-mode-cell {
+  white-space: nowrap;
+}
+
+.rpc-toggle {
+  /* Right-align so the column reads as "column of toggles", not
+     "column of labels". */
+  display: inline-flex;
+}
+
 .dtype-badge {
   display: inline-block;
   padding: 1px 8px;
@@ -221,7 +293,29 @@
   vertical-align: middle;
 }
 
+/* ------------------------ tablet (sm) --------------------------------
+ * 600-959px. Dialog takes up to 95vw so the table has breathing
+ * room; columns keep their widths. When the 780px min-width table
+ * exceeds the dialog, the .table-container scrolls horizontally. */
+@media (min-width: 600px) and (max-width: 959px) {
+  .node-browser-dialog {
+    max-width: 95vw;
+    width: 95vw;
+    max-height: 90vh;
+  }
+  .table-container { max-height: calc(90vh - 230px); }
+}
+
+/* ------------------------ mobile (xs) --------------------------------
+ * <600px. Full-screen dialog, full-height table-container. Horizontal
+ * scroll on the table-container reveals clipped columns — no columns
+ * are hidden, the operator just swipes sideways. */
 @media (max-width: 599px) {
-  .node-browser-dialog { max-height: 100vh; }
+  .node-browser-dialog {
+    max-width: 100vw;
+    width: 100vw;
+    max-height: 100vh;
+    height: 100vh;
+  }
   .table-container { max-height: calc(100vh - 250px); }
 }

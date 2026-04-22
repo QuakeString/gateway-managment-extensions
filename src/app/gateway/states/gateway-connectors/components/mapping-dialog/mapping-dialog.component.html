@@ -16,7 +16,7 @@
 
 <div [formGroup]="mappingForm" class="key-mapping">
   <mat-toolbar color="primary">
-    <h2>{{ MappingTypeTranslationsMap.get(this.data?.mappingType) | translate}}</h2>
+    <h2>{{ MappingTypeTranslationsMap.get(this.data?.mappingType) | translate}}<ng-container *ngIf="mappingDeviceLabel"> — {{ mappingDeviceLabel }}</ng-container></h2>
     <span class="flex-1"></span>
     <div [tb-help]="HelpLinkByMappingTypeMap.get(this.data.mappingType)"></div>
     <button mat-icon-button
@@ -753,6 +753,20 @@
                   <label class="ellipsis-text"></label>
                 </mat-chip>
               </mat-chip-listbox>
+              <!-- Browse Method-class nodes from the live server — same
+                   pattern as the other three sections, disabled until
+                   the connector has been saved / routed. Returned
+                   methods get `{ method, arguments: [] }`; the operator
+                   fills per-method arguments via the pencil Edit. -->
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Browse server"
+                      matTooltipPosition="above"
+                      [disabled]="!data.gatewayDeviceId || !data.connectorName"
+                      (click)="browseOpcuaNodes('rpc_methods')">
+                <mat-icon>wifi_find</mat-icon>
+              </button>
               <button type="button"
                       mat-icon-button
                       color="primary"

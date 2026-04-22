@@ -153,15 +153,32 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
    * (Variables) since the data shape is identical; the result is just
    * written into the `attributes_updates` form control.
    */
-  browseOpcuaNodes(section: 'timeseries' | 'attributes' | 'attribute_updates'): void {
+  browseOpcuaNodes(section: 'timeseries' | 'attributes' | 'attribute_updates' | 'rpc_methods'): void {
     if (!this.data.gatewayDeviceId || !this.data.connectorName) {
       return;
     }
+
+    // Map the caller's logical section to (form-control name, browser
+    // target). Variable sections reuse 'attributes' / 'timeseries'
+    // modes; attribute_updates reuses 'attributes' browse but writes
+    // into the `attributes_updates` control; rpc_methods browses Method
+    // nodes and writes into `rpc_methods`.
     const formKey = section === 'attribute_updates' ? 'attributes_updates' : section;
-    const browserTarget = section === 'attribute_updates' ? 'attributes' : section;
-    const current: Array<{ key: string; value: string; type: string }> =
-      this.mappingForm.get(formKey)?.value || [];
-    const existingValues = current.map(t => t.value).filter(Boolean);
+    const browserTarget: 'timeseries' | 'attributes' | 'rpc_methods' =
+      section === 'attribute_updates' ? 'attributes'
+      : section === 'rpc_methods'     ? 'rpc_methods'
+      : section;
+
+    const currentRaw: any[] = this.mappingForm.get(formKey)?.value || [];
+    const existingValues = section === 'rpc_methods'
+      ? currentRaw.map(r => r?.method).filter(Boolean)
+      : currentRaw.map(t => t?.value).filter(Boolean);
+
+    // Scope the browse tree to the current mapping's device so the
+    // operator only sees keys under *their* device, not every device
+    // the server exposes. 'devices' mode keeps the full /Objects tree.
+    const rootDevicePattern: string | undefined =
+      (this.mappingForm.get('deviceNodePattern')?.value || undefined);
 
     this.matDialog.open<
       OpcUaNodeBrowserDialogComponent,
@@ -171,17 +188,26 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       data: {
         gatewayDeviceId: this.data.gatewayDeviceId,
         connectorName: this.data.connectorName,
-        targetSection: browserTarget as 'timeseries' | 'attributes',
+        targetSection: browserTarget,
         existingValues,
+        rootDevicePattern,
       },
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       autoFocus: false,
     }).afterClosed().subscribe(result => {
-      if (!result?.tags?.length) return;
+      if (!result) return;
       const ctrl = this.mappingForm.get(formKey);
-      ctrl?.patchValue([...current, ...result.tags]);
-      ctrl?.markAsDirty();
+      if (!ctrl) return;
+
+      if (section === 'rpc_methods') {
+        if (!result.rpcMethods?.length) return;
+        ctrl.patchValue([...currentRaw, ...result.rpcMethods]);
+      } else {
+        if (!result.tags?.length) return;
+        ctrl.patchValue([...currentRaw, ...result.tags]);
+      }
+      ctrl.markAsDirty();
     });
   }
 
@@ -195,6 +221,21 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     if (this.converterType) {
       return this.mappingForm.get('converter').get(this.converterType).value.timeseries.map((value: Timeseries) => value.key);
     }
+  }
+
+  /** Label shown next to the mapping-dialog title — identifies *which*
+   *  device this mapping belongs to so the toolbar reads
+   *  "Data mapping — Simulator" instead of a bare "Data mapping".
+   *  OPC-UA uses `deviceNodePattern`; other connectors fall back to a
+   *  deviceInfo-derived name expression when present. */
+  get mappingDeviceLabel(): string {
+    if (this.data?.mappingType === MappingType.OPCUA) {
+      const pattern = this.mappingForm?.get('deviceNodePattern')?.value;
+      if (pattern) return String(pattern);
+    }
+    const info: any = this.mappingForm?.get('deviceInfo')?.value;
+    const name = info?.deviceNameExpression || info?.deviceName;
+    return name ? String(name) : '';
   }
 
   get opcAttributes(): Array<string> {
