@@ -234,7 +234,15 @@
                       </mat-form-field>
                     </div>
                   </ng-container>
-                  <div class="tb-form-panel stroked tb-flex">
+                  <!-- Arguments only apply to OPC-UA Method-node RPCs
+                       (inputs passed to `call_method()` on the server).
+                       Variable-bound get_/set_ entries use NodeId +
+                       Operation + Value type — the write value comes
+                       from the platform's RPC payload at runtime.
+                       Hiding this panel for them keeps the editor
+                       focused on fields that actually matter. -->
+                  <div class="tb-form-panel stroked tb-flex"
+                       *ngIf="!item.control.get('operation')?.value">
                     <mat-expansion-panel class="tb-settings">
                       <mat-expansion-panel-header class="flex flex-wrap">
                         <mat-panel-title>

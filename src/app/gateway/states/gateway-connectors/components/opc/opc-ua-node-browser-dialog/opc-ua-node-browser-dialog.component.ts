@@ -394,23 +394,28 @@ export class OpcUaNodeBrowserDialogComponent {
         }
         const tagName = this.toRpcTagName(n.raw.displayName || n.raw.browseName);
         const mode = this.rpcVariableOverrides.get(n.raw.nodeId) ?? this.deviceModeFor(n);
-        const argTemplate = this.defaultArgumentFor(n.raw.dataType);
+        const valueType = this.defaultArgumentFor(n.raw.dataType).type;
+        // Variable-bound entries carry NO `arguments` — the write
+        // value comes from the platform's RPC payload at runtime,
+        // coerced using `valueType`. The `Arguments` list is only
+        // meaningful for OPC-UA Method-node calls (inputs to
+        // `call_method()`), which is a different RPC flow.
         if (mode === 'get' || mode === 'both') {
           rpcMethods.push({
             method: `get_${tagName}`,
             arguments: [],
             nodeId: n.raw.nodeId,
             operation: 'read',
-            valueType: argTemplate.type,
+            valueType,
           });
         }
         if (mode === 'set' || mode === 'both') {
           rpcMethods.push({
             method: `set_${tagName}`,
-            arguments: [argTemplate],
+            arguments: [],
             nodeId: n.raw.nodeId,
             operation: 'write',
-            valueType: argTemplate.type,
+            valueType,
           });
         }
       }
