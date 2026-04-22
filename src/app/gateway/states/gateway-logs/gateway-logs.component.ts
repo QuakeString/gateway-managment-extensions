@@ -99,14 +99,33 @@ export class GatewayLogsComponent implements OnInit, AfterViewInit {
     };
     if (this.ctx.settings.isConnectorLog && this.ctx.settings.connectorLogState) {
       const connector = this.ctx.stateController.getStateParams()[this.ctx.settings.connectorLogState];
+      // Route by the log's SOURCE FILE, not by substring-matching the
+      // whole message. The old `message.includes('_converter.py')`
+      // rule mis-routed two ways:
+      //   - Exception tracebacks that traverse the converter file
+      //     are emitted by the connector logger but their stringified
+      //     frames include `_converter.py` paths — wrongly routed
+      //     to the Converter tab.
+      //   - Connector logs whose text mentions the word "converter"
+      //     (e.g. the name of the instance they dispatched to) read
+      //     like converter logs even though they're connector-side.
+      // The Python formatter prefixes every line with `[filename]`;
+      // match on that bracketed prefix alone so routing tracks the
+      // *emitter* rather than the surrounding text.
+      const filenameMatch = /\[([^\]]+\.py)\]/;
+      const sourceFileOf = (msg: string): string => {
+        const m = filenameMatch.exec(msg || '');
+        return m ? m[1] : '';
+      };
+      const isConverterSource = (msg: string) => sourceFileOf(msg).endsWith('_converter.py');
       this.logLinks = [{
         key: `${connector.key}_LOGS`,
         name: this.translate.instant('gateway.connector'),
-        filterFn: (attrData) => !attrData.message.includes(`_converter.py`)
+        filterFn: (attrData) => !isConverterSource(attrData.message)
       }, {
         key: `${connector.key}_converter_LOGS`,
         name: this.translate.instant('gateway.converter'),
-        filterFn: (attrData) => attrData.message.includes(`_converter.py`)
+        filterFn: (attrData) => isConverterSource(attrData.message)
       }];
     } else {
       this.logLinks = this.gatewayLogLinks;
