@@ -1,311 +1,124 @@
 <!--
-  Copyright © 2016-2025 The Thingsboard Authors
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+  Copyright © 2016-2025 The Sentient Authors
+  Licensed under the Apache License, Version 2.0
 -->
-<div #panelRoot class="s7-data-keys-panel-root" [class.fullscreen]="isFullscreen">
-  <div class="s7-keys-panel">
+<tb-industrial-keys-panel
+  [keysFormArray]="keysFormArray"
+  [title]="panelTitle"
+  [addKeyLabel]="addKeyTitle"
+  [deleteKeyTitle]="deleteKeyTitle"
+  [emptyText]="noKeysText"
+  [searchFields]="searchFields"
+  [sortFields]="sortFields"
+  [spreadsheetColumns]="spreadsheetColumns"
+  hostSelector="tb-s7-data-keys-panel"
+  [rowHeaderTpl]="rowHeaderTpl"
+  [rowBodyTpl]="rowBodyTpl"
+  [applyDisabled]="keysFormArray.invalid || !keysFormArray.dirty"
+  (addKeyRequested)="onAddRequested()"
+  (deleteKeyRequested)="onDeleteRequested($event)"
+  (applyRequested)="onApplyRequested()"
+  (cancelRequested)="onCancelRequested()">
+</tb-industrial-keys-panel>
+
+<!-- Row header — 3 labeled pairs. Same grammar as the other
+     industrial panels so the five dialogs read identically. -->
+<ng-template #rowHeaderTpl let-row let-index="index">
+  <div class="tb-flex">
+    <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('tag')?.value }}</span>
+    </div>
+    <div class="title-container">Address:
+      <span class="key-label">{{ row.get('address')?.value }}</span>
+    </div>
+    <div class="title-container">Type:
+      <span class="key-label">{{ row.get('valueType')?.value || 'Auto' }}</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #rowBodyTpl let-row let-index="index">
+  <ng-container [formGroup]="row">
     <div class="tb-form-panel no-border no-padding">
-      <div class="tb-form-panel-title">{{ panelTitle }} ({{ keysFormArray.length }})</div>
-      <div class="header-actions" *ngIf="!isFullscreen">
-        <div class="rounded-search">
-          <mat-icon class="rounded-search-icon">search</mat-icon>
-          <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
-          <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
-            <mat-icon>close</mat-icon>
-          </button>
+      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ 'gateway.hints.s7.data-keys' | translate }}
+        <div matSuffix
+             class="see-example p-1"
+             [tb-help-popup]="'widget/lib/gateway/s7-address-data-types_fn'"
+             tb-help-popup-placement="left"
+             [tb-help-popup-style]="{maxWidth: '970px'}">
         </div>
-        <button type="button"
-                mat-icon-button
-                class="header-action-btn"
-                [matMenuTriggerFor]="sortMenu"
-                matTooltip="Sort"
-                matTooltipPosition="above">
-          <mat-icon>sort</mat-icon>
-        </button>
-        <button type="button"
-                mat-icon-button
-                class="header-action-btn"
-                (click)="toggleFullscreen()"
-                [matTooltip]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
-                matTooltipPosition="above">
-          <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
-        <mat-menu #sortMenu="matMenu" class="spreadsheet-sort-menu-panel">
-          <button mat-menu-item type="button" (click)="setSortField(null)">
-            <mat-icon *ngIf="sortField === null">check</mat-icon>
-            <span>Default order</span>
-          </button>
-          <button *ngFor="let f of sortFields"
-                  mat-menu-item
-                  type="button"
-                  (click)="setSortField(f.value)">
-            <mat-icon *ngIf="sortField === f.value">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-            <span>{{ f.label }}</span>
-          </button>
-        </mat-menu>
       </div>
-      <div *ngIf="!isFullscreen && searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
-        {{ filteredControls.length }} of {{ keysFormArray.length }} keys
-      </div>
-
-      <ng-container *ngIf="!isFullscreen; else spreadsheet">
-        <div class="tb-form-panel no-border no-padding key-panel"
-             *ngIf="displayedControls.length; else noKeys"
-             (scroll)="onKeyPanelScroll($event)">
-          <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
-               *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
-            <div class="tb-form-panel stroked tb-flex">
-              <ng-container [formGroup]="item.control">
-                <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
-                  <mat-expansion-panel-header class="flex-wrap">
-                    <mat-panel-title>
-                      <div class="tb-flex">
-                        <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
-                          <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? item.control.get('method').value : item.control.get('tag').value }}</span>
-                        </div>
-                        <div class="title-container">Address:
-                          <span class="key-label">{{ item.control.get('address').value }}</span>
-                        </div>
-                        <div class="title-container">Type:
-                          <span class="key-label">{{ item.control.get('valueType').value || 'Auto' }}</span>
-                        </div>
-                      </div>
-                    </mat-panel-title>
-                  </mat-expansion-panel-header>
-                  <ng-template matExpansionPanelContent>
-                    <div class="tb-form-panel no-border no-padding">
-                      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
-                        {{ 'gateway.hints.s7.data-keys' | translate }}
-                        <div matSuffix
-                             class="see-example p-1"
-                             [tb-help-popup]="'widget/lib/gateway/s7-address-data-types_fn'"
-                             tb-help-popup-placement="left"
-                             [tb-help-popup-style]="{maxWidth: '970px'}">
-                        </div>
-                      </div>
-                      <div class="tb-form-panel stroked">
-                        <div class="tb-form-panel-title" translate>gateway.platform-side</div>
-                        <ng-container *ngIf="!isRpc">
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.tag' | translate }}">{{ 'gateway.key' | translate }}</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <input matInput formControlName="tag" placeholder="temperature">
-                            </mat-form-field>
-                          </div>
-                        </ng-container>
-                        <ng-container *ngIf="isRpc">
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">Method</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <input matInput formControlName="method" placeholder="setValue">
-                            </mat-form-field>
-                          </div>
-                        </ng-container>
-                      </div>
-                      <div class="tb-form-panel stroked">
-                        <div class="tb-form-panel-title" translate>gateway.connector-side</div>
-                        <ng-container *ngIf="isRpc">
-                          <div class="tb-form-row column-xs">
-                            <div class="fixed-title-width tb-required">Operation</div>
-                            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                              <mat-select formControlName="operation">
-                                <mat-option value="read">Read</mat-option>
-                                <mat-option value="write">Write</mat-option>
-                              </mat-select>
-                            </mat-form-field>
-                          </div>
-                        </ng-container>
-                        <div class="tb-form-row column-xs">
-                          <div class="fixed-title-width tb-required">Address</div>
-                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                            <input matInput formControlName="address" placeholder="DB1.DBD0"
-                                   style="text-transform: uppercase"
-                                   (input)="onAddressInput(item.control)">
-                            <mat-icon matSuffix
-                                      matTooltipPosition="above"
-                                      matTooltipClass="tb-error-tooltip"
-                                      [matTooltip]="'Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)'"
-                                      *ngIf="item.control.get('address').hasError('pattern')
-                                                           && item.control.get('address').touched"
-                                      class="tb-error">
-                              warning
-                            </mat-icon>
-                          </mat-form-field>
-                        </div>
-                        <div class="tb-form-row column-xs">
-                          <div class="fixed-title-width">Value Type</div>
-                          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                            <mat-select formControlName="valueType">
-                              <mat-option value="">Auto</mat-option>
-                              <mat-option *ngFor="let type of valueTypes" [value]="type">
-                                {{ type }}
-                              </mat-option>
-                            </mat-select>
-                          </mat-form-field>
-                        </div>
-                        <ng-container *ngIf="!isRpc">
-                          <!-- Calibration — modifier (× / ÷ / + / −)
-                               and scaling (rawMin/rawMax → engMin/engMax)
-                               are mutually exclusive. The whole panel
-                               is hidden for non-numeric value types
-                               (bool, string) since post-read math
-                               isn't meaningful for them. -->
-                          <div class="tb-form-panel stroked"
-                               *ngIf="canCalibrate(item.control)">
-                            <mat-expansion-panel class="tb-settings"
-                                                 [expanded]="calModeControlMap.get(item.control.getRawValue().id)?.value !== 'none'">
-                              <mat-expansion-panel-header class="flex-wrap">
-                                <mat-panel-title>Calibration</mat-panel-title>
-                              </mat-expansion-panel-header>
-                              <div class="tb-form-row column-xs">
-                                <div class="fixed-title-width">Mode</div>
-                                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                                  <mat-select [formControl]="calModeControlMap.get(item.control.getRawValue().id)">
-                                    <mat-option value="none">None</mat-option>
-                                    <mat-option value="modifier">Modifier (× / ÷ / + / −)</mat-option>
-                                    <mat-option value="scaling">Scale (linear)</mat-option>
-                                  </mat-select>
-                                </mat-form-field>
-                              </div>
-                              <ng-container *ngIf="calModeControlMap.get(item.control.getRawValue().id)?.value === 'modifier'">
-                                <div class="tb-form-row column-xs">
-                                  <div class="fixed-title-width" translate>gateway.type</div>
-                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                                    <mat-select formControlName="modifierType">
-                                      <mat-select-trigger>
-                                        <div class="tb-flex align-center">
-                                          <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(item.control.get('modifierType').value)?.icon"></mat-icon>
-                                          <span>{{ ModifierTypesMap.get(item.control.get('modifierType').value)?.name | translate }}</span>
-                                        </div>
-                                      </mat-select-trigger>
-                                      <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
-                                        <mat-icon class="tb-mat-20" [svgIcon]="ModifierTypesMap.get(modifierType).icon"></mat-icon>
-                                        <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
-                                      </mat-option>
-                                    </mat-select>
-                                  </mat-form-field>
-                                </div>
-                                <div class="tb-form-row column-xs">
-                                  <div class="fixed-title-width" translate>gateway.value</div>
-                                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
-                                    <input matInput required formControlName="modifierValue" step="0.1" type="number"
-                                           placeholder="{{ 'gateway.set' | translate }}" />
-                                    <mat-icon matSuffix
-                                              matTooltipPosition="above"
-                                              matTooltipClass="tb-error-tooltip"
-                                              [matTooltip]="('gateway.modifier-invalid') | translate"
-                                              *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
-                                              class="tb-error">
-                                      warning
-                                    </mat-icon>
-                                  </mat-form-field>
-                                </div>
-                              </ng-container>
-                              <ng-container *ngIf="calModeControlMap.get(item.control.getRawValue().id)?.value === 'scaling'">
-                                <div class="tb-form-row column-xs">
-                                  <div class="fixed-title-width">Raw Min</div>
-                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                                    <input matInput type="number" formControlName="rawMin" placeholder="0"/>
-                                  </mat-form-field>
-                                </div>
-                                <div class="tb-form-row column-xs">
-                                  <div class="fixed-title-width">Raw Max</div>
-                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                                    <input matInput type="number" formControlName="rawMax" placeholder="65535"/>
-                                  </mat-form-field>
-                                </div>
-                                <div class="tb-form-row column-xs">
-                                  <div class="fixed-title-width">Eng Min</div>
-                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                                    <input matInput type="number" formControlName="engMin" placeholder="0"/>
-                                  </mat-form-field>
-                                </div>
-                                <div class="tb-form-row column-xs">
-                                  <div class="fixed-title-width">Eng Max</div>
-                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                                    <input matInput type="number" formControlName="engMax" placeholder="100"/>
-                                  </mat-form-field>
-                                </div>
-                              </ng-container>
-                            </mat-expansion-panel>
-                          </div>
-                          <tb-report-strategy
-                            class="stroked tb-form-panel"
-                            [defaultValue]="ReportStrategyDefaultValue.Key"
-                            formControlName="reportStrategy"
-                            [isExpansionMode]="true"
-                          />
-                        </ng-container>
-                      </div>
-                    </div>
-                  </ng-template>
-                </mat-expansion-panel>
-              </ng-container>
-            </div>
-            <button type="button"
-                    mat-icon-button
-                    (click)="deleteKey(item.index)"
-                    [matTooltip]="deleteKeyTitle"
-                    matTooltipPosition="above">
-              <mat-icon>delete</mat-icon>
-            </button>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>gateway.platform-side</div>
+        <ng-container *ngIf="!isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.tag' | translate }}">{{ 'gateway.key' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="tag" placeholder="temperature">
+            </mat-form-field>
           </div>
+        </ng-container>
+        <ng-container *ngIf="isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">Method</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="method" placeholder="setValue">
+            </mat-form-field>
+          </div>
+        </ng-container>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>gateway.connector-side</div>
+        <ng-container *ngIf="isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required">Operation</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="operation">
+                <mat-option value="read">Read</mat-option>
+                <mat-option value="write">Write</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </ng-container>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required">Address</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="address" placeholder="DB1.DBD0"
+                   style="text-transform: uppercase"
+                   (input)="onAddressInput(row)">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)'"
+                      *ngIf="row.get('address').hasError('pattern') && row.get('address').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
         </div>
-        <ng-template #noKeys>
-          <div class="tb-flex no-flex center align-center key-panel">
-            <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeys" class="tb-prompt">
-              No matching keys
-            </span>
-            <ng-template #emptyKeys>
-              <span class="tb-prompt">{{ noKeysText }}</span>
-            </ng-template>
-          </div>
-        </ng-template>
-      </ng-container>
-
-      <ng-template #spreadsheet>
-        <tb-spreadsheet-keys
-          [keysFormArray]="keysFormArray"
-          [columns]="spreadsheetColumns"
-          [searchFields]="searchFields"
-          [isFullscreen]="isFullscreen"
-          hostSelector="tb-s7-data-keys-panel"
-          (fullscreenToggled)="onFullscreenToggled($event)"
-          (addRowRequested)="onAddRowRequested()"
-          (deleteRowsRequested)="onDeleteRowsRequested($event)">
-        </tb-spreadsheet-keys>
-      </ng-template>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width">Value Type</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="valueType">
+              <mat-option value="">Auto</mat-option>
+              <mat-option *ngFor="let type of valueTypes" [value]="type">{{ type }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <ng-container *ngIf="!isRpc">
+          <!-- Calibration CVA — mode dropdown + modifier/scaling
+               inputs live inside. Hidden for non-numeric value types
+               (bool / string) via the canCalibrate gate. -->
+          <tb-calibration-block formControlName="calibration" [canCalibrate]="canCalibrate(row)"/>
+          <tb-report-strategy
+            class="stroked tb-form-panel"
+            [defaultValue]="ReportStrategyDefaultValue.Key"
+            formControlName="reportStrategy"
+            [isExpansionMode]="true"
+          />
+        </ng-container>
+      </div>
     </div>
-  </div>
-  <div class="flex justify-between pt-4 footer-actions">
-    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
-      {{ addKeyTitle }}
-    </button>
-    <div class="tb-flex flex-end">
-      <button mat-button
-              color="primary"
-              type="button"
-              (click)="cancel()">
-        Cancel
-      </button>
-      <button mat-raised-button
-              color="primary"
-              type="button"
-              (click)="applyKeysData()"
-              [disabled]="keysFormArray.invalid || !keysFormArray.dirty">
-        Apply
-      </button>
-    </div>
-  </div>
-</div>
+  </ng-container>
+</ng-template>

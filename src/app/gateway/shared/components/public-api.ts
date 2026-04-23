@@ -18,3 +18,8 @@ export * from './gateway-status/gateway-status.component';
 export * from './error-icon/error-icon.component';
 export * from './device-profile-autocomplete/device-profile-autocomplete.component';
 export * from './time-sync-dialog/time-sync-dialog.component';
+export * from './industrial-keys-panel/industrial-keys-panel.component';
+export * from './industrial-keys-panel/industrial-keys-panel.models';
+export * from './industrial-keys-panel/column-builders';
+export * from './calibration-block/calibration-block.component';
+export * from './calibration-block/calibration-block.models';

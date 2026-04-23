@@ -1,201 +1,22 @@
 /*
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2025 The Sentient Authors
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Panel-specific styles only — toolbar / search / fullscreen /
+ * footer are owned by the shared IndustrialKeysPanel shell.
  */
 
 :host {
-  .s7-keys-panel {
-    width: 77vw;
-    max-width: 700px;
+  display: block;
 
-    .title-container {
-      width: 180px;
-    }
-
-    .key-label {
-      font-weight: 400;
-    }
-
-    .rounded-search {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 0 14px;
-      height: 36px;
-      border: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
-      border-radius: 999px;
-      background: transparent;
-      box-sizing: border-box;
-      margin-bottom: 4px;
-      transition: border-color 120ms ease;
-
-      &:hover {
-        border-color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-      }
-      &:focus-within {
-        border-color: var(--tb-primary, #26a69a);
-        border-width: 2px;
-        padding: 0 13px;
-      }
-
-      .rounded-search-icon {
-        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        line-height: 18px;
-        flex-shrink: 0;
-      }
-
-      .rounded-search-input {
-        flex: 1;
-        min-width: 0;
-        border: none;
-        outline: none;
-        background: transparent;
-        color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
-        font-size: 14px;
-        font-family: inherit;
-        padding: 0;
-      }
-
-      .rounded-search-clear {
-        flex-shrink: 0;
-        width: 22px;
-        height: 22px;
-        padding: 0;
-        border: none;
-        background: transparent;
-        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-
-        &:hover {
-          background: rgba(0, 0, 0, 0.08);
-        }
-
-        mat-icon {
-          font-size: 16px;
-          width: 16px;
-          height: 16px;
-        }
-      }
-    }
-
-    .search-result-info {
-      font-size: 12px;
-      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-      padding-bottom: 4px;
-    }
-
-    .key-panel {
-      height: calc(100vh - 112px);
-      max-height: 500px;
-      overflow: auto;
-    }
-
-    .tb-form-panel {
-      .mat-mdc-icon-button {
-        width: 56px;
-        height: 56px;
-        padding: 16px;
-        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-      }
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-
-    .header-action-btn {
-      flex-shrink: 0;
-    }
-  }
-
-  .s7-data-keys-panel-root {
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-:host {
-  .s7-data-keys-panel-root.fullscreen {
-    width: 100%;
-    height: 100%;
-    background: var(--tb-surface-card, #ffffff);
-    padding: 16px;
-    box-sizing: border-box;
+  .title-container {
+    width: 180px;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-
-    .s7-keys-panel {
-      width: 100%;
-      max-width: none;
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-
-      > .tb-form-panel {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-
-        tb-spreadsheet-keys {
-          flex: 1;
-          min-height: 0;
-          display: flex;
-          flex-direction: column;
-        }
-      }
-
-      .key-panel {
-        height: auto;
-        max-height: none;
-        flex: 1;
-        min-height: 0;
-      }
-    }
-
-    .footer-actions {
-      flex-shrink: 0;
-    }
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-}
 
-@media (max-width: 599px) {
-  :host {
-    .s7-keys-panel {
-      width: 100%;
-      max-width: 100%;
-
-      .title-container {
-        width: auto;
-        max-width: 45%;
-      }
-
-      .key-panel {
-        max-height: calc(100vh - 160px);
-      }
-    }
+  .key-label {
+    font-weight: 400;
+    padding-left: 4px;
   }
 }

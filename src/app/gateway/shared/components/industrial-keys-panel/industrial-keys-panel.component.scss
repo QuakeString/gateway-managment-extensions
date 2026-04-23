@@ -1,0 +1,196 @@
+/*
+ * Copyright © 2016-2025 The Sentient Authors
+ *
+ * Shared chassis styles — derived from the S7 panel so the five
+ * connectors that migrate onto this shell get the same toolbar /
+ * footer / fullscreen layout for free.
+ */
+
+:host {
+  .industrial-keys-panel {
+    width: 77vw;
+    max-width: 700px;
+
+    .title-container {
+      width: 180px;
+    }
+
+    .key-label {
+      font-weight: 400;
+    }
+
+    .rounded-search {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      height: 36px;
+      border: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
+      border-radius: 999px;
+      background: transparent;
+      box-sizing: border-box;
+      margin-bottom: 4px;
+      transition: border-color 120ms ease;
+
+      &:hover { border-color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54)); }
+      &:focus-within {
+        border-color: var(--tb-primary, #26a69a);
+        border-width: 2px;
+        padding: 0 13px;
+      }
+
+      .rounded-search-icon {
+        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        line-height: 18px;
+        flex-shrink: 0;
+      }
+
+      .rounded-search-input {
+        flex: 1;
+        min-width: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
+        font-size: 14px;
+        font-family: inherit;
+        padding: 0;
+      }
+
+      .rounded-search-clear {
+        flex-shrink: 0;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+
+        &:hover { background: rgba(0, 0, 0, 0.08); }
+
+        mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      }
+    }
+
+    .search-result-info {
+      font-size: 12px;
+      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+      padding-bottom: 4px;
+    }
+
+    .key-panel {
+      height: calc(100vh - 112px);
+      max-height: 500px;
+      overflow: auto;
+    }
+
+    .tb-form-panel {
+      .mat-mdc-icon-button {
+        width: 56px;
+        height: 56px;
+        padding: 16px;
+        color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+      }
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .header-action-btn { flex-shrink: 0; }
+  }
+
+  .industrial-keys-panel-root {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+:host {
+  .industrial-keys-panel-root.fullscreen {
+    width: 100%;
+    height: 100%;
+    background: var(--tb-surface-card, #ffffff);
+    padding: 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .industrial-keys-panel {
+      width: 100%;
+      max-width: none;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      > .tb-form-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+
+        tb-spreadsheet-keys {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+        }
+      }
+
+      .key-panel {
+        height: auto;
+        max-height: none;
+        flex: 1;
+        min-height: 0;
+      }
+    }
+
+    .footer-actions {
+      flex-shrink: 0;
+    }
+  }
+}
+
+/* Outer pane selector — applied by TS to whichever floating host
+   (mat-dialog overlay or tb-popover) contains this panel when
+   fullscreen is toggled on. */
+:host ::ng-deep {
+  .cdk-overlay-pane.industrial-keys-fullscreen-pane,
+  .tb-popover.industrial-keys-fullscreen-pane {
+    width: 96vw !important;
+    max-width: none !important;
+    height: 92vh !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 599px) {
+  :host {
+    .industrial-keys-panel {
+      width: 100%;
+      max-width: 100%;
+
+      .title-container {
+        width: auto;
+        max-width: 45%;
+      }
+
+      .key-panel {
+        max-height: calc(100vh - 160px);
+      }
+    }
+  }
+}

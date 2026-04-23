@@ -229,7 +229,8 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
       keys: keysControl.value,
       keysType,
       panelTitle: panelTitles[keysType],
-      addKeyTitle: 'Add key',
+      // Standardized: data keys → "Add key"; RPC → "Add method".
+      addKeyTitle: keysType === EthernetIPValueKey.RPC ? 'Add method' : 'Add key',
       deleteKeyTitle: 'Delete key',
       noKeysText: 'No keys configured. Add a key to get started.',
       isSLC: !this.isLogixType,

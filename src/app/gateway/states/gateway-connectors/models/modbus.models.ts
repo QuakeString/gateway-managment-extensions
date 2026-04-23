@@ -258,10 +258,13 @@ export const ModbusKeysPanelTitleTranslationsMap = new Map<ModbusValueKey, strin
 
 export const ModbusKeysAddKeyTranslationsMap = new Map<ModbusValueKey, string>(
   [
-    [ModbusValueKey.ATTRIBUTES, 'gateway.add-attribute'],
-    [ModbusValueKey.TIMESERIES, 'gateway.add-timeseries'],
-    [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
-    [ModbusValueKey.RPC_REQUESTS, 'gateway.add-rpc-request']
+    // Standardized labels: every timeseries / attribute / attribute-
+    // update / attribute-request panel uses "Add key"; every RPC
+    // panel uses "Add method" — same grammar across all connectors.
+    [ModbusValueKey.ATTRIBUTES, 'gateway.add-key'],
+    [ModbusValueKey.TIMESERIES, 'gateway.add-key'],
+    [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.add-key'],
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.add-rpc-method']
   ]
 );
 

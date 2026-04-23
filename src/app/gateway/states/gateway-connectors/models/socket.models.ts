@@ -102,10 +102,11 @@ export enum ExpressionType {
 
 export const SocketKeysAddKeyTranslationsMap = new Map<SocketValueKey, string>(
   [
-    [SocketValueKey.ATTRIBUTES, 'gateway.add-attribute'],
-    [SocketValueKey.TIMESERIES, 'gateway.add-timeseries'],
-    [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.add-attribute-request'],
-    [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    // Standardized labels: data keys → "Add key"; RPC → "Add method".
+    [SocketValueKey.ATTRIBUTES, 'gateway.add-key'],
+    [SocketValueKey.TIMESERIES, 'gateway.add-key'],
+    [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.add-key'],
+    [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.add-key'],
     [SocketValueKey.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );

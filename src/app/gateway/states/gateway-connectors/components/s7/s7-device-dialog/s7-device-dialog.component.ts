@@ -224,7 +224,8 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       keys: keysControl.value,
       keysType,
       panelTitle: panelTitles[keysType],
-      addKeyTitle: 'Add key',
+      // Standardized: data keys → "Add key"; RPC → "Add method".
+      addKeyTitle: keysType === S7ValueKey.RPC ? 'Add method' : 'Add key',
       deleteKeyTitle: 'Delete key',
       noKeysText: 'No keys configured. Add a key to get started.',
     };

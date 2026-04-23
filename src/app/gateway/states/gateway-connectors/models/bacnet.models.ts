@@ -50,9 +50,10 @@ export const BacnetDeviceKeysPanelTitleTranslationsMap = new Map<BacnetDeviceKey
 
 export const BacnetDeviceKeysAddKeyTranslationsMap = new Map<BacnetDeviceKeysType, string>(
   [
-    [BacnetDeviceKeysType.ATTRIBUTES, 'gateway.add-attribute'],
-    [BacnetDeviceKeysType.TIMESERIES, 'gateway.add-timeseries'],
-    [BacnetDeviceKeysType.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    // Standardized labels: data keys → "Add key"; RPC → "Add method".
+    [BacnetDeviceKeysType.ATTRIBUTES, 'gateway.add-key'],
+    [BacnetDeviceKeysType.TIMESERIES, 'gateway.add-key'],
+    [BacnetDeviceKeysType.ATTRIBUTES_UPDATES, 'gateway.add-key'],
     [BacnetDeviceKeysType.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );

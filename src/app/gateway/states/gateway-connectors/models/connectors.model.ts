@@ -260,10 +260,11 @@ export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, str
 
 export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>(
   [
-    [MappingKeysType.ATTRIBUTES, 'gateway.add-attribute'],
-    [MappingKeysType.TIMESERIES, 'gateway.add-timeseries'],
+    // Standardized labels: data keys → "Add key"; RPC → "Add method".
+    [MappingKeysType.ATTRIBUTES, 'gateway.add-key'],
+    [MappingKeysType.TIMESERIES, 'gateway.add-key'],
     [MappingKeysType.CUSTOM, 'gateway.add-key'],
-    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.add-key'],
     [MappingKeysType.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );
