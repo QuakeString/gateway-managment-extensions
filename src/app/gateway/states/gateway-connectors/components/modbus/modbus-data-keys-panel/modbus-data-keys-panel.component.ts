@@ -90,7 +90,11 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   withFunctionCode = true;
   withReportStrategy = true;
 
-  enableModifiersControlMap = new Map<string, FormControl<boolean>>();
+  /** Per-row calibration mode picker ('none' | 'modifier' | 'scaling')
+   *  — replaces the previous boolean "enable modifier" toggle so each
+   *  Modbus row can also carry a 2-point linear scale. Mutually
+   *  exclusive; the backend converter honours whichever was persisted. */
+  calModeControlMap = new Map<string, FormControl<'none' | 'modifier' | 'scaling'>>();
   showModifiersMap = new Map<string, boolean>();
   functionCodesMap = new Map();
   defaultFunctionCodes = [];
@@ -237,15 +241,45 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     );
 
     if (!this.isMaster && (this.keysType === ModbusValueKey.ATTRIBUTES || this.keysType === ModbusValueKey.TIMESERIES)) {
+      // Calibration cells are only visible for numeric data types —
+      // bytes / bits / strings can't be math-calibrated. Within the
+      // visible group, the Mode dropdown decides whether modifier or
+      // scaling cells are active; the other set is disabled (kept
+      // visible for a consistent column layout during live edits).
+      const isVisible = (row: FormGroup) =>
+        this.showModifiersMap.get(row.get('id').value) ?? false;
+      const isModifierRow = (row: FormGroup) =>
+        isVisible(row)
+        && this.calModeControlMap.get(row.get('id').value)?.value === 'modifier';
+      const isScalingRow = (row: FormGroup) =>
+        isVisible(row)
+        && this.calModeControlMap.get(row.get('id').value)?.value === 'scaling';
       cols.push(
-        { key: '_modEnabled', label: 'Mod.', type: 'checkbox', width: '44px', headerClass: 'center',
-          cellVisible: (row) => this.showModifiersMap.get(row.get('id').value) ?? false,
-          externalControl: (row) => this.enableModifiersControlMap.get(row.get('id').value) },
+        { key: '_calMode', label: 'Calibration', type: 'select', width: 'minmax(100px, 0.8fr)',
+          options: [
+            { value: 'none', label: 'None' },
+            { value: 'modifier', label: 'Modifier' },
+            { value: 'scaling', label: 'Scale' },
+          ],
+          cellVisible: isVisible,
+          getValue: (row) => this.calModeControlMap.get(row.get('id').value)?.value ?? 'none',
+          setValue: (row, v) => {
+            const ctrl = this.calModeControlMap.get(row.get('id').value);
+            if (ctrl) { ctrl.setValue(v); row.markAsDirty(); }
+          } },
         { key: 'modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(100px, 0.8fr)', translateLabels: true,
           options: modifierTypeOptions,
-          cellVisible: (row) => this.showModifiersMap.get(row.get('id').value) ?? false },
+          cellVisible: isVisible, cellDisabled: (row) => !isModifierRow(row) },
         { key: 'modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)', step: 0.1, placeholder: '1',
-          cellVisible: (row) => this.showModifiersMap.get(row.get('id').value) ?? false },
+          cellVisible: isVisible, cellDisabled: (row) => !isModifierRow(row) },
+        { key: 'rawMin', label: 'Raw Min', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '0',
+          cellVisible: isVisible, cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'rawMax', label: 'Raw Max', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '65535',
+          cellVisible: isVisible, cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'engMin', label: 'Eng Min', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '0',
+          cellVisible: isVisible, cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'engMax', label: 'Eng Max', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '100',
+          cellVisible: isVisible, cellDisabled: (row) => !isScalingRow(row) },
       );
     }
 
@@ -334,12 +368,16 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       reportStrategy: [{ value: null, disabled: !this.withReportStrategy }],
       modifierType: [{ value: ModifierType.MULTIPLIER, disabled: true }],
       modifierValue: [{ value: 1, disabled: true }, [Validators.pattern(nonZeroFloat)]],
+      rawMin: [{ value: 0, disabled: true }],
+      rawMax: [{ value: 65535, disabled: true }],
+      engMin: [{ value: 0, disabled: true }],
+      engMax: [{ value: 100, disabled: true }],
       bit: [{ value: null, disabled: true }],
       bitTargetType: [{ value: ModbusBitTargetType.IntegerType, disabled: true }],
       id: [{value: id, disabled: true}],
     });
     this.showModifiersMap.set(id, false);
-    this.enableModifiersControlMap.set(id, this.fb.control(false));
+    this.calModeControlMap.set(id, this.fb.control('none'));
     this.observeKeyDataType(dataKeyFormGroup);
     this.observeObjectsCount(dataKeyFormGroup);
     this.observeEnableModifier(dataKeyFormGroup);
@@ -380,12 +418,16 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       reportStrategy: [{ value: null, disabled: !this.withReportStrategy }],
       modifierType: [{ value: ModifierType.MULTIPLIER, disabled: true }],
       modifierValue: [{ value: 1, disabled: true }, [Validators.pattern(nonZeroFloat)]],
+      rawMin: [{ value: 0, disabled: true }],
+      rawMax: [{ value: 65535, disabled: true }],
+      engMin: [{ value: 0, disabled: true }],
+      engMax: [{ value: 100, disabled: true }],
       bit: [{ value: null, disabled: true }],
       bitTargetType: [{ value: ModbusBitTargetType.IntegerType, disabled: true }],
       id: [{value: id, disabled: true}],
     });
     this.showModifiersMap.set(id, false);
-    this.enableModifiersControlMap.set(id, this.fb.control(false));
+    this.calModeControlMap.set(id, this.fb.control('none'));
     this.observeKeyDataType(dataKeyFormGroup);
     this.observeObjectsCount(dataKeyFormGroup);
     this.observeEnableModifier(dataKeyFormGroup);
@@ -475,11 +517,24 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   private mapKeysWithModifier(values: Array<ModbusFormValue>): Array<ModbusValue> {
     return values.map((keyData, i) => {
-      if (this.showModifiersMap.get(this.keysListFormArray.controls[i].get('id').value)) {
-        const { modifierType, modifierValue, ...value } = keyData;
-        return modifierType ? { ...value, [modifierType]: modifierValue } : value;
+      const rowId = this.keysListFormArray.controls[i].get('id').value;
+      // Always strip the UI-only calibration input fields; emit
+      // modifier or scaling only when the row is actually in that
+      // mode (and eligible for calibration at all).
+      const { modifierType, modifierValue,
+              rawMin, rawMax, engMin, engMax,
+              ...rest } = keyData as any;
+      if (!this.showModifiersMap.get(rowId)) {
+        return rest as ModbusValue;
       }
-      return keyData;
+      const mode = this.calModeControlMap.get(rowId)?.value;
+      if (mode === 'modifier' && modifierType) {
+        return { ...rest, [modifierType]: modifierValue } as ModbusValue;
+      }
+      if (mode === 'scaling') {
+        return { ...rest, scaling: { rawMin, rawMax, engMin, engMax } } as ModbusValue;
+      }
+      return rest as ModbusValue;
     });
   }
 
@@ -502,12 +557,35 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   private createDataKeyFormGroup(modbusValue: ModbusValue): FormGroup {
-    const { tag, value, type, address, objectsCount, functionCode, multiplier, divider, reportStrategy, bit, bitTargetType } = modbusValue;
+    const { tag, value, type, address, objectsCount, functionCode,
+            multiplier, divider, reportStrategy, bit, bitTargetType } = modbusValue;
+    const scaling = (modbusValue as any).scaling as
+      { rawMin: number; rawMax: number; engMin: number; engMax: number } | undefined;
+    const adder = (modbusValue as any).adder as number | undefined;
+    const subtractor = (modbusValue as any).subtractor as number | undefined;
     const id = generateSecret(5);
 
-    const showModifier = this.shouldShowModifier(type);
-    this.showModifiersMap.set(id, showModifier);
-    this.enableModifiersControlMap.set(id, this.fb.control((multiplier || divider) && showModifier));
+    // Calibration is only offered for numeric Modbus data types —
+    // bytes / bits / strings skip it. Detect which operator the
+    // persisted value carries (exactly one key set in modifier mode).
+    const showCalibration = this.shouldShowModifier(type);
+    this.showModifiersMap.set(id, showCalibration);
+    const existingModifierType =
+      multiplier !== undefined  ? ModifierType.MULTIPLIER :
+      divider !== undefined     ? ModifierType.DIVIDER :
+      adder !== undefined       ? ModifierType.ADDER :
+      subtractor !== undefined  ? ModifierType.SUBTRACTOR :
+      null;
+    const existingModifierValue =
+      multiplier ?? divider ?? adder ?? subtractor ?? 1;
+    const hasModifier = existingModifierType !== null;
+    const hasScaling = !!scaling;
+    const initialMode: 'none' | 'modifier' | 'scaling' =
+      !showCalibration ? 'none'
+      : hasModifier ? 'modifier'
+      : hasScaling ? 'scaling'
+      : 'none';
+    this.calModeControlMap.set(id, this.fb.control(initialMode));
 
     return this.fb.group({
       tag: [tag, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -517,15 +595,19 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       objectsCount: [objectsCount, [Validators.required]],
       functionCode: [{ value: functionCode, disabled: !this.withFunctionCode }, [Validators.required]],
       modifierType: [{
-        value: divider ? ModifierType.DIVIDER : ModifierType.MULTIPLIER,
-        disabled: !this.enableModifiersControlMap.get(id).value
+        value: existingModifierType ?? ModifierType.MULTIPLIER,
+        disabled: initialMode !== 'modifier'
       }],
       bit: [{ value: bit, disabled: type !== ModbusDataType.BITS || objectsCount < 2 }, [Validators.max(objectsCount - 1)]],
       bitTargetType: [{ value: bitTargetType ?? ModbusBitTargetType.IntegerType, disabled: type !== ModbusDataType.BITS || this.hideNewFields }],
       modifierValue: [
-        { value: multiplier ?? divider ?? 1, disabled: !this.enableModifiersControlMap.get(id).value },
+        { value: existingModifierValue, disabled: initialMode !== 'modifier' },
         [Validators.pattern(nonZeroFloat)]
       ],
+      rawMin: [{ value: scaling?.rawMin ?? 0, disabled: initialMode !== 'scaling' }],
+      rawMax: [{ value: scaling?.rawMax ?? 65535, disabled: initialMode !== 'scaling' }],
+      engMin: [{ value: scaling?.engMin ?? 0, disabled: initialMode !== 'scaling' }],
+      engMax: [{ value: scaling?.engMax ?? 100, disabled: initialMode !== 'scaling' }],
       id: [{ value: id, disabled: true }],
       reportStrategy: [{ value: reportStrategy, disabled: !this.withReportStrategy }],
     });
@@ -544,8 +626,21 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       }
       this.toggleBitsFields(keyFormGroup);
       const withModifier = this.shouldShowModifier(dataType);
-      this.showModifiersMap.set(keyFormGroup.get('id').value, withModifier);
+      const id = keyFormGroup.get('id').value;
+      this.showModifiersMap.set(id, withModifier);
+      // If the operator flips a numeric row to bytes / bits / string
+      // mid-edit, force calibration off so the row doesn't silently
+      // persist stale multiplier / scaling values with the new type.
+      if (!withModifier) {
+        const calCtrl = this.calModeControlMap.get(id);
+        if (calCtrl && calCtrl.value !== 'none') {
+          calCtrl.setValue('none');   // triggers applyCalibrationMode
+        } else {
+          this.applyCalibrationMode(keyFormGroup, 'none');
+        }
+      }
       this.updateFunctionCodes(keyFormGroup, dataType);
+      this.cd.markForCheck();
     });
   }
 
@@ -572,20 +667,31 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   private observeEnableModifier(keyFormGroup: FormGroup): void {
-    this.enableModifiersControlMap.get(keyFormGroup.get('id').value).valueChanges
+    const id = keyFormGroup.get('id').value;
+    this.calModeControlMap.get(id).valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(showModifier => this.toggleModifierControls(keyFormGroup, showModifier));
+      .subscribe(mode => this.applyCalibrationMode(keyFormGroup, mode));
   }
 
-  private toggleModifierControls(keyFormGroup: FormGroup, enable: boolean): void {
-    const modifierTypeControl = keyFormGroup.get('modifierType');
-    const modifierValueControl = keyFormGroup.get('modifierValue');
-
-    modifierTypeControl[enable ? 'enable' : 'disable']({emitEvent: false});
-    modifierValueControl[enable ? 'enable' : 'disable']({emitEvent: false});
-
-    modifierTypeControl.markAsDirty();
-    modifierValueControl.markAsDirty();
+  private applyCalibrationMode(keyFormGroup: FormGroup, mode: 'none' | 'modifier' | 'scaling'): void {
+    const modT = keyFormGroup.get('modifierType');
+    const modV = keyFormGroup.get('modifierValue');
+    const rMin = keyFormGroup.get('rawMin');
+    const rMax = keyFormGroup.get('rawMax');
+    const eMin = keyFormGroup.get('engMin');
+    const eMax = keyFormGroup.get('engMax');
+    const setTo = (ctrls: (typeof modT)[], action: 'enable' | 'disable') =>
+      ctrls.forEach(c => c?.[action]({ emitEvent: false }));
+    if (mode === 'modifier') {
+      setTo([modT, modV], 'enable');
+      setTo([rMin, rMax, eMin, eMax], 'disable');
+    } else if (mode === 'scaling') {
+      setTo([modT, modV], 'disable');
+      setTo([rMin, rMax, eMin, eMax], 'enable');
+    } else {
+      setTo([modT, modV, rMin, rMax, eMin, eMax], 'disable');
+    }
+    keyFormGroup.markAsDirty();
   }
 
   private updateFunctionCodes(keyFormGroup: FormGroup, dataType: ModbusDataType): void {

@@ -99,6 +99,13 @@ export interface SlaveConfig {
   strict?: boolean;
 }
 
+export interface ModbusScaling {
+  rawMin: number;
+  rawMax: number;
+  engMin: number;
+  engMax: number;
+}
+
 export interface ModbusValue {
   tag: string;
   type: ModbusDataType;
@@ -107,8 +114,15 @@ export interface ModbusValue {
   address: number;
   value?: string;
   reportStrategy?: ReportStrategyConfig;
+  /** Calibration — modifier (exactly one of multiplier / divider /
+   *  adder / subtractor) and scaling (2-point linear) are mutually
+   *  exclusive in the UI. Applied to numeric data types only; bytes /
+   *  bits / strings skip calibration entirely. */
   multiplier?: number;
   divider?: number;
+  adder?: number;
+  subtractor?: number;
+  scaling?: ModbusScaling;
   bit?: number;
   bitTargetType?: ModbusBitTargetType;
 }
@@ -279,6 +293,12 @@ export interface ModbusFormValue extends ModbusValue {
 export enum ModifierType {
   DIVIDER = 'divider',
   MULTIPLIER = 'multiplier',
+  // Enum values match the persisted key on the data-point
+  // (`{divider: 2}` | `{multiplier: 0.1}` | `{adder: 50}`
+  // | `{subtractor: 273}`) so the same config shape works for
+  // every operator. Backend converters branch on presence.
+  ADDER = 'adder',
+  SUBTRACTOR = 'subtractor',
 }
 
 export const ModifierTypesMap = new Map<ModifierType, ValueTypeData>(
@@ -295,6 +315,20 @@ export const ModifierTypesMap = new Map<ModifierType, ValueTypeData>(
       {
         name: 'gateway.multiplier',
         icon: 'mdi:multiplication'
+      }
+    ],
+    [
+      ModifierType.ADDER,
+      {
+        name: 'gateway.adder',
+        icon: 'mdi:plus'
+      }
+    ],
+    [
+      ModifierType.SUBTRACTOR,
+      {
+        name: 'gateway.subtractor',
+        icon: 'mdi:minus'
       }
     ],
   ]

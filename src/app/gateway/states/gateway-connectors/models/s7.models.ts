@@ -43,8 +43,18 @@ export interface S7DataKey {
   tag: string;
   address: string;
   valueType?: S7ValueType;
+  /** Calibration — `modifier` (one of multiply / divide / add /
+   *  subtract) and `scaling` (2-point linear) are mutually exclusive
+   *  in the UI; both absent means the raw value is reported as-is.
+   *  Exactly one of `multiplier` / `divider` / `adder` / `subtractor`
+   *  is set when modifier mode is active. Matches the shape used by
+   *  Modbus / Ethernet-IP so the data-keys panel stays consistent
+   *  across connectors. */
   multiplier?: number;
   divider?: number;
+  adder?: number;
+  subtractor?: number;
+  scaling?: S7Scaling;
   reportStrategy?: ReportStrategyConfig;
 }
 

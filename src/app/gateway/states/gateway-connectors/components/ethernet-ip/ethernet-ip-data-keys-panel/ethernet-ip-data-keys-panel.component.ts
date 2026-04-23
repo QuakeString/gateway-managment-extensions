@@ -29,7 +29,7 @@ import { ReportStrategyDefaultValue, ReportStrategyType, ReportStrategyTypeTrans
 import { ReportStrategyComponent } from '../../../../../shared/components/public-api';
 import { SpreadsheetKeysComponent } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.component';
 import { SpreadsheetColumnConfig, SelectOption } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
-import { EthernetIPDataKey, EthernetIPRpcConfig, EthernetIPDataType, EthernetIPValueKey } from '../../../models/public-api';
+import { EthernetIPDataKey, EthernetIPRpcConfig, EthernetIPDataType, EthernetIPValueKey, ModifierType, ModifierTypesMap } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -58,10 +58,17 @@ export class EthernetIPDataKeysPanelComponent implements OnInit, OnDestroy {
   @ViewChild(SpreadsheetKeysComponent) spreadsheetKeys: SpreadsheetKeysComponent;
 
   readonly dataTypes = Object.values(EthernetIPDataType);
+  readonly modifierTypes: ModifierType[] = Object.values(ModifierType) as ModifierType[];
+  readonly ModifierTypesMap = ModifierTypesMap;
   readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
   readonly EthernetIPValueKey = EthernetIPValueKey;
 
-  enableScalingControlMap = new Map<string, FormControl<boolean>>();
+  /** Per-row calibration mode picker ('none' | 'modifier' | 'scaling'),
+   *  replacing the previous scaling-only toggle. EIP data keys have
+   *  no `valueType` field so we allow calibration on every row; the
+   *  backend converter skips it when the PLC returns a non-numeric
+   *  value. */
+  calModeControlMap = new Map<string, FormControl<'none' | 'modifier' | 'scaling'>>();
   keysFormArray: FormArray;
 
   searchControl = new FormControl('');
@@ -223,16 +230,43 @@ export class EthernetIPDataKeysPanelComponent implements OnInit, OnDestroy {
       const reportStrategyOptions: SelectOption[] = reportStrategyTypes.map(t => ({
         value: t, label: ReportStrategyTypeTranslationsMap.get(t) || t
       }));
+      const modifierTypeOptions: SelectOption[] = this.modifierTypes.map(t => ({
+        value: t, label: ModifierTypesMap.get(t)?.name || t
+      }));
+      // Mode-driven disable — mirrors S7 / Modbus so the three
+      // connectors' data-keys panels are visually identical.
+      const isModifierRow = (row: FormGroup) =>
+        this.calModeControlMap.get(row.getRawValue().id)?.value === 'modifier';
+      const isScalingRow = (row: FormGroup) =>
+        this.calModeControlMap.get(row.getRawValue().id)?.value === 'scaling';
       this.spreadsheetColumns = [
         { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
         { key: 'plcTag', label: 'PLC Tag', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)',
           placeholder: this.isSLC ? 'N7:0' : 'Program:MainProgram.Temperature' },
-        { key: '_scalingEnabled', label: 'Scale', type: 'checkbox', width: '44px', headerClass: 'center',
-          externalControl: (row) => this.enableScalingControlMap.get(row.getRawValue().id) },
-        { key: 'rawMin', label: 'Raw Min', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '0' },
-        { key: 'rawMax', label: 'Raw Max', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '65535' },
-        { key: 'engMin', label: 'Eng Min', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '0' },
-        { key: 'engMax', label: 'Eng Max', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '100' },
+        { key: '_calMode', label: 'Calibration', type: 'select', width: 'minmax(100px, 0.8fr)',
+          options: [
+            { value: 'none', label: 'None' },
+            { value: 'modifier', label: 'Modifier' },
+            { value: 'scaling', label: 'Scale' },
+          ],
+          getValue: (row) => this.calModeControlMap.get(row.getRawValue().id)?.value ?? 'none',
+          setValue: (row, v) => {
+            const ctrl = this.calModeControlMap.get(row.getRawValue().id);
+            if (ctrl) { ctrl.setValue(v); row.markAsDirty(); }
+          } },
+        { key: 'modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(110px, 0.9fr)',
+          options: modifierTypeOptions, translateLabels: true,
+          cellDisabled: (row) => !isModifierRow(row) },
+        { key: 'modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)',
+          step: 0.1, placeholder: '1', cellDisabled: (row) => !isModifierRow(row) },
+        { key: 'rawMin', label: 'Raw Min', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '0',
+          cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'rawMax', label: 'Raw Max', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '65535',
+          cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'engMin', label: 'Eng Min', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '0',
+          cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'engMax', label: 'Eng Max', type: 'number', width: 'minmax(80px, 0.7fr)', placeholder: '100',
+          cellDisabled: (row) => !isScalingRow(row) },
         { key: '_stratEnabled', label: 'Strat.', type: 'checkbox', width: '44px', headerClass: 'center',
           getValue: (row) => !!row.get('reportStrategy')?.value,
           setValue: (row, v) => {
@@ -379,8 +413,11 @@ export class EthernetIPDataKeysPanelComponent implements OnInit, OnDestroy {
         return result;
       }
       const keyId = (this.keysFormArray.controls[i] as FormGroup).get('id')?.value;
+      const mode = this.calModeControlMap.get(keyId)?.value;
       const result: any = { tag: key.tag, plcTag: key.plcTag };
-      if (this.enableScalingControlMap.get(keyId)?.value) {
+      if (mode === 'modifier' && key.modifierType) {
+        result[key.modifierType] = key.modifierValue;
+      } else if (mode === 'scaling') {
         result.scaling = {
           rawMin: key.rawMin,
           rawMax: key.rawMax,
@@ -407,30 +444,54 @@ export class EthernetIPDataKeysPanelComponent implements OnInit, OnDestroy {
     }
     const dataKey = key as EthernetIPDataKey;
     const id = generateSecret(5);
+    const existingModifierType =
+      dataKey.multiplier !== undefined ? ModifierType.MULTIPLIER :
+      dataKey.divider !== undefined    ? ModifierType.DIVIDER :
+      dataKey.adder !== undefined      ? ModifierType.ADDER :
+      dataKey.subtractor !== undefined ? ModifierType.SUBTRACTOR :
+      null;
+    const existingModifierValue =
+      dataKey.multiplier ?? dataKey.divider ?? dataKey.adder ?? dataKey.subtractor ?? 1;
+    const hasModifier = existingModifierType !== null;
     const hasScaling = !!dataKey.scaling;
-    this.enableScalingControlMap.set(id, this.fb.control(hasScaling));
+    const initialMode: 'none' | 'modifier' | 'scaling' =
+      hasModifier ? 'modifier' : hasScaling ? 'scaling' : 'none';
+    this.calModeControlMap.set(id, this.fb.control(initialMode));
 
     return this.fb.group({
       id: [{ value: id, disabled: true }],
       tag: [dataKey.tag || '', [Validators.required]],
       plcTag: [dataKey.plcTag || '', [Validators.required]],
-      rawMin: [{ value: dataKey.scaling?.rawMin ?? 0, disabled: !hasScaling }],
-      rawMax: [{ value: dataKey.scaling?.rawMax ?? 65535, disabled: !hasScaling }],
-      engMin: [{ value: dataKey.scaling?.engMin ?? 0, disabled: !hasScaling }],
-      engMax: [{ value: dataKey.scaling?.engMax ?? 100, disabled: !hasScaling }],
+      modifierType: [{ value: existingModifierType ?? ModifierType.MULTIPLIER, disabled: initialMode !== 'modifier' }],
+      modifierValue: [{ value: existingModifierValue, disabled: initialMode !== 'modifier' }],
+      rawMin: [{ value: dataKey.scaling?.rawMin ?? 0, disabled: initialMode !== 'scaling' }],
+      rawMax: [{ value: dataKey.scaling?.rawMax ?? 65535, disabled: initialMode !== 'scaling' }],
+      engMin: [{ value: dataKey.scaling?.engMin ?? 0, disabled: initialMode !== 'scaling' }],
+      engMax: [{ value: dataKey.scaling?.engMax ?? 100, disabled: initialMode !== 'scaling' }],
       reportStrategy: [dataKey.reportStrategy || null],
     });
   }
 
   private observeEnableScaling(keyFormGroup: FormGroup): void {
     const id = keyFormGroup.get('id')?.value ?? (keyFormGroup.getRawValue() as any).id;
-    this.enableScalingControlMap.get(id)?.valueChanges
+    this.calModeControlMap.get(id)?.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(enabled => {
-        ['rawMin', 'rawMax', 'engMin', 'engMax'].forEach(field => {
-          const ctrl = keyFormGroup.get(field);
-          if (enabled) { ctrl?.enable(); } else { ctrl?.disable(); }
-        });
+      .subscribe(mode => {
+        const modT = keyFormGroup.get('modifierType');
+        const modV = keyFormGroup.get('modifierValue');
+        const scalingFields = ['rawMin', 'rawMax', 'engMin', 'engMax']
+          .map(f => keyFormGroup.get(f));
+        if (mode === 'modifier') {
+          modT?.enable(); modV?.enable();
+          scalingFields.forEach(c => c?.disable());
+        } else if (mode === 'scaling') {
+          modT?.disable(); modV?.disable();
+          scalingFields.forEach(c => c?.enable());
+        } else {
+          modT?.disable(); modV?.disable();
+          scalingFields.forEach(c => c?.disable());
+        }
+        keyFormGroup.markAsDirty();
       });
   }
 }

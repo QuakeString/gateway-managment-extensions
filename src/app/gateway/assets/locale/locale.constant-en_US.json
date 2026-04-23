@@ -173,6 +173,8 @@
     "delete-slave-description": "Be careful, after the confirmation server configuration and all related data will become unrecoverable.",
     "delete-device-title": "Are you sure you want to delete the device '{{name}}'?",
     "delete-device-description": "Be careful, after the confirmation the device configuration and all related data will become unrecoverable.",
+    "adder": "Adder",
+    "subtractor": "Subtractor",
     "divider": "Divider",
     "download-configuration-file": "Download configuration file",
     "download-docker-compose": "Download docker-compose.yml for your gateway",

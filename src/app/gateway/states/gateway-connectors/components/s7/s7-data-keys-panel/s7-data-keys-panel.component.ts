@@ -48,7 +48,7 @@ import { ReportStrategyComponent } from '../../../../../shared/components/public
 import { SpreadsheetKeysComponent } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.component';
 import { SpreadsheetColumnConfig, SelectOption } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
 import { ModifierType, ModifierTypesMap } from '../../../models/public-api';
-import { S7DataKey, S7RpcConfig, S7ValueKey, S7ValueType } from '../../../models/public-api';
+import { S7DataKey, S7RpcConfig, S7Scaling, S7ValueKey, S7ValueType } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -106,8 +106,35 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
     { value: 'operation', label: 'Operation' },
   ];
 
-  enableModifiersControlMap = new Map<string, FormControl<boolean>>();
+  /** Per-row calibration mode picker — values: 'none' | 'modifier' |
+   *  'scaling'. Replaces the previous boolean "enable modifier" toggle
+   *  so the row can also carry a 2-point scaling calibration. The
+   *  modifier and scaling cells on each row are enabled based on
+   *  this control's value; only one set can be active at a time. */
+  calModeControlMap = new Map<string, FormControl<'none' | 'modifier' | 'scaling'>>();
   keysFormArray: FormArray;
+
+  /** S7 value types that are numeric and therefore can carry a
+   *  calibration (modifier or scaling). Booleans, strings, and other
+   *  non-numeric types skip calibration entirely — the UI cells are
+   *  disabled and the mode is forced to 'none'. Auto ('') is treated
+   *  as numeric since the real type is resolved at read time and the
+   *  backend tolerates non-numeric values by skipping calibration. */
+  private static readonly NUMERIC_VALUE_TYPES = new Set<string>([
+    '', // Auto
+    S7ValueType.UINT8, S7ValueType.INT8,
+    S7ValueType.UINT16, S7ValueType.INT16,
+    S7ValueType.UINT32, S7ValueType.INT32,
+    S7ValueType.FLOAT32, S7ValueType.FLOAT64,
+  ]);
+
+  /** Whether the row's selected `valueType` supports numeric
+   *  calibration. Used by the Calibration column's cellDisabled
+   *  and by the list-view template's expansion panel. */
+  canCalibrate(row: FormGroup): boolean {
+    const vt = (row.get('valueType')?.value ?? '').toString();
+    return S7DataKeysPanelComponent.NUMERIC_VALUE_TYPES.has(vt);
+  }
 
   searchControl = new FormControl('');
   filteredControls: { control: FormGroup; index: number }[] = [];
@@ -268,15 +295,59 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
       const reportStrategyOptions: SelectOption[] = this.reportStrategyTypes.map(t => ({
         value: t, label: ReportStrategyTypeTranslationsMap.get(t) || t
       }));
+      // Convenience accessors for cellDisabled so the modifier and
+      // scaling columns toggle off together when the row isn't in
+      // that calibration mode. Keeps the flat column layout while
+      // enforcing mutual exclusivity (user chose one mode per row).
+      // Non-numeric value types (bool, string) can't be calibrated —
+      // every calibration cell on those rows is disabled including
+      // the Mode dropdown itself, so the operator can't accidentally
+      // enable one. `valueType === ''` (Auto) keeps calibration open
+      // since the real type is resolved at read time.
+      const isModifierRow = (row: FormGroup) =>
+        this.canCalibrate(row)
+        && this.calModeControlMap.get(row.getRawValue().id)?.value === 'modifier';
+      const isScalingRow = (row: FormGroup) =>
+        this.canCalibrate(row)
+        && this.calModeControlMap.get(row.getRawValue().id)?.value === 'scaling';
       this.spreadsheetColumns = [
         { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
         { key: 'address', label: 'Address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true },
         { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)',
           options: [{ value: '', label: 'Auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
-        { key: '_modEnabled', label: 'Mod.', type: 'checkbox', width: '44px', headerClass: 'center',
-          externalControl: (row) => this.enableModifiersControlMap.get(row.getRawValue().id) },
-        { key: 'modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(110px, 0.9fr)', options: modifierTypeOptions, translateLabels: true },
-        { key: 'modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)', step: 0.1, placeholder: '1' },
+        // Calibration mode picker — drives both the modifier columns
+        // and the scaling columns. Mutually exclusive; 'none' disables
+        // both sets so raw values flow through unchanged.
+        { key: '_calMode', label: 'Calibration', type: 'select', width: 'minmax(100px, 0.8fr)',
+          options: [
+            { value: 'none', label: 'None' },
+            { value: 'modifier', label: 'Modifier' },
+            { value: 'scaling', label: 'Scale' },
+          ],
+          // `_`-prefixed keys bind through getValue/setValue instead
+          // of formControlName, so we pipe through the per-row
+          // calibration-mode FormControl. Setting also dirties the row
+          // so the Save button activates.
+          getValue: (row) => this.calModeControlMap.get(row.getRawValue().id)?.value ?? 'none',
+          setValue: (row, v) => {
+            const ctrl = this.calModeControlMap.get(row.getRawValue().id);
+            if (ctrl) { ctrl.setValue(v); row.markAsDirty(); }
+          },
+          cellDisabled: (row) => !this.canCalibrate(row) },
+        { key: 'modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(110px, 0.9fr)',
+          options: modifierTypeOptions, translateLabels: true,
+          cellDisabled: (row) => !isModifierRow(row) },
+        { key: 'modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)',
+          step: 0.1, placeholder: '1',
+          cellDisabled: (row) => !isModifierRow(row) },
+        { key: 'rawMin', label: 'Raw Min', type: 'number', width: 'minmax(80px, 0.7fr)',
+          placeholder: '0', cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'rawMax', label: 'Raw Max', type: 'number', width: 'minmax(80px, 0.7fr)',
+          placeholder: '65535', cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'engMin', label: 'Eng Min', type: 'number', width: 'minmax(80px, 0.7fr)',
+          placeholder: '0', cellDisabled: (row) => !isScalingRow(row) },
+        { key: 'engMax', label: 'Eng Max', type: 'number', width: 'minmax(80px, 0.7fr)',
+          placeholder: '100', cellDisabled: (row) => !isScalingRow(row) },
         { key: '_stratEnabled', label: 'Strat.', type: 'checkbox', width: '44px', headerClass: 'center',
           getValue: (row) => this.isReportStrategyEnabled(row),
           setValue: (row, v) => this.setReportStrategyEnabled(row, v) },
@@ -469,14 +540,22 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
   private getFormValue(): Array<S7DataKey | S7RpcConfig> {
     return this.keysFormArray.value.map((key: any, i: number) => {
       if (this.isRpc) return key;
-      const { id, modifierType, modifierValue, reportStrategy, ...rest } = key;
+      // Strip UI-only fields (id + calibration inputs) before emitting
+      // — the submitted model carries either `multiplier`/`divider`
+      // (modifier mode) OR `scaling` (scaling mode), never both.
+      const { id: _id, modifierType, modifierValue,
+              rawMin, rawMax, engMin, engMax,
+              reportStrategy, ...rest } = key;
       const keyId = (this.keysFormArray.controls[i] as FormGroup).get('id')?.value;
+      const mode = this.calModeControlMap.get(keyId)?.value;
       const result: any = { ...rest };
       if (!result.valueType) {
         delete result.valueType;
       }
-      if (this.enableModifiersControlMap.get(keyId)?.value && modifierType) {
+      if (mode === 'modifier' && modifierType) {
         result[modifierType] = modifierValue;
+      } else if (mode === 'scaling') {
+        result.scaling = { rawMin, rawMax, engMin, engMax };
       }
       if (reportStrategy) {
         result.reportStrategy = reportStrategy;
@@ -497,34 +576,90 @@ export class S7DataKeysPanelComponent implements OnInit, OnDestroy {
     }
     const dataKey = key as S7DataKey;
     const id = generateSecret(5);
-    const hasModifier = !!(dataKey.multiplier || dataKey.divider);
-    this.enableModifiersControlMap.set(id, this.fb.control(hasModifier));
+    // Persisted shape carries exactly one of the four operator keys
+    // when modifier mode is active. Detect which and seed the form
+    // accordingly; if none are set and no scaling either, start the
+    // row at 'none' so raw values flow through unchanged.
+    const existingModifierType =
+      dataKey.multiplier !== undefined ? ModifierType.MULTIPLIER :
+      dataKey.divider !== undefined    ? ModifierType.DIVIDER :
+      dataKey.adder !== undefined      ? ModifierType.ADDER :
+      dataKey.subtractor !== undefined ? ModifierType.SUBTRACTOR :
+      null;
+    const existingModifierValue =
+      dataKey.multiplier ?? dataKey.divider ?? dataKey.adder ?? dataKey.subtractor ?? 1;
+    const hasModifier = existingModifierType !== null;
+    const hasScaling = !!dataKey.scaling;
+    const initialMode: 'none' | 'modifier' | 'scaling' =
+      hasModifier ? 'modifier' : hasScaling ? 'scaling' : 'none';
+    this.calModeControlMap.set(id, this.fb.control(initialMode));
 
+    // `+` and `-` work for bool-typed tags too, but `×` and `÷` don't
+    // — not restricting here since the operator might intentionally
+    // coerce a bool into a number with an adder. Backend logs if the
+    // math fails.
     return this.fb.group({
       id: [{ value: id, disabled: true }],
       tag: [dataKey.tag || '', [Validators.required]],
       address: [dataKey.address || '', [Validators.required, Validators.pattern(/^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|[MIQC]\d+\.\d+|[MIQC][BWDL]\d+|[CT]\d+)$/i)]],
       valueType: [dataKey.valueType || ''],
-      modifierType: [{ value: dataKey.divider ? ModifierType.DIVIDER : ModifierType.MULTIPLIER, disabled: !hasModifier }],
-      modifierValue: [{ value: dataKey.multiplier ?? dataKey.divider ?? 1, disabled: !hasModifier }, [Validators.pattern(nonZeroFloat)]],
+      modifierType: [{ value: existingModifierType ?? ModifierType.MULTIPLIER, disabled: initialMode !== 'modifier' }],
+      modifierValue: [{ value: existingModifierValue, disabled: initialMode !== 'modifier' }, [Validators.pattern(nonZeroFloat)]],
+      rawMin: [{ value: dataKey.scaling?.rawMin ?? 0, disabled: initialMode !== 'scaling' }],
+      rawMax: [{ value: dataKey.scaling?.rawMax ?? 65535, disabled: initialMode !== 'scaling' }],
+      engMin: [{ value: dataKey.scaling?.engMin ?? 0, disabled: initialMode !== 'scaling' }],
+      engMax: [{ value: dataKey.scaling?.engMax ?? 100, disabled: initialMode !== 'scaling' }],
       reportStrategy: [dataKey.reportStrategy || null],
     });
   }
 
   private observeEnableModifier(keyFormGroup: FormGroup): void {
     const id = keyFormGroup.get('id')?.value ?? (keyFormGroup.getRawValue() as any).id;
-    this.enableModifiersControlMap.get(id)?.valueChanges
+    const applyMode = (mode: 'none' | 'modifier' | 'scaling') => {
+      const modifierType = keyFormGroup.get('modifierType');
+      const modifierValue = keyFormGroup.get('modifierValue');
+      const rawMin = keyFormGroup.get('rawMin');
+      const rawMax = keyFormGroup.get('rawMax');
+      const engMin = keyFormGroup.get('engMin');
+      const engMax = keyFormGroup.get('engMax');
+      if (mode === 'modifier') {
+        modifierType?.enable();
+        modifierValue?.enable();
+        rawMin?.disable(); rawMax?.disable();
+        engMin?.disable(); engMax?.disable();
+      } else if (mode === 'scaling') {
+        modifierType?.disable();
+        modifierValue?.disable();
+        rawMin?.enable(); rawMax?.enable();
+        engMin?.enable(); engMax?.enable();
+      } else {
+        modifierType?.disable();
+        modifierValue?.disable();
+        rawMin?.disable(); rawMax?.disable();
+        engMin?.disable(); engMax?.disable();
+      }
+    };
+    this.calModeControlMap.get(id)?.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(enabled => {
-        const modifierType = keyFormGroup.get('modifierType');
-        const modifierValue = keyFormGroup.get('modifierValue');
-        if (enabled) {
-          modifierType?.enable();
-          modifierValue?.enable();
-        } else {
-          modifierType?.disable();
-          modifierValue?.disable();
+      .subscribe(mode => {
+        applyMode(mode);
+        keyFormGroup.markAsDirty();
+      });
+    // React to value-type flips — if the operator changes a row's
+    // type from Int32 to String mid-edit, force the mode back to
+    // 'none' so the row doesn't carry orphan calibration values.
+    keyFormGroup.get('valueType')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!this.canCalibrate(keyFormGroup)) {
+          const ctrl = this.calModeControlMap.get(id);
+          if (ctrl && ctrl.value !== 'none') {
+            ctrl.setValue('none');  // triggers applyMode via the subscribe above
+          } else {
+            applyMode('none');
+          }
         }
+        this.cd.markForCheck();
       });
   }
 }

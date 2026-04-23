@@ -155,22 +155,33 @@
                           </mat-form-field>
                         </div>
                         <ng-container *ngIf="!isRpc">
-                          <div class="tb-form-panel stroked tb-slide-toggle">
-                            <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(item.control.getRawValue().id)?.value">
+                          <!-- Calibration — modifier (× / ÷ / + / −)
+                               and scaling (rawMin/rawMax → engMin/engMax)
+                               are mutually exclusive. The whole panel
+                               is hidden for non-numeric value types
+                               (bool, string) since post-read math
+                               isn't meaningful for them. -->
+                          <div class="tb-form-panel stroked"
+                               *ngIf="canCalibrate(item.control)">
+                            <mat-expansion-panel class="tb-settings"
+                                                 [expanded]="calModeControlMap.get(item.control.getRawValue().id)?.value !== 'none'">
                               <mat-expansion-panel-header class="flex-wrap">
-                                <mat-panel-title>
-                                  <mat-slide-toggle
-                                    [formControl]="enableModifiersControlMap.get(item.control.getRawValue().id)"
-                                    class="mat-slide"
-                                    (click)="$event.stopPropagation()">
-                                    <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">{{ 'gateway.modifier' | translate }}</mat-label>
-                                  </mat-slide-toggle>
-                                </mat-panel-title>
+                                <mat-panel-title>Calibration</mat-panel-title>
                               </mat-expansion-panel-header>
-                              <div class="tb-flex no-gap">
-                                <div class="tb-form-row column-xs w-full">
+                              <div class="tb-form-row column-xs">
+                                <div class="fixed-title-width">Mode</div>
+                                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                  <mat-select [formControl]="calModeControlMap.get(item.control.getRawValue().id)">
+                                    <mat-option value="none">None</mat-option>
+                                    <mat-option value="modifier">Modifier (× / ÷ / + / −)</mat-option>
+                                    <mat-option value="scaling">Scale (linear)</mat-option>
+                                  </mat-select>
+                                </mat-form-field>
+                              </div>
+                              <ng-container *ngIf="calModeControlMap.get(item.control.getRawValue().id)?.value === 'modifier'">
+                                <div class="tb-form-row column-xs">
                                   <div class="fixed-title-width" translate>gateway.type</div>
-                                  <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                                     <mat-select formControlName="modifierType">
                                       <mat-select-trigger>
                                         <div class="tb-flex align-center">
@@ -185,22 +196,48 @@
                                     </mat-select>
                                   </mat-form-field>
                                 </div>
-                              </div>
-                              <div class="tb-form-row column-xs">
-                                <div class="fixed-title-width" translate>gateway.value</div>
-                                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
-                                  <input matInput required formControlName="modifierValue" step="0.1" type="number"
-                                         placeholder="{{ 'gateway.set' | translate }}" />
-                                  <mat-icon matSuffix
-                                            matTooltipPosition="above"
-                                            matTooltipClass="tb-error-tooltip"
-                                            [matTooltip]="('gateway.modifier-invalid') | translate"
-                                            *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
-                                            class="tb-error">
-                                    warning
-                                  </mat-icon>
-                                </mat-form-field>
-                              </div>
+                                <div class="tb-form-row column-xs">
+                                  <div class="fixed-title-width" translate>gateway.value</div>
+                                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
+                                    <input matInput required formControlName="modifierValue" step="0.1" type="number"
+                                           placeholder="{{ 'gateway.set' | translate }}" />
+                                    <mat-icon matSuffix
+                                              matTooltipPosition="above"
+                                              matTooltipClass="tb-error-tooltip"
+                                              [matTooltip]="('gateway.modifier-invalid') | translate"
+                                              *ngIf="item.control.get('modifierValue').hasError('pattern') && item.control.get('modifierValue').touched"
+                                              class="tb-error">
+                                      warning
+                                    </mat-icon>
+                                  </mat-form-field>
+                                </div>
+                              </ng-container>
+                              <ng-container *ngIf="calModeControlMap.get(item.control.getRawValue().id)?.value === 'scaling'">
+                                <div class="tb-form-row column-xs">
+                                  <div class="fixed-title-width">Raw Min</div>
+                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                    <input matInput type="number" formControlName="rawMin" placeholder="0"/>
+                                  </mat-form-field>
+                                </div>
+                                <div class="tb-form-row column-xs">
+                                  <div class="fixed-title-width">Raw Max</div>
+                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                    <input matInput type="number" formControlName="rawMax" placeholder="65535"/>
+                                  </mat-form-field>
+                                </div>
+                                <div class="tb-form-row column-xs">
+                                  <div class="fixed-title-width">Eng Min</div>
+                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                    <input matInput type="number" formControlName="engMin" placeholder="0"/>
+                                  </mat-form-field>
+                                </div>
+                                <div class="tb-form-row column-xs">
+                                  <div class="fixed-title-width">Eng Max</div>
+                                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                                    <input matInput type="number" formControlName="engMax" placeholder="100"/>
+                                  </mat-form-field>
+                                </div>
+                              </ng-container>
                             </mat-expansion-panel>
                           </div>
                           <tb-report-strategy

@@ -59,6 +59,16 @@ export interface IEC61850DataKey {
   fc?: IEC61850FC;
   valueType?: IEC61850ValueType;
   enumMapping?: Record<string, string>;
+  /** Calibration — modifier (exactly one of multiplier / divider /
+   *  adder / subtractor) and scaling (2-point linear) are mutually
+   *  exclusive in the UI. Only applied to numeric value types; bool
+   *  / string skip calibration at the converter. Matches the shape
+   *  used by S7 / Modbus / Ethernet-IP so the data-keys panels stay
+   *  consistent across industrial connectors. */
+  multiplier?: number;
+  divider?: number;
+  adder?: number;
+  subtractor?: number;
   scaling?: IEC61850Scaling;
   reportStrategy?: ReportStrategyConfig;
 }

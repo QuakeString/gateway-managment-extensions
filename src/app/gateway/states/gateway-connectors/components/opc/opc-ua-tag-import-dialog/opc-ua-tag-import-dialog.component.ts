@@ -32,6 +32,9 @@ export interface OpcUaTagImportResult {
 }
 
 export interface OpcUaTagImportDialogData {
+  /** Label shown in the toolbar next to "Import Tags —". The caller
+   *  typically passes the mapping's deviceNodePattern or deviceName
+   *  so the operator knows which mapping the rows land on. */
   mappingName: string;
 }
 
@@ -81,6 +84,18 @@ export class OpcUaTagImportDialogComponent {
 
   showInvalid = false;
 
+  /** Keeps the column-mapping block collapsed once auto-detect found
+   *  the required key + value columns — matches S7's "it just works"
+   *  feel. If auto-detect fails (no key or no value found), we flip
+   *  this to true so the operator sees the mapping controls. Tied to
+   *  a template `[expanded]` binding on the expansion panel. */
+  mappingExpanded = false;
+
+  /** Preview-table pagination — mirrors the S7 import dialog so the
+   *  two connector imports feel identical. */
+  pageIndex = 0;
+  pageSize = 10;
+
   constructor(
     private dialogRef: MatDialogRef<OpcUaTagImportDialogComponent, OpcUaTagImportResult | null>,
     private cd: ChangeDetectorRef,
@@ -123,6 +138,7 @@ export class OpcUaTagImportDialogComponent {
 
   reprocess(): void {
     this.processRows();
+    this.pageIndex = 0;
     this.cd.markForCheck();
   }
 
@@ -144,6 +160,17 @@ export class OpcUaTagImportDialogComponent {
 
   toggleInvalid(): void {
     this.showInvalid = !this.showInvalid;
+  }
+
+  get paginatedValidTags(): ParsedTag[] {
+    const start = this.pageIndex * this.pageSize;
+    return this.validTags.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(event: { pageIndex: number; pageSize: number }): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.cd.markForCheck();
   }
 
   importTags(): void {
@@ -186,6 +213,11 @@ export class OpcUaTagImportDialogComponent {
       c === 'type' || c === 'datatype' || c === 'data_type' || c === 'valuetype',
     );
     if (typeIdx >= 0) this.typeColumnControl.setValue(this.detectedColumns[typeIdx]);
+
+    // Auto-open the mapping panel only when detection couldn't find
+    // the two required columns — the common, "clean CSV" case keeps
+    // the dialog tight and the preview immediately visible.
+    this.mappingExpanded = !(this.keyColumnControl.value && this.valueColumnControl.value);
   }
 
   private processRows(): void {

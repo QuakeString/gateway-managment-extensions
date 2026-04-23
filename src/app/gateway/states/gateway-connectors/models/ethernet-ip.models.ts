@@ -49,6 +49,15 @@ export interface EthernetIPScaling {
 export interface EthernetIPDataKey {
   tag: string;
   plcTag: string;
+  /** Calibration — modifier (exactly one of multiplier / divider /
+   *  adder / subtractor) and scaling (2-point linear) are mutually
+   *  exclusive in the UI. EIP has no per-key `valueType`, so the
+   *  backend converter decides whether to apply at read time based
+   *  on whether the PLC returned a numeric value. */
+  multiplier?: number;
+  divider?: number;
+  adder?: number;
+  subtractor?: number;
   scaling?: EthernetIPScaling;
   reportStrategy?: ReportStrategyConfig;
 }

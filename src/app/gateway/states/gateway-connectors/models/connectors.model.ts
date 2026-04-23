@@ -206,6 +206,23 @@ export interface MappingDataKey {
   key: string;
   value: any;
   type: MappingValueType;
+  /** Calibration — OPC-UA attributes / timeseries only. Modifier
+   *  (exactly one of multiplier / divider / adder / subtractor) and
+   *  `scaling` (2-point linear) are mutually exclusive in the UI;
+   *  both absent means the raw value is reported as-is. Matches the
+   *  shape used by S7 / Modbus / IEC 61850 / Ethernet-IP. Other
+   *  connectors sharing this model (MQTT / REST) don't populate
+   *  these fields. */
+  multiplier?: number;
+  divider?: number;
+  adder?: number;
+  subtractor?: number;
+  scaling?: {
+    rawMin: number;
+    rawMax: number;
+    engMin: number;
+    engMax: number;
+  };
 }
 
 export type SourceType = MQTTSourceType | OPCUaSourceType | RestSourceType | ExpressionType;
