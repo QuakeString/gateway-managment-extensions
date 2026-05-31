@@ -44,7 +44,7 @@
         </div>
       </ng-container>
       <ng-container *ngIf="mode === 'scaling'">
-        <div class="scaling-grid" formGroupName="scaling">
+        <ng-container formGroupName="scaling">
           <div class="tb-form-row column-xs">
             <div class="fixed-title-width">Raw Min</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -69,7 +69,7 @@
               <input matInput type="number" formControlName="engMax">
             </mat-form-field>
           </div>
-        </div>
+        </ng-container>
       </ng-container>
     </ng-template>
   </mat-expansion-panel>
