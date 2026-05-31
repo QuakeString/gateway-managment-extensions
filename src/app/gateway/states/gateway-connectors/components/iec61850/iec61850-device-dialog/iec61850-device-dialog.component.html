@@ -356,7 +356,11 @@
                   matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
                   matTooltipPosition="above"
                   (click)="browseAndOpen('timeseries')">
-            <mat-icon>device_hub</mat-icon>
+            <!-- `wifi_find` matches the Discover icon used across
+                 every other connector's Browse buttons (OPC-UA,
+                 EtherNet/IP, BACnet, the mapping table). Keeps the
+                 device-level browse action visually consistent. -->
+            <mat-icon>wifi_find</mat-icon>
           </button>
           <button type="button"
                   mat-icon-button
@@ -388,7 +392,11 @@
                   matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
                   matTooltipPosition="above"
                   (click)="browseAndOpen('attributes')">
-            <mat-icon>device_hub</mat-icon>
+            <!-- `wifi_find` matches the Discover icon used across
+                 every other connector's Browse buttons (OPC-UA,
+                 EtherNet/IP, BACnet, the mapping table). Keeps the
+                 device-level browse action visually consistent. -->
+            <mat-icon>wifi_find</mat-icon>
           </button>
           <button type="button"
                   mat-icon-button
@@ -420,7 +428,11 @@
                   matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
                   matTooltipPosition="above"
                   (click)="browseAndOpen('attributeUpdates')">
-            <mat-icon>device_hub</mat-icon>
+            <!-- `wifi_find` matches the Discover icon used across
+                 every other connector's Browse buttons (OPC-UA,
+                 EtherNet/IP, BACnet, the mapping table). Keeps the
+                 device-level browse action visually consistent. -->
+            <mat-icon>wifi_find</mat-icon>
           </button>
           <button type="button"
                   mat-icon-button
@@ -452,7 +464,11 @@
                   matTooltip="{{ 'gateway.iec61850-browse-ied' | translate }}"
                   matTooltipPosition="above"
                   (click)="browseAndOpen('rpc')">
-            <mat-icon>device_hub</mat-icon>
+            <!-- `wifi_find` matches the Discover icon used across
+                 every other connector's Browse buttons (OPC-UA,
+                 EtherNet/IP, BACnet, the mapping table). Keeps the
+                 device-level browse action visually consistent. -->
+            <mat-icon>wifi_find</mat-icon>
           </button>
           <button type="button"
                   mat-icon-button
