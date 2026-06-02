@@ -43,12 +43,18 @@ import {
   ModbusMasterConfig,
   ModbusProtocolLabelsMap,
   ModbusSlaveInfo,
+  ModbusValue,
   ModbusValues,
   SlaveConfig,
 } from '../../../models/public-api';
 import { isDefinedAndNotNull, DialogService } from '@core/public-api';
 import { CommonModule } from '@angular/common';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
+import {
+  ModbusValueImportDialogComponent,
+  ModbusValueImportDialogData,
+  ModbusValueImportResult,
+} from '../modbus-value-import-dialog/modbus-value-import-dialog.component';
 import {
   TbTableDatasource,
   SharedModule
@@ -217,6 +223,94 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
     ).pipe(take(1), takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
         this.slaves.removeAt(index);
+        this.masterFormGroup.markAsDirty();
+      }
+    });
+  }
+
+  exportKeys($event: Event, index: number): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const slave = this.slaves.at(index)?.value as SlaveConfig;
+    if (!slave) {
+      return;
+    }
+
+    const rows: string[] = [
+      'tag,address,type,functionCode,objectsCount,category,multiplier,divider,adder,subtractor,' +
+      'scalingRawMin,scalingRawMax,scalingEngMin,scalingEngMax,reportStrategyType,reportPeriod',
+    ];
+    const addKeys = (keys: ModbusValue[], category: string): void => {
+      for (const k of (keys || [])) {
+        const tag = (k.tag || '').replace(/,/g, ';');
+        rows.push([
+          tag,
+          k.address ?? '',
+          k.type ?? '',
+          k.functionCode ?? '',
+          k.objectsCount ?? '',
+          category,
+          k.multiplier ?? '',
+          k.divider ?? '',
+          k.adder ?? '',
+          k.subtractor ?? '',
+          k.scaling?.rawMin ?? '',
+          k.scaling?.rawMax ?? '',
+          k.scaling?.engMin ?? '',
+          k.scaling?.engMax ?? '',
+          k.reportStrategy?.type ?? '',
+          k.reportStrategy?.reportPeriod ?? '',
+        ].join(','));
+      }
+    };
+    addKeys(slave.timeseries, 'timeseries');
+    addKeys(slave.attributes, 'attributes');
+    addKeys(slave.attributeUpdates, 'attributeUpdates');
+    addKeys(slave.rpc, 'rpc');
+
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slave.deviceName || 'modbus-slave'}-keys.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  importKeys($event: Event, index: number): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const slave = this.slaves.at(index)?.value as SlaveConfig;
+    if (!slave) {
+      return;
+    }
+
+    const existingValues: ModbusValue[] = [
+      ...(slave.timeseries || []),
+      ...(slave.attributes || []),
+      ...(slave.attributeUpdates || []),
+      ...(slave.rpc || []),
+    ];
+
+    this.dialog.open<ModbusValueImportDialogComponent, ModbusValueImportDialogData, ModbusValueImportResult>(
+      ModbusValueImportDialogComponent, {
+        data: { deviceName: slave.deviceName, existingValues },
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        autoFocus: false,
+      }
+    ).afterClosed().pipe(take(1), takeUntil(this.destroy$)).subscribe(result => {
+      if (result) {
+        const updated: SlaveConfig = {
+          ...slave,
+          timeseries: [...(slave.timeseries || []), ...result.timeseries],
+          attributes: [...(slave.attributes || []), ...result.attributes],
+          attributeUpdates: [...(slave.attributeUpdates || []), ...result.attributeUpdates],
+          rpc: [...(slave.rpc || []), ...result.rpc],
+        };
+        this.slaves.at(index).patchValue(updated);
         this.masterFormGroup.markAsDirty();
       }
     });

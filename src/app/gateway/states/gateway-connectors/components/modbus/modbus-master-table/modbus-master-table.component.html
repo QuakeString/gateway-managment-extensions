@@ -92,37 +92,45 @@
             {{ ModbusProtocolLabelsMap.get(slave['type']) }}
           </mat-cell>
         </ng-container>
-        <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef class="w-12"/>
-          <mat-cell *matCellDef="let slave; let i = index">
-            <ng-template #rowActions>
-              <button mat-icon-button
-                      matTooltip="{{ 'action.edit' | translate }}"
-                      matTooltipPosition="above"
-                      (click)="manageSlave($event, i)">
-                <tb-icon>edit</tb-icon>
+        <!-- Edit + Delete stay inline; Import / Export live in a ⋮ menu —
+             same layout as the S7 connector. The actions column keeps a
+             fixed width for all three controls; when the connector panel is
+             narrower than the table the row scrolls horizontally (the
+             table has a min-width + overflow:auto container). No stickyEnd,
+             so the actions scroll into view rather than clipping. -->
+        <ng-container matColumnDef="actions">
+          <mat-header-cell *matHeaderCellDef [style]="{ flex: '0 0 152px', minWidth: '152px' }"/>
+          <mat-cell *matCellDef="let slave; let i = index"
+                    [style]="{ flex: '0 0 152px', minWidth: '152px' }">
+            <button mat-icon-button
+                    matTooltip="{{ 'action.edit' | translate }}"
+                    matTooltipPosition="above"
+                    (click)="manageSlave($event, i)">
+              <tb-icon>edit</tb-icon>
+            </button>
+            <button mat-icon-button
+                    matTooltip="{{ 'action.delete' | translate }}"
+                    matTooltipPosition="above"
+                    (click)="deleteSlave($event, i)">
+              <tb-icon>delete</tb-icon>
+            </button>
+            <button mat-icon-button
+                    (click)="$event.stopPropagation()"
+                    matTooltip="Import / Export keys"
+                    matTooltipPosition="above"
+                    [matMenuTriggerFor]="rowMenu">
+              <mat-icon class="material-icons">more_vert</mat-icon>
+            </button>
+            <mat-menu #rowMenu="matMenu" xPosition="before">
+              <button mat-menu-item (click)="exportKeys($event, i)">
+                <mat-icon>file_download</mat-icon>
+                <span>Export Keys</span>
               </button>
-              <button mat-icon-button
-                      matTooltip="{{ 'action.delete' | translate }}"
-                      matTooltipPosition="above"
-                      (click)="deleteSlave($event, i)">
-                <tb-icon>delete</tb-icon>
+              <button mat-menu-item (click)="importKeys($event, i)">
+                <mat-icon>file_upload</mat-icon>
+                <span>Import Keys</span>
               </button>
-            </ng-template>
-            <div class="lt-lg:!hidden flex flex-1 flex-row items-stretch justify-end"
-                 [style]="{ minWidth: '96px', textAlign: 'center'}">
-              <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
-            </div>
-            <div class="gt-md:!hidden">
-              <button mat-icon-button
-                      (click)="$event.stopPropagation()"
-                      [matMenuTriggerFor]="cellActionsMenu">
-                <mat-icon class="material-icons">more_vert</mat-icon>
-              </button>
-              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
-              </mat-menu>
-            </div>
+            </mat-menu>
           </mat-cell>
         </ng-container>
         <mat-header-row class="mat-row-select" *matHeaderRowDef="['deviceName', 'info', 'unitId', 'type', 'actions']; sticky: true"></mat-header-row>
