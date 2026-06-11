@@ -15,7 +15,7 @@
 -->
 <div [formGroup]="deviceForm" class="dialog-mapping">
   <mat-toolbar color="primary">
-    <h2>{{ isEdit ? 'Edit' : 'Add' }} EtherNet/IP Device</h2>
+    <h2>{{ (isEdit ? 'gateway.gw-edit' : 'gateway.eip-add') | translate }} EtherNet/IP Device</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -26,14 +26,14 @@
   <div mat-dialog-content>
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Device Name</div>
+        <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="deviceName" placeholder="Allen-Bradley PLC 1"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'Device name is required'"
+                      [matTooltip]="'gateway.gw-device-name-required' | translate"
                       *ngIf="deviceForm.get('deviceName').hasError('required')
                                            && deviceForm.get('deviceName').touched"
                       class="tb-error">
@@ -43,20 +43,20 @@
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width" translate>gateway.device-profile</div>
+        <div class="fixed-title-width">{{ 'gateway.device-profile' | translate }}</div>
         <div class="tb-flex no-gap">
           <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">Host</div>
+        <div class="fixed-title-width tb-required">{{ 'gateway.host' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="host" placeholder="192.168.1.100"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'Host is required'"
+                      [matTooltip]="'gateway.gw-host-required' | translate"
                       *ngIf="deviceForm.get('host').hasError('required')
                                            && deviceForm.get('host').touched"
                       class="tb-error">
@@ -66,7 +66,7 @@
         </div>
       </div>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width tb-required">PLC Type</div>
+        <div class="fixed-title-width tb-required">{{ 'gateway.eip-plc-type' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="plcType">
@@ -78,7 +78,7 @@
         </div>
       </div>
       <div class="tb-form-row column-xs" *ngIf="isLogixType">
-        <div class="fixed-title-width tb-required">Slot</div>
+        <div class="fixed-title-width tb-required">{{ 'gateway.gw-slot' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput type="number" formControlName="slot"/>
@@ -86,49 +86,49 @@
         </div>
       </div>
       <div class="tb-form-row column-xs" *ngIf="supportsTagBrowsing">
-        <div class="fixed-title-width">Auto-discover Tags</div>
+        <div class="fixed-title-width">{{ 'gateway.eip-auto-discover-tags' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-checkbox formControlName="initTags">
-            Upload tag list from PLC on connect
+            {{ 'gateway.eip-upload-tag-list' | translate }}
           </mat-checkbox>
         </div>
       </div>
       <div class="tb-form-row column-xs" *ngIf="supportsTagBrowsing && browsedTags.length > 0">
-        <div class="fixed-title-width">Browse Tags</div>
+        <div class="fixed-title-width">{{ 'gateway.eip-browse-tags' | translate }}</div>
         <div class="tb-flex no-gap" style="gap: 8px; display: flex;">
           <button mat-stroked-button color="primary" type="button"
                   (click)="openTagBrowser('timeseries')">
             <mat-icon>playlist_add</mat-icon>
-            Browse → Timeseries
+            {{ 'gateway.eip-browse-timeseries' | translate }}
           </button>
           <button mat-stroked-button color="primary" type="button"
                   (click)="openTagBrowser('attributes')">
             <mat-icon>playlist_add</mat-icon>
-            Browse → Attributes
+            {{ 'gateway.eip-browse-attributes' | translate }}
           </button>
-          <span class="browse-count">{{ browsedTags.length }} tags available</span>
+          <span class="browse-count">{{ 'gateway.eip-tags-available-plain' | translate:{ count: browsedTags.length } }}</span>
         </div>
       </div>
       <div class="tb-form-panel stroked">
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
-            <mat-panel-title>Advanced connection settings</mat-panel-title>
+            <mat-panel-title>{{ 'gateway.advanced-connection-settings' | translate }}</mat-panel-title>
           </mat-expansion-panel-header>
           <div class="tb-form-panel no-border no-padding">
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Poll Period (ms)</div>
+              <div class="fixed-title-width">{{ 'gateway.gw-poll-period-ms' | translate }}</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="pollPeriod"/>
               </mat-form-field>
             </div>
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Connect Attempts</div>
+              <div class="fixed-title-width">{{ 'gateway.gw-connect-attempts' | translate }}</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="connectAttemptCount"/>
               </mat-form-field>
             </div>
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width">Wait After Failed (ms)</div>
+              <div class="fixed-title-width">{{ 'gateway.gw-wait-after-failed-ms' | translate }}</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="waitAfterFailedAttemptsMs"/>
               </mat-form-field>
@@ -140,29 +140,29 @@
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              Time synchronization
+              {{ 'gateway.timesync-title' | translate }}
               <span *ngIf="deviceForm.get('timeSync.enabled').value"
                     class="ts-inline-hint">
-                (auto every {{ deviceForm.get('timeSync.intervalSec').value }}s)
+                {{ 'gateway.timesync-auto-every' | translate:{ value: deviceForm.get('timeSync.intervalSec').value } }}
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="ts-body">
             <div class="ts-auto-row">
               <span class="ts-auto-label">
-                Auto sync
+                {{ 'gateway.timesync-auto-sync' | translate }}
                 <mat-icon class="material-icons ts-info-icon"
-                          matTooltip="Push gateway time to PLC periodically. Requires a successful manual sync first to confirm the PLC accepts clock writes."
+                          [matTooltip]="'gateway.timesync-auto-tooltip' | translate"
                           matTooltipPosition="above">info_outline</mat-icon>
               </span>
               <mat-slide-toggle formControlName="enabled"
                                 [disabled]="!isLogixType || !isTimeSyncVerified"
-                                [matTooltip]="!isLogixType ? 'Time sync is only supported for Logix-family PLCs (ControlLogix / CompactLogix)' : (isTimeSyncVerified ? '' : 'Set the device date/time manually first to verify the PLC supports clock writes.')"></mat-slide-toggle>
+                                [matTooltip]="!isLogixType ? ('gateway.timesync-logix-only' | translate) : (isTimeSyncVerified ? '' : ('gateway.timesync-verify-first' | translate))"></mat-slide-toggle>
               <mat-form-field *ngIf="deviceForm.get('timeSync.enabled').value"
                               class="ts-interval-field"
                               appearance="outline"
                               subscriptSizing="dynamic">
-                <mat-label>Interval (s)</mat-label>
+                <mat-label>{{ 'gateway.timesync-interval-s' | translate }}</mat-label>
                 <input matInput type="number" formControlName="intervalSec" min="10"/>
               </mat-form-field>
             </div>
@@ -170,17 +170,17 @@
               <button mat-stroked-button type="button"
                       color="primary"
                       [disabled]="!canSyncTimeNow || !isLogixType"
-                      [matTooltip]="canSyncTimeNow ? 'Read and set the PLC clock' : 'Save the device first to enable manual sync'"
+                      [matTooltip]="(canSyncTimeNow ? 'gateway.timesync-read-set-clock' : 'gateway.timesync-save-first') | translate"
                       (click)="openTimeSyncDialog()">
                 <mat-icon>schedule</mat-icon>
-                Set date time
+                {{ 'gateway.timesync-set-date-time' | translate }}
               </button>
             </div>
           </div>
         </mat-expansion-panel>
       </div>
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Timeseries</div>
+        <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
             <mat-chip *ngFor="let ts of (deviceForm.get('timeseries').value | slice: 0 : 50)">
@@ -193,7 +193,7 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  [matTooltip]="'gateway.gw-edit' | translate"
                   matTooltipPosition="above"
                   #timeseriesButton
                   (click)="manageKeys($event, timeseriesButton, EthernetIPValueKey.TIMESERIES)">
@@ -202,7 +202,7 @@
         </div>
       </div>
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Attributes</div>
+        <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
             <mat-chip *ngFor="let attr of (deviceForm.get('attributes').value | slice: 0 : 50)">
@@ -215,7 +215,7 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  [matTooltip]="'gateway.gw-edit' | translate"
                   matTooltipPosition="above"
                   #attributesButton
                   (click)="manageKeys($event, attributesButton, EthernetIPValueKey.ATTRIBUTES)">
@@ -224,7 +224,7 @@
         </div>
       </div>
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">Attribute Updates</div>
+        <div class="fixed-title-width">{{ 'gateway.gw-attribute-updates' | translate }}</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
             <mat-chip *ngFor="let au of (deviceForm.get('attributeUpdates').value | slice: 0 : 50)">
@@ -237,7 +237,7 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  [matTooltip]="'gateway.gw-edit' | translate"
                   matTooltipPosition="above"
                   #attributeUpdatesButton
                   (click)="manageKeys($event, attributeUpdatesButton, EthernetIPValueKey.ATTRIBUTES_UPDATES)">
@@ -246,7 +246,7 @@
         </div>
       </div>
       <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">RPC Methods</div>
+        <div class="fixed-title-width">{{ 'gateway.gw-rpc-methods' | translate }}</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
             <mat-chip *ngFor="let rpc of (deviceForm.get('rpc').value | slice: 0 : 50)">
@@ -259,7 +259,7 @@
           <button type="button"
                   mat-icon-button
                   color="primary"
-                  matTooltip="Edit"
+                  [matTooltip]="'gateway.gw-edit' | translate"
                   matTooltipPosition="above"
                   #rpcButton
                   (click)="manageKeys($event, rpcButton, EthernetIPValueKey.RPC)">
@@ -273,12 +273,12 @@
     <button mat-button color="primary"
             type="button"
             (click)="cancel()">
-      Cancel
+      {{ 'gateway.gw-cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             (click)="save()"
             [disabled]="deviceForm.invalid || !keysPopupClosed">
-      {{ isEdit ? 'Update' : 'Add' }}
+      {{ (isEdit ? 'action.update' : 'action.add') | translate }}
     </button>
   </div>
 </div>

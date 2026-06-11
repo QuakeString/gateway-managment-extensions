@@ -5,22 +5,22 @@
 <div class="tb-form-panel stroked" *ngIf="canCalibrate" [formGroup]="form">
   <mat-expansion-panel class="tb-settings" [expanded]="mode !== 'none'">
     <mat-expansion-panel-header class="flex-wrap">
-      <mat-panel-title>Calibration</mat-panel-title>
+      <mat-panel-title>{{ 'gateway.calibration-title' | translate }}</mat-panel-title>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width">Mode</div>
+        <div class="fixed-title-width">{{ 'gateway.mode' | translate }}</div>
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="mode">
-            <mat-option value="none">None</mat-option>
-            <mat-option value="modifier">Modifier (× / ÷ / + / −)</mat-option>
-            <mat-option value="scaling">Scale (linear)</mat-option>
+            <mat-option value="none">{{ 'gateway.calibration-none' | translate }}</mat-option>
+            <mat-option value="modifier">{{ 'gateway.calibration-modifier-ops' | translate }}</mat-option>
+            <mat-option value="scaling">{{ 'gateway.calibration-scale-linear' | translate }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
       <ng-container *ngIf="mode === 'modifier'">
         <div class="tb-form-row column-xs">
-          <div class="fixed-title-width">Type</div>
+          <div class="fixed-title-width">{{ 'gateway.type' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="modifierType">
               <mat-select-trigger>
@@ -37,7 +37,7 @@
           </mat-form-field>
         </div>
         <div class="tb-form-row column-xs">
-          <div class="fixed-title-width">Value</div>
+          <div class="fixed-title-width">{{ 'gateway.value' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput type="number" step="0.1" formControlName="modifierValue" placeholder="1"/>
           </mat-form-field>
@@ -46,25 +46,25 @@
       <ng-container *ngIf="mode === 'scaling'">
         <ng-container formGroupName="scaling">
           <div class="tb-form-row column-xs">
-            <div class="fixed-title-width">Raw Min</div>
+            <div class="fixed-title-width">{{ 'gateway.calibration-raw-min' | translate }}</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput type="number" formControlName="rawMin">
             </mat-form-field>
           </div>
           <div class="tb-form-row column-xs">
-            <div class="fixed-title-width">Raw Max</div>
+            <div class="fixed-title-width">{{ 'gateway.calibration-raw-max' | translate }}</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput type="number" formControlName="rawMax">
             </mat-form-field>
           </div>
           <div class="tb-form-row column-xs">
-            <div class="fixed-title-width">Eng Min</div>
+            <div class="fixed-title-width">{{ 'gateway.calibration-eng-min' | translate }}</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput type="number" formControlName="engMin">
             </mat-form-field>
           </div>
           <div class="tb-form-row column-xs">
-            <div class="fixed-title-width">Eng Max</div>
+            <div class="fixed-title-width">{{ 'gateway.calibration-eng-max' | translate }}</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput type="number" formControlName="engMax">
             </mat-form-field>

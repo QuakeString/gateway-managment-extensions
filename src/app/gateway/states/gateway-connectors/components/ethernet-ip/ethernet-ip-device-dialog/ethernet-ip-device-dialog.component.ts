@@ -220,19 +220,19 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
 
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
-      [EthernetIPValueKey.TIMESERIES]: 'Timeseries',
-      [EthernetIPValueKey.ATTRIBUTES]: 'Attributes',
-      [EthernetIPValueKey.ATTRIBUTES_UPDATES]: 'Attribute Updates',
-      [EthernetIPValueKey.RPC]: 'RPC Methods',
+      [EthernetIPValueKey.TIMESERIES]: 'gateway.gw-timeseries',
+      [EthernetIPValueKey.ATTRIBUTES]: 'gateway.attributes',
+      [EthernetIPValueKey.ATTRIBUTES_UPDATES]: 'gateway.gw-attribute-updates',
+      [EthernetIPValueKey.RPC]: 'gateway.gw-rpc-methods',
     };
     const ctx = {
       keys: keysControl.value,
       keysType,
       panelTitle: panelTitles[keysType],
       // Standardized: data keys → "Add key"; RPC → "Add method".
-      addKeyTitle: keysType === EthernetIPValueKey.RPC ? 'Add method' : 'Add key',
-      deleteKeyTitle: 'Delete key',
-      noKeysText: 'No keys configured. Add a key to get started.',
+      addKeyTitle: keysType === EthernetIPValueKey.RPC ? 'gateway.gw-add-method' : 'gateway.gw-add-key',
+      deleteKeyTitle: 'gateway.gw-delete-key',
+      noKeysText: 'gateway.gw-no-keys-configured-hint',
       isSLC: !this.isLogixType,
     };
     this.keysPopupClosed = false;

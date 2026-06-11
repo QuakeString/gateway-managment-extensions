@@ -17,24 +17,24 @@
   <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
     <div class="mat-toolbar-tools">
       <div class="title-container">
-        <span class="tb-master-table-title">EtherNet/IP Devices</span>
+        <span class="tb-master-table-title">{{ 'gateway.eip-devices-title' | translate }}</span>
       </div>
       <span class="flex-1"></span>
       <button mat-icon-button
               (click)="addDevice()"
-              matTooltip="Add device"
+              [matTooltip]="'gateway.add-device' | translate"
               matTooltipPosition="above">
         <mat-icon>add</mat-icon>
       </button>
       <button mat-icon-button
               (click)="enterFilterMode()"
-              matTooltip="Search"
+              [matTooltip]="'gateway.gw-search' | translate"
               matTooltipPosition="above">
         <mat-icon>search</mat-icon>
       </button>
       <button mat-icon-button
               (click)="openDiscoverDialog([])"
-              matTooltip="Discover EtherNet/IP devices on network"
+              [matTooltip]="'gateway.eip-discover-tooltip' | translate"
               matTooltipPosition="above">
         <mat-icon>wifi_find</mat-icon>
       </button>
@@ -43,7 +43,7 @@
   <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
     <div class="mat-toolbar-tools">
       <button mat-icon-button
-              matTooltip="Search"
+              [matTooltip]="'gateway.gw-search' | translate"
               matTooltipPosition="above">
         <mat-icon>search</mat-icon>
       </button>
@@ -51,48 +51,46 @@
         <mat-label>&nbsp;</mat-label>
         <input #searchInput matInput
                [formControl]="textSearch"
-               placeholder="Enter search"/>
+               [placeholder]="'gateway.gw-enter-search' | translate"/>
       </mat-form-field>
       <button mat-icon-button (click)="exitFilterMode()"
-              matTooltip="Close"
+              [matTooltip]="'gateway.gw-close' | translate"
               matTooltipPosition="above">
         <mat-icon>close</mat-icon>
       </button>
     </div>
   </mat-toolbar>
 
-  <div *ngIf="filteredDevices.length === 0 && devices.length === 0" class="tb-form-hint tb-primary-fill tb-flex center">
-    No devices configured. Click + to add an EtherNet/IP device.
-  </div>
+  <div *ngIf="filteredDevices.length === 0 && devices.length === 0" class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.eip-no-devices' | translate }}</div>
 
   <table *ngIf="devices.length > 0" mat-table [dataSource]="filteredDevices" class="mat-elevation-z0">
     <ng-container matColumnDef="deviceName">
-      <th mat-header-cell *matHeaderCellDef>Device Name</th>
+      <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-device-name' | translate }}</th>
       <td mat-cell *matCellDef="let device">{{ device.deviceName }}</td>
     </ng-container>
 
     <ng-container matColumnDef="host">
-      <th mat-header-cell *matHeaderCellDef>Host</th>
+      <th mat-header-cell *matHeaderCellDef>{{ 'gateway.host' | translate }}</th>
       <td mat-cell *matCellDef="let device">{{ device.host }}</td>
     </ng-container>
 
     <ng-container matColumnDef="plcType">
-      <th mat-header-cell *matHeaderCellDef>PLC Type</th>
+      <th mat-header-cell *matHeaderCellDef>{{ 'gateway.eip-plc-type' | translate }}</th>
       <td mat-cell *matCellDef="let device">{{ device.plcType }}</td>
     </ng-container>
 
     <ng-container matColumnDef="tags">
-      <th mat-header-cell *matHeaderCellDef>Tags</th>
+      <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-tags' | translate }}</th>
       <td mat-cell *matCellDef="let device">{{ getTagCount(device) }}</td>
     </ng-container>
 
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let device; let i = index">
-        <button mat-icon-button (click)="$event.stopPropagation(); editDevice(getOriginalIndex(device))" matTooltip="Edit">
+        <button mat-icon-button (click)="$event.stopPropagation(); editDevice(getOriginalIndex(device))" [matTooltip]="'gateway.gw-edit' | translate">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button color="warn" (click)="$event.stopPropagation(); deleteDevice(getOriginalIndex(device))" matTooltip="Delete">
+        <button mat-icon-button color="warn" (click)="$event.stopPropagation(); deleteDevice(getOriginalIndex(device))" [matTooltip]="'gateway.gw-delete' | translate">
           <mat-icon>delete</mat-icon>
         </button>
         <button mat-icon-button
@@ -103,11 +101,11 @@
         <mat-menu #deviceMenu="matMenu" xPosition="before">
           <button mat-menu-item (click)="exportTags(getOriginalIndex(device))">
             <mat-icon>file_download</mat-icon>
-            <span>Export Tags</span>
+            <span>{{ 'gateway.gw-export-tags' | translate }}</span>
           </button>
           <button mat-menu-item (click)="importTags(getOriginalIndex(device))">
             <mat-icon>file_upload</mat-icon>
-            <span>Import Tags</span>
+            <span>{{ 'gateway.gw-import-tags' | translate }}</span>
           </button>
         </mat-menu>
       </td>

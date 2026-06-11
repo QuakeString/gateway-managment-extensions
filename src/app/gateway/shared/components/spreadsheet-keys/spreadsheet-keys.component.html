@@ -17,7 +17,7 @@
   <div class="header-actions">
     <div class="rounded-search">
       <mat-icon class="rounded-search-icon">search</mat-icon>
-      <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
+      <input class="rounded-search-input" type="text" [formControl]="searchControl" [placeholder]="'gateway.keys-search' | translate"/>
       <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
         <mat-icon>close</mat-icon>
       </button>
@@ -26,13 +26,13 @@
             mat-icon-button
             class="header-action-btn"
             (click)="toggleFullscreen()"
-            [matTooltip]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+            [matTooltip]="(isFullscreen ? 'gateway.keys-exit-fullscreen' : 'gateway.keys-fullscreen') | translate"
             matTooltipPosition="above">
       <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </div>
   <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
-    {{ filteredControls.length }} of {{ keysFormArray.length }} keys
+    {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.length } }}
   </div>
 
   <div class="spreadsheet-wrapper key-panel" *ngIf="displayedControls.length; else noKeysFs"
@@ -45,7 +45,7 @@
              [class.center]="col.headerClass === 'center'"
              [class.sortable]="col.sortable"
              (click)="col.sortable ? setSortField(col.key) : null">
-          {{ col.label }}
+          {{ col.label | translate }}
           <mat-icon *ngIf="col.sortable && sortField === col.key" class="sort-icon">
             {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
           </mat-icon>
@@ -164,11 +164,11 @@
 
   <ng-template #noKeysFs>
     <div class="empty-state-fullscreen key-panel">
-      <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeysFs" class="tb-prompt">
-        No matching keys
+      <span *ngIf="searchControl.value && keysFormArray.length > 0; else emptyKeysFs" class="tb-prompt" translate>
+        gateway.keys-no-matching
       </span>
       <ng-template #emptyKeysFs>
-        <span class="tb-prompt">No data keys configured</span>
+        <span class="tb-prompt">{{ 'gateway.keys-no-data-configured' | translate }}</span>
       </ng-template>
     </div>
   </ng-template>

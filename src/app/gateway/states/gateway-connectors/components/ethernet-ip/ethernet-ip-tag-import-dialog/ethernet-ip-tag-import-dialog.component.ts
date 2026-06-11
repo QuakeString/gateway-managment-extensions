@@ -19,6 +19,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { SharedModule } from '@shared/public-api';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import { EthernetIPDataKey } from '../../../models/public-api';
 import * as XLSX from 'xlsx';
 
@@ -68,6 +69,7 @@ export class EthernetIPTagImportDialogComponent {
   constructor(
     private dialogRef: MatDialogRef<EthernetIPTagImportDialogComponent>,
     private cd: ChangeDetectorRef,
+    private translate: TranslateService,
     @Inject(MAT_DIALOG_DATA) public data: EthernetIPTagImportDialogData,
   ) {
     this.existingPlcTags = new Set(
@@ -187,13 +189,13 @@ export class EthernetIPTagImportDialogComponent {
       };
 
       const errors: string[] = [];
-      if (!tagName) { errors.push('Missing tag name'); }
-      if (!plcTag) { errors.push('Missing PLC tag'); }
+      if (!tagName) { errors.push(this.translate.instant('gateway.gw-missing-tag-name')); }
+      if (!plcTag) { errors.push(this.translate.instant('gateway.gw-missing-plc-tag')); }
       if (plcTag && this.existingPlcTags.has(plcTag.toLowerCase())) {
-        errors.push('Duplicate: PLC tag already exists on device');
+        errors.push(this.translate.instant('gateway.gw-dup-plc-tag-device'));
       }
       if (plcTag && seenPlcTags.has(plcTag.toLowerCase())) {
-        errors.push('Duplicate: PLC tag repeated in file');
+        errors.push(this.translate.instant('gateway.gw-dup-plc-tag-file'));
       }
 
       if (errors.length > 0) {

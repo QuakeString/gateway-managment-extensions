@@ -21,6 +21,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { SharedModule } from '@shared/public-api';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import { S7DataKey, S7ValueType } from '../../../models/public-api';
 import { ReportStrategyConfig } from '../../../../../shared/models/public-api';
 import * as XLSX from 'xlsx';
@@ -102,6 +103,7 @@ export class S7TagImportDialogComponent {
   constructor(
     private dialogRef: MatDialogRef<S7TagImportDialogComponent>,
     private cd: ChangeDetectorRef,
+    private translate: TranslateService,
     @Inject(MAT_DIALOG_DATA) public data: S7TagImportDialogData,
   ) {
     this.existingAddresses = new Set(
@@ -353,18 +355,18 @@ export class S7TagImportDialogComponent {
       // Validate
       const errors: string[] = [];
       if (!tagName) {
-        errors.push('Missing tag name');
+        errors.push(this.translate.instant('gateway.gw-missing-tag-name'));
       }
       if (!rawAddress) {
-        errors.push('Missing address');
+        errors.push(this.translate.instant('gateway.gw-missing-address'));
       } else if (!S7_ADDRESS_REGEX.test(rawAddress)) {
-        errors.push(`Invalid S7 address: ${rawAddress}`);
+        errors.push(this.translate.instant('gateway.s7-invalid-address-prefix', { address: rawAddress }));
       }
       if (rawAddress && this.existingAddresses.has(rawAddress.toLowerCase())) {
-        errors.push('Duplicate: address already exists on device');
+        errors.push(this.translate.instant('gateway.gw-dup-address-device'));
       }
       if (rawAddress && seenAddresses.has(rawAddress.toLowerCase())) {
-        errors.push('Duplicate: address repeated in file');
+        errors.push(this.translate.instant('gateway.gw-dup-address-file'));
       }
 
       if (errors.length > 0) {

@@ -15,9 +15,9 @@
 -->
 <div class="info-panel">
   <div class="panel-header">
-    <span class="panel-title">PLC Information</span>
+    <span class="panel-title">{{ 'gateway.eip-plc-information' | translate }}</span>
     <span class="flex-spacer"></span>
-    <button mat-icon-button (click)="onRefresh()" matTooltip="Refresh" [disabled]="loading">
+    <button mat-icon-button (click)="onRefresh()" [matTooltip]="'gateway.gw-refresh' | translate" [disabled]="loading">
       <mat-icon [class.spinning]="loading">refresh</mat-icon>
     </button>
   </div>
@@ -25,7 +25,7 @@
   <!-- Loading state -->
   <div *ngIf="loading" class="loading-container">
     <mat-spinner diameter="32"></mat-spinner>
-    <span>Fetching PLC info...</span>
+    <span>{{ 'gateway.eip-fetching-info' | translate }}</span>
   </div>
 
   <!-- Error state -->
@@ -37,7 +37,7 @@
   <!-- PLC Info table -->
   <table *ngIf="!loading && getInfoRows().length > 0" class="info-table">
     <tr *ngFor="let row of getInfoRows()">
-      <td class="info-label">{{ row.label }}</td>
+      <td class="info-label">{{ row.label | translate }}</td>
       <td class="info-value">{{ row.value }}</td>
     </tr>
   </table>
@@ -45,29 +45,29 @@
   <!-- Actions -->
   <div class="actions-row" *ngIf="!loading">
     <button mat-stroked-button color="primary" (click)="onSyncTime()"
-            *ngIf="isLogix" matTooltip="Sync PLC clock to system time">
+            *ngIf="isLogix" [matTooltip]="'gateway.eip-sync-clock-tooltip' | translate">
       <mat-icon>schedule</mat-icon>
-      Sync Time
+      {{ 'gateway.eip-sync-time' | translate }}
     </button>
   </div>
 
   <!-- Module Info Query -->
   <div class="module-query" *ngIf="isLogix">
-    <h4>Backplane Module Info</h4>
+    <h4>{{ 'gateway.eip-backplane-info' | translate }}</h4>
     <div class="module-row">
       <mat-form-field appearance="outline" class="slot-field">
-        <mat-label>Slot</mat-label>
+        <mat-label>{{ 'gateway.gw-slot' | translate }}</mat-label>
         <input matInput type="number" [(ngModel)]="moduleSlot" min="0" max="16">
       </mat-form-field>
       <button mat-stroked-button color="primary" (click)="onQueryModule()">
         <mat-icon>info_outline</mat-icon>
-        Query
+        {{ 'gateway.gw-query' | translate }}
       </button>
     </div>
 
     <table *ngIf="moduleInfoList.length > 0" class="info-table module-table">
       <tr>
-        <th>Slot</th><th>Product</th><th>Vendor</th><th>Revision</th><th>Serial</th>
+        <th>{{ 'gateway.gw-slot' | translate }}</th><th>{{ 'gateway.gw-product' | translate }}</th><th>{{ 'gateway.gw-vendor' | translate }}</th><th>{{ 'gateway.gw-revision' | translate }}</th><th>{{ 'gateway.gw-serial' | translate }}</th>
       </tr>
       <tr *ngFor="let mod of moduleInfoList">
         <td>{{ mod.slot }}</td>

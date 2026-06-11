@@ -25,14 +25,14 @@
      industrial panels so the five dialogs read identically. -->
 <ng-template #rowHeaderTpl let-row let-index="index">
   <div class="tb-flex">
-    <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
+    <div class="title-container tb-flex">{{ (isRpc ? 'gateway.method' : 'gateway.gw-key') | translate }}:
       <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('tag')?.value }}</span>
     </div>
-    <div class="title-container">Address:
+    <div class="title-container">{{ 'gateway.address' | translate }}:
       <span class="key-label">{{ row.get('address')?.value }}</span>
     </div>
-    <div class="title-container">Type:
-      <span class="key-label">{{ row.get('valueType')?.value || 'Auto' }}</span>
+    <div class="title-container">{{ 'gateway.type' | translate }}:
+      <span class="key-label">{{ row.get('valueType')?.value || ('gateway.gw-auto' | translate) }}</span>
     </div>
   </div>
 </ng-template>
@@ -50,7 +50,7 @@
         </div>
       </div>
       <div class="tb-form-panel stroked">
-        <div class="tb-form-panel-title" translate>gateway.platform-side</div>
+        <div class="tb-form-panel-title">{{ 'gateway.platform-side' | translate }}</div>
         <ng-container *ngIf="!isRpc">
           <div class="tb-form-row column-xs">
             <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.tag' | translate }}">{{ 'gateway.key' | translate }}</div>
@@ -61,7 +61,7 @@
         </ng-container>
         <ng-container *ngIf="isRpc">
           <div class="tb-form-row column-xs">
-            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">Method</div>
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | }}" translate>{{ 'gateway.method' | translate }}</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="method" placeholder="setValue">
             </mat-form-field>
@@ -69,20 +69,20 @@
         </ng-container>
       </div>
       <div class="tb-form-panel stroked">
-        <div class="tb-form-panel-title" translate>gateway.connector-side</div>
+        <div class="tb-form-panel-title">{{ 'gateway.connector-side' | translate }}</div>
         <ng-container *ngIf="isRpc">
           <div class="tb-form-row column-xs">
-            <div class="fixed-title-width tb-required">Operation</div>
+            <div class="fixed-title-width tb-required">{{ 'gateway.gw-operation' | translate }}</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="operation">
-                <mat-option value="read">Read</mat-option>
-                <mat-option value="write">Write</mat-option>
+                <mat-option value="read">{{ 'gateway.gw-read' | translate }}</mat-option>
+                <mat-option value="write">{{ 'gateway.gw-write' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
         </ng-container>
         <div class="tb-form-row column-xs">
-          <div class="fixed-title-width tb-required">Address</div>
+          <div class="fixed-title-width tb-required">{{ 'gateway.address' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="address" placeholder="DB1.DBD0"
                    style="text-transform: uppercase"
@@ -90,7 +90,7 @@
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)'"
+                      [matTooltip]="'gateway.s7-invalid-address' | translate"
                       *ngIf="row.get('address').hasError('pattern') && row.get('address').touched"
                       class="tb-error">
               warning
@@ -98,10 +98,10 @@
           </mat-form-field>
         </div>
         <div class="tb-form-row column-xs">
-          <div class="fixed-title-width">Value Type</div>
+          <div class="fixed-title-width">{{ 'gateway.gw-value-type' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="valueType">
-              <mat-option value="">Auto</mat-option>
+              <mat-option value="">{{ 'gateway.gw-auto' | translate }}</mat-option>
               <mat-option *ngFor="let type of valueTypes" [value]="type">{{ type }}</mat-option>
             </mat-select>
           </mat-form-field>

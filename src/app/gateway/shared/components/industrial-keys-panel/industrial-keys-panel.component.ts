@@ -69,10 +69,10 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
    *  only reads length + controls for filtering/sorting/display. */
   @Input({ required: true }) keysFormArray!: FormArray;
 
-  @Input() title = 'Data Keys';
-  @Input() addKeyLabel = 'Add key';
-  @Input() deleteKeyTitle = 'Delete key';
-  @Input() emptyText = 'No keys configured';
+  @Input() title = 'gateway.gw-data-keys';
+  @Input() addKeyLabel = 'gateway.gw-add-key';
+  @Input() deleteKeyTitle = 'gateway.gw-delete-key';
+  @Input() emptyText = 'gateway.gw-no-keys-configured';
 
   /** Field names (on each row's FormGroup) to search by. Case-
    *  insensitive substring match; host passes e.g. ['tag', 'address']. */

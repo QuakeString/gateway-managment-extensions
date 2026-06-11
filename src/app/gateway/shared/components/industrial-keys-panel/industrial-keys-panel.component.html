@@ -6,7 +6,7 @@
 <div #panelRoot class="industrial-keys-panel-root" [class.fullscreen]="isFullscreen">
   <div class="industrial-keys-panel">
     <div class="tb-form-panel no-border no-padding">
-      <div class="tb-form-panel-title">{{ title }} ({{ keysFormArray.controls.length }})</div>
+      <div class="tb-form-panel-title">{{ title | translate }} ({{ keysFormArray.controls.length }})</div>
 
       <!-- Toolbar: pill search, sort menu, fullscreen toggle. Hidden
            in fullscreen — the spreadsheet has its own identical
@@ -14,36 +14,36 @@
       <div class="header-actions" *ngIf="!isFullscreen">
         <div class="rounded-search">
           <mat-icon class="rounded-search-icon">search</mat-icon>
-          <input class="rounded-search-input" type="text" [formControl]="searchControl" placeholder="Search keys..."/>
+          <input class="rounded-search-input" type="text" [formControl]="searchControl" [placeholder]="'gateway.keys-search' | translate"/>
           <button *ngIf="searchControl.value" type="button" class="rounded-search-clear" (click)="searchControl.setValue('')">
             <mat-icon>close</mat-icon>
           </button>
         </div>
         <button *ngIf="sortFields.length > 0" type="button" mat-icon-button class="header-action-btn"
                 [matMenuTriggerFor]="sortMenu"
-                matTooltip="Sort" matTooltipPosition="above">
+                [matTooltip]="'gateway.keys-sort' | translate" matTooltipPosition="above">
           <mat-icon>sort</mat-icon>
         </button>
         <button *ngIf="fullscreenSupported && spreadsheetColumns.length > 0" type="button" mat-icon-button class="header-action-btn"
                 (click)="toggleFullscreen()"
-                [matTooltip]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+                [matTooltip]="(isFullscreen ? 'gateway.keys-exit-fullscreen' : 'gateway.keys-fullscreen') | translate"
                 matTooltipPosition="above">
           <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
         </button>
         <mat-menu #sortMenu="matMenu" class="spreadsheet-sort-menu-panel">
           <button mat-menu-item type="button" (click)="setSortField(null)">
             <mat-icon *ngIf="sortField === null">check</mat-icon>
-            <span>Default order</span>
+            <span>{{ 'gateway.keys-default-order' | translate }}</span>
           </button>
           <button *ngFor="let f of sortFields" mat-menu-item type="button" (click)="setSortField(f.value)">
             <mat-icon *ngIf="sortField === f.value">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-            <span>{{ f.label }}</span>
+            <span>{{ f.label | translate }}</span>
           </button>
         </mat-menu>
       </div>
       <div *ngIf="!isFullscreen && searchControl.value && filteredControls.length !== keysFormArray.controls.length"
            class="search-result-info">
-        {{ filteredControls.length }} of {{ keysFormArray.controls.length }} keys
+        {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.controls.length } }}
       </div>
 
       <ng-container *ngIf="!isFullscreen; else spreadsheetMode">
@@ -68,18 +68,18 @@
             </div>
             <button type="button" mat-icon-button
                     (click)="onDeleteClicked(item.index)"
-                    [matTooltip]="deleteKeyTitle" matTooltipPosition="above">
+                    [matTooltip]="deleteKeyTitle | translate" matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
             </button>
           </div>
         </div>
         <ng-template #noKeys>
           <div class="tb-flex no-flex center align-center key-panel">
-            <span *ngIf="searchControl.value && keysFormArray.controls.length > 0; else emptyKeys" class="tb-prompt">
-              No matching keys
+            <span *ngIf="searchControl.value && keysFormArray.controls.length > 0; else emptyKeys" class="tb-prompt" translate>
+              gateway.keys-no-matching
             </span>
             <ng-template #emptyKeys>
-              <span class="tb-prompt">{{ emptyText }}</span>
+              <span class="tb-prompt">{{ emptyText | translate }}</span>
             </ng-template>
           </div>
         </ng-template>
@@ -104,13 +104,13 @@
        every industrial panel's action bar layout. -->
   <div class="flex justify-between pt-4 footer-actions">
     <button type="button" mat-stroked-button color="primary" (click)="onAddClicked()">
-      {{ addKeyLabel }}
+      {{ addKeyLabel | translate }}
     </button>
     <div class="tb-flex flex-end">
-      <button mat-button color="primary" type="button" (click)="onCancelClicked()">Cancel</button>
+      <button mat-button color="primary" type="button" (click)="onCancelClicked()">{{ 'gateway.gw-cancel' | translate }}</button>
       <button mat-raised-button color="primary" type="button"
               (click)="onApplyClicked()"
-              [disabled]="applyDisabled">Apply</button>
+              [disabled]="applyDisabled">{{ 'gateway.keys-apply' | translate }}</button>
     </div>
   </div>
 </div>

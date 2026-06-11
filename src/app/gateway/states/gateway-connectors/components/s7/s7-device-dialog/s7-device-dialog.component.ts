@@ -215,19 +215,19 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
 
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
-      [S7ValueKey.TIMESERIES]: 'Timeseries',
-      [S7ValueKey.ATTRIBUTES]: 'Attributes',
-      [S7ValueKey.ATTRIBUTES_UPDATES]: 'Attribute Updates',
-      [S7ValueKey.RPC]: 'RPC Methods',
+      [S7ValueKey.TIMESERIES]: 'gateway.gw-timeseries',
+      [S7ValueKey.ATTRIBUTES]: 'gateway.attributes',
+      [S7ValueKey.ATTRIBUTES_UPDATES]: 'gateway.gw-attribute-updates',
+      [S7ValueKey.RPC]: 'gateway.gw-rpc-methods',
     };
     const ctx = {
       keys: keysControl.value,
       keysType,
       panelTitle: panelTitles[keysType],
       // Standardized: data keys → "Add key"; RPC → "Add method".
-      addKeyTitle: keysType === S7ValueKey.RPC ? 'Add method' : 'Add key',
-      deleteKeyTitle: 'Delete key',
-      noKeysText: 'No keys configured. Add a key to get started.',
+      addKeyTitle: keysType === S7ValueKey.RPC ? 'gateway.gw-add-method' : 'gateway.gw-add-key',
+      deleteKeyTitle: 'gateway.gw-delete-key',
+      noKeysText: 'gateway.gw-no-keys-configured-hint',
     };
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(

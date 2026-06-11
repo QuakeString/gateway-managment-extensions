@@ -23,6 +23,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
 import { DeviceService } from '@core/public-api';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface TimeSyncDialogData {
   gatewayDeviceId: string;
@@ -90,6 +91,7 @@ export class TimeSyncDialogComponent extends DialogComponent<TimeSyncDialogCompo
     public dialogRef: MatDialogRef<TimeSyncDialogComponent, boolean>,
     private deviceService: DeviceService,
     private cd: ChangeDetectorRef,
+    private translate: TranslateService,
   ) {
     super(store, router, dialogRef);
     // Report readSucceeded on ESC/backdrop too — caller uses it to gate auto-sync.
@@ -127,7 +129,7 @@ export class TimeSyncDialogComponent extends DialogComponent<TimeSyncDialogCompo
         const body: TimeInfoResult = result?.result ?? result ?? {};
         this.info = body;
         if (body?.success === false) {
-          this.error = body.error || 'Failed to read device time';
+          this.error = body.error || this.translate.instant('gateway.timesync-failed-read');
         }
 
         // Establish clock offsets so the display can tick forward.
@@ -156,7 +158,7 @@ export class TimeSyncDialogComponent extends DialogComponent<TimeSyncDialogCompo
       },
       error: () => {
         this.loading = false;
-        this.error = 'Could not reach the gateway. Is it connected?';
+        this.error = this.translate.instant('gateway.timesync-could-not-reach');
         this.cd.markForCheck();
       },
     });
@@ -193,14 +195,14 @@ export class TimeSyncDialogComponent extends DialogComponent<TimeSyncDialogCompo
         if (body?.success) {
           this.refresh();
         } else {
-          this.error = body.error || 'Sync failed';
+          this.error = body.error || this.translate.instant('gateway.timesync-failed');
         }
         this.syncing = false;
         this.cd.markForCheck();
       },
       error: () => {
         this.syncing = false;
-        this.error = 'Sync failed: gateway unreachable';
+        this.error = this.translate.instant('gateway.timesync-failed-unreachable');
         this.cd.markForCheck();
       },
     });

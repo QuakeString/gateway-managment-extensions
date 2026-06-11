@@ -111,11 +111,12 @@ export function calibrationColumns(
     canCalibrate(row) && calibrationModeOf(row.get('calibration')?.value) === 'scaling';
   return [
     {
-      key: '_calMode', label: 'Calibration', type: 'select', width: 'minmax(100px, 0.8fr)',
+      key: '_calMode', label: 'gateway.calibration-title', type: 'select', width: 'minmax(100px, 0.8fr)',
+      translateLabels: true,
       options: [
-        { value: 'none', label: 'None' },
-        { value: 'modifier', label: 'Modifier' },
-        { value: 'scaling', label: 'Scale' },
+        { value: 'none', label: 'gateway.calibration-none' },
+        { value: 'modifier', label: 'gateway.modifier' },
+        { value: 'scaling', label: 'gateway.calibration-scale' },
       ],
       getValue: (row) => calibrationModeOf((row as UntypedFormGroup).get('calibration')?.value),
       setValue: (row, v) => {
@@ -138,7 +139,7 @@ export function calibrationColumns(
       cellVisible: (row) => canCalibrate(row as UntypedFormGroup),
     },
     {
-      key: '_modifierType', label: 'Mod. Type', type: 'select', width: 'minmax(110px, 0.9fr)',
+      key: '_modifierType', label: 'gateway.calibration-mod-type', type: 'select', width: 'minmax(110px, 0.9fr)',
       options: modifierTypeOptions, translateLabels: true,
       getValue: (row) => modifierKeyOf((row as UntypedFormGroup).get('calibration')?.value) ?? ModifierType.MULTIPLIER,
       setValue: (row, v) => setModifierKey(row as UntypedFormGroup, v as ModifierType),
@@ -146,7 +147,7 @@ export function calibrationColumns(
       cellDisabled: (row) => !isModifier(row as UntypedFormGroup),
     },
     {
-      key: '_modifierValue', label: 'Mod. Value', type: 'number', width: 'minmax(80px, 0.7fr)',
+      key: '_modifierValue', label: 'gateway.calibration-mod-value', type: 'number', width: 'minmax(80px, 0.7fr)',
       step: 0.1, placeholder: '1',
       getValue: (row) => modifierValueOf((row as UntypedFormGroup).get('calibration')?.value) ?? 1,
       setValue: (row, v) => setModifierValue(row as UntypedFormGroup, v),
@@ -155,7 +156,7 @@ export function calibrationColumns(
     },
     ...(['rawMin', 'rawMax', 'engMin', 'engMax'] as const).map(f => ({
       key: `_${f}` as string,
-      label: ({ rawMin: 'Raw Min', rawMax: 'Raw Max', engMin: 'Eng Min', engMax: 'Eng Max' } as const)[f],
+      label: ({ rawMin: 'gateway.calibration-raw-min', rawMax: 'gateway.calibration-raw-max', engMin: 'gateway.calibration-eng-min', engMax: 'gateway.calibration-eng-max' } as const)[f],
       type: 'number' as const,
       width: 'minmax(80px, 0.7fr)',
       placeholder: ({ rawMin: '0', rawMax: '65535', engMin: '0', engMax: '100' } as const)[f],
@@ -177,7 +178,7 @@ export function reportStrategyColumns(): SpreadsheetColumnConfig[] {
     .map(t => ({ value: t, label: ReportStrategyTypeTranslationsMap.get(t) || String(t) }));
   return [
     {
-      key: '_stratEnabled', label: 'Strat.', type: 'checkbox', width: '44px', headerClass: 'center',
+      key: '_stratEnabled', label: 'gateway.calibration-strat', type: 'checkbox', width: '44px', headerClass: 'center',
       getValue: (row) => !!(row as UntypedFormGroup).get('reportStrategy')?.value,
       setValue: (row, v) => {
         const ctrl = (row as UntypedFormGroup).get('reportStrategy');
@@ -189,7 +190,7 @@ export function reportStrategyColumns(): SpreadsheetColumnConfig[] {
       },
     },
     {
-      key: '_stratType', label: 'Strat. Type', type: 'select', width: 'minmax(150px, 1fr)', translateLabels: true,
+      key: '_stratType', label: 'gateway.calibration-strat-type', type: 'select', width: 'minmax(150px, 1fr)', translateLabels: true,
       options: reportStrategyOptions,
       getValue: (row) => (row as UntypedFormGroup).get('reportStrategy')?.value?.type ?? null,
       setValue: (row, v) => {
@@ -201,7 +202,7 @@ export function reportStrategyColumns(): SpreadsheetColumnConfig[] {
       cellDisabled: (row) => !(row as UntypedFormGroup).get('reportStrategy')?.value,
     },
     {
-      key: '_stratPeriod', label: 'Period (ms)', type: 'number', width: 'minmax(90px, 0.7fr)', placeholder: 'ms',
+      key: '_stratPeriod', label: 'gateway.calibration-period-ms', type: 'number', width: 'minmax(90px, 0.7fr)', placeholder: 'ms',
       getValue: (row) => (row as UntypedFormGroup).get('reportStrategy')?.value?.reportPeriod ?? null,
       setValue: (row, v) => {
         const ctrl = (row as UntypedFormGroup).get('reportStrategy');

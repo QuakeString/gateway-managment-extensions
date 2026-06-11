@@ -30,6 +30,7 @@ import slSI from '../../assets/locale/locale.constant-sl_SI.json';
 import trTR from '../../assets/locale/locale.constant-tr_TR.json';
 import zhCN from '../../assets/locale/locale.constant-zh_CN.json';
 import zhTW from '../../assets/locale/locale.constant-zh_TW.json';
+import viVN from '../../assets/locale/locale.constant-vi_VN.json';
 import { isLiteralObject, mergeDeep } from '@core/public-api';
 
 export enum AvailableLanguages {
@@ -47,7 +48,8 @@ export enum AvailableLanguages {
   Slovenian = 'sl_SI',
   Turkish = 'tr_TR',
   ChineseSimplified = 'zh_CN',
-  ChineseTraditional = 'zh_TW'
+  ChineseTraditional = 'zh_TW',
+  Vietnamese = 'vi_VN'
 }
 
 type LocaleData = Record<string, any>;
@@ -67,25 +69,32 @@ const languagesMap = new Map<AvailableLanguages, LocaleData>([
   [AvailableLanguages.Slovenian, slSI],
   [AvailableLanguages.Turkish, trTR],
   [AvailableLanguages.ChineseSimplified, zhCN],
-  [AvailableLanguages.ChineseTraditional, zhTW]
+  [AvailableLanguages.ChineseTraditional, zhTW],
+  [AvailableLanguages.Vietnamese, viVN]
 ]);
 
 export const addGatewayLocale = (translate: TranslateService) => {
   const EN = AvailableLanguages.English;
   const lang = (translate.currentLang as AvailableLanguages) ?? EN;
 
-  const currentLocale = translate.translations[lang]?.gateway ? lang : EN;
-  const gatewayLocale = languagesMap.get(lang)?.gateway ? lang : EN;
-
+  // Merge the compiled gateway locale into the ACTIVE language, layering:
+  //   1. English  — fallback so any key without a translation in `lang`
+  //      renders English text instead of the raw `gateway.*` key;
+  //   2. the active language's compiled gateway strings (override the fallback);
+  //   3. whatever the runtime already loaded for that language (e.g. the few
+  //      gateway keys shipped in the host UI's locale asset).
+  // Always target `lang` — never fall back to mutating English — and the caller
+  // re-runs this on every language change (including switches *to* English),
+  // so the gateway namespace is rebuilt whenever the host reloads a locale.
   const sources = [
-    gatewayLocale === EN ? undefined : languagesMap.get(EN)?.gateway,
-    languagesMap.get(gatewayLocale)?.gateway,
-    translate.translations[currentLocale]?.gateway
+    languagesMap.get(EN)?.gateway,
+    languagesMap.get(lang)?.gateway,
+    translate.translations[lang]?.gateway
   ].filter(isNonEmptyObject);
 
   if (!sources.length) return;
   const merged = sources.length === 1 ? sources[0] : mergeDeep({}, ...sources);
-  translate.setTranslation(currentLocale, { gateway: merged }, true);
+  translate.setTranslation(lang, { gateway: merged }, true);
 };
 
 const isNonEmptyObject = (v: any) =>

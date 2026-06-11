@@ -87,15 +87,15 @@ export class EthernetIPDeviceInfoPanelComponent {
       return [];
     }
     const rows: Array<{ label: string; value: string }> = [];
-    if (this.plcInfo.productName) { rows.push({ label: 'Product Name', value: this.plcInfo.productName }); }
-    if (this.plcInfo.vendor) { rows.push({ label: 'Vendor', value: this.plcInfo.vendor }); }
-    if (this.plcInfo.productType) { rows.push({ label: 'Product Type', value: this.plcInfo.productType }); }
-    if (this.plcInfo.revision) { rows.push({ label: 'Firmware Revision', value: this.plcInfo.revision }); }
-    if (this.plcInfo.serial) { rows.push({ label: 'Serial Number', value: this.plcInfo.serial }); }
-    if (this.plcInfo.keyswitch) { rows.push({ label: 'Keyswitch', value: this.plcInfo.keyswitch }); }
-    if (this.plcInfo.processorType) { rows.push({ label: 'Processor Type', value: this.plcInfo.processorType }); }
-    if (this.plcName) { rows.push({ label: 'PLC Name', value: this.plcName }); }
-    if (this.plcTime) { rows.push({ label: 'PLC Time', value: this.plcTime }); }
+    if (this.plcInfo.productName) { rows.push({ label: 'gateway.eip-product-name', value: this.plcInfo.productName }); }
+    if (this.plcInfo.vendor) { rows.push({ label: 'gateway.gw-vendor', value: this.plcInfo.vendor }); }
+    if (this.plcInfo.productType) { rows.push({ label: 'gateway.eip-product-type', value: this.plcInfo.productType }); }
+    if (this.plcInfo.revision) { rows.push({ label: 'gateway.eip-firmware-revision', value: this.plcInfo.revision }); }
+    if (this.plcInfo.serial) { rows.push({ label: 'gateway.eip-serial-number', value: this.plcInfo.serial }); }
+    if (this.plcInfo.keyswitch) { rows.push({ label: 'gateway.eip-keyswitch', value: this.plcInfo.keyswitch }); }
+    if (this.plcInfo.processorType) { rows.push({ label: 'gateway.eip-processor-type', value: this.plcInfo.processorType }); }
+    if (this.plcName) { rows.push({ label: 'gateway.eip-plc-name', value: this.plcName }); }
+    if (this.plcTime) { rows.push({ label: 'gateway.eip-plc-time', value: this.plcTime }); }
     return rows;
   }
 }

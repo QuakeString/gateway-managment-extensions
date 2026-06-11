@@ -75,10 +75,10 @@ const S7_ADDRESS_REGEX = /^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|[MIQC]\d+\.\d+|[MIQC][BW
 })
 export class S7DataKeysPanelComponent implements OnInit {
 
-  @Input() panelTitle = 'Data Keys';
-  @Input() addKeyTitle = 'Add key';
-  @Input() deleteKeyTitle = 'Delete key';
-  @Input() noKeysText = 'No data keys configured';
+  @Input() panelTitle = 'gateway.gw-data-keys';
+  @Input() addKeyTitle = 'gateway.gw-add-key';
+  @Input() deleteKeyTitle = 'gateway.gw-delete-key';
+  @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Array<S7DataKey | S7RpcConfig> = [];
   @Input() keysType: S7ValueKey = S7ValueKey.TIMESERIES;
 
@@ -169,32 +169,32 @@ export class S7DataKeysPanelComponent implements OnInit {
     if (this.isRpc) {
       this.searchFields = ['method', 'address'];
       this.sortFields = [
-        { value: 'method', label: 'Method' },
-        { value: 'address', label: 'Address' },
-        { value: 'valueType', label: 'Value Type' },
-        { value: 'operation', label: 'Operation' },
+        { value: 'method', label: 'gateway.method' },
+        { value: 'address', label: 'gateway.address' },
+        { value: 'valueType', label: 'gateway.gw-value-type' },
+        { value: 'operation', label: 'gateway.gw-operation' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'Method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
-        { key: 'address', label: 'Address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: true },
-        { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)',
-          options: [{ value: '', label: 'Auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
-        { key: 'operation', label: 'Operation', type: 'select', sortable: true, width: 'minmax(120px, 1fr)',
-          options: [{ value: 'read', label: 'Read' }, { value: 'write', label: 'Write' }] },
+        { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
+        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: true },
+        { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
+          options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
+        { key: 'operation', label: 'gateway.gw-operation', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
+          options: [{ value: 'read', label: 'gateway.gw-read' }, { value: 'write', label: 'gateway.gw-write' }] },
       ];
       return;
     }
     this.searchFields = ['tag', 'address'];
     this.sortFields = [
-      { value: 'tag', label: 'Key' },
-      { value: 'address', label: 'Address' },
-      { value: 'valueType', label: 'Value Type' },
+      { value: 'tag', label: 'gateway.gw-key' },
+      { value: 'address', label: 'gateway.address' },
+      { value: 'valueType', label: 'gateway.gw-value-type' },
     ];
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'address', label: 'Address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true },
-      { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)',
-        options: [{ value: '', label: 'Auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
+      { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
+      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true },
+      { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)', translateLabels: true,
+        options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
       ...calibrationColumns((row) => this.canCalibrate(row)),
       ...reportStrategyColumns(),
     ];

@@ -14,7 +14,7 @@
   limitations under the License.
 -->
 <mat-toolbar color="primary">
-  <h2>Set Device Date &amp; Time</h2>
+  <h2>{{ 'gateway.timesync-set-device-dt' | translate }}</h2>
   <span class="flex-1"></span>
   <button mat-icon-button (click)="close()" type="button">
     <mat-icon class="material-icons">close</mat-icon>
@@ -25,16 +25,16 @@
 
   <div *ngIf="loading && !info" class="ts-loading">
     <mat-spinner diameter="32"></mat-spinner>
-    <span>Reading device time…</span>
+    <span>{{ 'gateway.timesync-reading-device-time' | translate }}</span>
   </div>
 
   <div *ngIf="info && !loading" class="ts-info">
     <div class="ts-row">
-      <div class="ts-label">System time</div>
+      <div class="ts-label">{{ 'gateway.timesync-system-time' | translate }}</div>
       <div class="ts-value">{{ systemTimeDisplay }}</div>
     </div>
     <div class="ts-row ts-device-row">
-      <div class="ts-label">Device time</div>
+      <div class="ts-label">{{ 'gateway.timesync-device-time' | translate }}</div>
       <div class="ts-value">
         <ng-container *ngIf="useSystemTime || !deviceTimeAvailable">{{ deviceTimeDisplay }}</ng-container>
         <div class="ts-datetime-inputs" *ngIf="!useSystemTime && deviceTimeAvailable">
@@ -48,17 +48,17 @@
       </div>
     </div>
     <div class="ts-row" *ngIf="deviceTimeAvailable && useSystemTime">
-      <div class="ts-label">Drift</div>
+      <div class="ts-label">{{ 'gateway.timesync-drift' | translate }}</div>
       <div class="ts-value" [class.ts-drift-warn]="driftIsLarge">
         {{ driftDisplay }}
         <span *ngIf="driftDisplay !== '—'" class="ts-drift-note">
-          ({{ driftBehind ? 'device behind' : 'device ahead' }})
+          ({{ (driftBehind ? 'gateway.timesync-device-behind' : 'gateway.timesync-device-ahead') | translate }})
         </span>
       </div>
     </div>
     <div class="ts-checkbox-row">
       <mat-checkbox [(ngModel)]="useSystemTime" [disabled]="syncing">
-        Take datetime from system
+        {{ 'gateway.timesync-take-from-system' | translate }}
       </mat-checkbox>
     </div>
   </div>
@@ -71,17 +71,17 @@
 
 <div mat-dialog-actions class="tb-dialog-actions">
   <button mat-button (click)="refresh()" [disabled]="loading || syncing" type="button">
-    Refresh
+    {{ 'gateway.gw-refresh' | translate }}
   </button>
   <span class="flex-1"></span>
   <button mat-button (click)="close()" [disabled]="syncing" type="button">
-    Cancel
+    {{ 'gateway.gw-cancel' | translate }}
   </button>
   <button mat-raised-button color="primary"
           (click)="apply()"
           [disabled]="loading || syncing || !info || (!useSystemTime && (!customDate || !customTime))"
           type="button">
     <mat-icon *ngIf="syncing" class="ts-spinner-icon">hourglass_empty</mat-icon>
-    {{ syncing ? 'Applying…' : 'Apply' }}
+    {{ (syncing ? 'gateway.timesync-applying' : 'gateway.keys-apply') | translate }}
   </button>
 </div>

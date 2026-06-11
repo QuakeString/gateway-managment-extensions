@@ -60,7 +60,7 @@ export class EthernetIPDiscoverDialogComponent {
   ) {
     this.devices = data.discoveredDevices || [];
     if (!this.devices.length) {
-      this.error = 'No EtherNet/IP devices found on the network.';
+      this.error = 'gateway.eip-no-devices-found';
     }
   }
 

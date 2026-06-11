@@ -74,10 +74,10 @@ import { generateSecret } from '@core/public-api';
 })
 export class EthernetIPDataKeysPanelComponent implements OnInit {
 
-  @Input() panelTitle = 'Data Keys';
-  @Input() addKeyTitle = 'Add key';
-  @Input() deleteKeyTitle = 'Delete key';
-  @Input() noKeysText = 'No data keys configured';
+  @Input() panelTitle = 'gateway.gw-data-keys';
+  @Input() addKeyTitle = 'gateway.gw-add-key';
+  @Input() deleteKeyTitle = 'gateway.gw-delete-key';
+  @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Array<EthernetIPDataKey | EthernetIPRpcConfig> = [];
   @Input() keysType: EthernetIPValueKey = EthernetIPValueKey.TIMESERIES;
   @Input() isSLC = false;
@@ -139,24 +139,24 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
     if (this.isRpc) {
       this.searchFields = ['method', 'plcTag'];
       this.sortFields = [
-        { value: 'method', label: 'Method' },
-        { value: 'plcTag', label: 'PLC Tag' },
+        { value: 'method', label: 'gateway.method' },
+        { value: 'plcTag', label: 'gateway.eip-plc-tag' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'Method', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'readTemperature' },
-        { key: 'operation', label: 'Operation', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)',
-          options: [{ value: 'read', label: 'Read' }, { value: 'write', label: 'Write' }] },
-        { key: 'plcTag', label: 'PLC Tag', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)',
+        { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'readTemperature' },
+        { key: 'operation', label: 'gateway.gw-operation', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)', translateLabels: true,
+          options: [{ value: 'read', label: 'gateway.gw-read' }, { value: 'write', label: 'gateway.gw-write' }] },
+        { key: 'plcTag', label: 'gateway.eip-plc-tag', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)',
           placeholder: this.isSLC ? 'N7:0' : 'MotorSpeed' },
-        { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)',
-          options: [{ value: null as any, label: 'Auto' }, ...this.dataTypes.map(t => ({ value: t, label: t }))] },
+        { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
+          options: [{ value: null as any, label: 'gateway.gw-auto' }, ...this.dataTypes.map(t => ({ value: t, label: t }))] },
       ];
       return;
     }
     this.searchFields = ['tag', 'plcTag'];
     this.sortFields = [
-      { value: 'tag', label: 'Key' },
-      { value: 'plcTag', label: 'PLC Tag' },
+      { value: 'tag', label: 'gateway.gw-key' },
+      { value: 'plcTag', label: 'gateway.eip-plc-tag' },
     ];
     // Calibration + report-strategy columns come from the shared
     // helpers so every connector panel's spreadsheet view has the
@@ -164,8 +164,8 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
     // calibration is offered on every row (backend skips non-
     // numeric reads at runtime).
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'plcTag', label: 'PLC Tag', type: 'input', sortable: true, width: 'minmax(180px, 1.4fr)',
+      { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'temperature' },
+      { key: 'plcTag', label: 'gateway.eip-plc-tag', type: 'input', sortable: true, width: 'minmax(180px, 1.4fr)',
         placeholder: this.isSLC ? 'N7:0' : 'Program:MainProgram.Temperature' },
       ...calibrationColumns(() => true),
       ...reportStrategyColumns(),

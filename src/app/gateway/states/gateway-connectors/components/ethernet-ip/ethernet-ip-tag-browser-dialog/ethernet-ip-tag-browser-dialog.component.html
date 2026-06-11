@@ -15,7 +15,7 @@
 -->
 <div class="tag-browser-dialog">
   <mat-toolbar color="primary">
-    <h2>Browse PLC Tags — Add to {{ targetCategory === 'timeseries' ? 'Timeseries' : 'Attributes' }}</h2>
+    <h2>{{ 'gateway.eip-browse-plc-tags-add' | translate }} {{ (targetCategory === 'timeseries' ? 'gateway.gw-timeseries' : 'gateway.attributes') | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button (click)="cancel()" type="button">
       <mat-icon>close</mat-icon>
@@ -25,13 +25,13 @@
   <div mat-dialog-content class="dialog-content">
     <!-- Search bar -->
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search tags</mat-label>
-      <input matInput [formControl]="textSearch" placeholder="Filter by name, type...">
+      <mat-label>{{ 'gateway.eip-search-tags' | translate }}</mat-label>
+      <input matInput [formControl]="textSearch" [placeholder]="'gateway.eip-filter-tags' | translate">
       <mat-icon matSuffix>search</mat-icon>
     </mat-form-field>
 
     <div class="tag-count">
-      {{ filteredTags.length }} tags found, {{ selection.selected.length }} selected
+      {{ 'gateway.eip-tags-found-selected' | translate:{ found: filteredTags.length, selected: selection.selected.length } }}
     </div>
 
     <!-- Error state -->
@@ -62,23 +62,23 @@
 
         <!-- Tag Name Column -->
         <ng-container matColumnDef="tagName">
-          <th mat-header-cell *matHeaderCellDef>Tag Name</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-tag-name' | translate }}</th>
           <td mat-cell *matCellDef="let tag">
             <span [class.existing-tag]="isExisting(tag)">{{ tag.tagName }}</span>
             <mat-icon *ngIf="isExisting(tag)" class="existing-icon"
-                      matTooltip="Already configured">check_circle</mat-icon>
+                      [matTooltip]="'gateway.gw-already-configured' | translate">check_circle</mat-icon>
           </td>
         </ng-container>
 
         <!-- Data Type Column -->
         <ng-container matColumnDef="dataType">
-          <th mat-header-cell *matHeaderCellDef>Data Type</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-data-type' | translate }}</th>
           <td mat-cell *matCellDef="let tag">{{ tag.dataType }}</td>
         </ng-container>
 
         <!-- Tag Type Column -->
         <ng-container matColumnDef="tagType">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.type' | translate }}</th>
           <td mat-cell *matCellDef="let tag">
             <span class="tag-type-badge" [class.struct-badge]="tag.tagType === 'struct'">
               {{ tag.tagType }}
@@ -88,13 +88,13 @@
 
         <!-- Dimensions Column -->
         <ng-container matColumnDef="dim">
-          <th mat-header-cell *matHeaderCellDef>Dimensions</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.eip-dimensions' | translate }}</th>
           <td mat-cell *matCellDef="let tag">{{ getDimensionsDisplay(tag) }}</td>
         </ng-container>
 
         <!-- Access Column -->
         <ng-container matColumnDef="externalAccess">
-          <th mat-header-cell *matHeaderCellDef>Access</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.eip-access' | translate }}</th>
           <td mat-cell *matCellDef="let tag">{{ tag.externalAccess }}</td>
         </ng-container>
 
@@ -108,11 +108,11 @@
   </div>
 
   <div mat-dialog-actions class="justify-end">
-    <button mat-button color="primary" (click)="cancel()">Cancel</button>
+    <button mat-button color="primary" (click)="cancel()">{{ 'gateway.gw-cancel' | translate }}</button>
     <button mat-raised-button color="primary"
             (click)="addSelected()"
             [disabled]="selection.isEmpty()">
-      Add {{ selection.selected.length }} Tag{{ selection.selected.length !== 1 ? 's' : '' }}
+      {{ 'gateway.eip-add-n-tags' | translate:{ count: selection.selected.length } }}
     </button>
   </div>
 </div>
