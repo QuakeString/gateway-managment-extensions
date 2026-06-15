@@ -132,6 +132,14 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
   focusLastRow(): void {
     const firstCol = this.columns[0];
     if (!firstCol) return;
+    // The just-added row is appended at the end; make sure it's within the
+    // rendered slice (lazy-load otherwise hides rows past renderLimit) so the
+    // focus targets the new row and not the last visible one.
+    if (this.renderLimit < this.filteredControls.length) {
+      this.renderLimit = this.filteredControls.length;
+      this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+      this.cd.markForCheck();
+    }
     const fieldName = firstCol.key.startsWith('_') ? null : firstCol.key;
     let attempts = 0;
     const tryFocus = () => {
@@ -483,5 +491,10 @@ body.tb-dark ${hostSel} input[type="number"] {
   isCellVisible(col: SpreadsheetColumnConfig, row: FormGroup): boolean {
     if (col.cellVisible) return col.cellVisible(row);
     return true;
+  }
+
+  isCellInvalid(col: SpreadsheetColumnConfig, row: FormGroup): boolean {
+    const control = row.get(col.key);
+    return !!control && control.invalid && (control.touched || control.dirty);
   }
 }

@@ -176,7 +176,7 @@ export class S7DataKeysPanelComponent implements OnInit {
       ];
       this.spreadsheetColumns = [
         { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
-        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: true },
+        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: true, errorText: 'gateway.s7-invalid-address' },
         { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
           options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
         { key: 'operation', label: 'gateway.gw-operation', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
@@ -192,7 +192,7 @@ export class S7DataKeysPanelComponent implements OnInit {
     ];
     this.spreadsheetColumns = [
       { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true },
+      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true, errorText: 'gateway.s7-invalid-address' },
       { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)', translateLabels: true,
         options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
       ...calibrationColumns((row) => this.canCalibrate(row)),

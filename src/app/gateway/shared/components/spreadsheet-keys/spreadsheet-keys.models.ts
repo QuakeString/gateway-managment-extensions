@@ -41,6 +41,8 @@ export interface SpreadsheetColumnConfig {
   cellClass?: string;
   uppercase?: boolean;
   translateLabels?: boolean;
+  /** Translation key for the tooltip shown when the cell's control is invalid. */
+  errorText?: string;
   cellVisible?: (row: FormGroup) => boolean;
   cellDisabled?: (row: FormGroup) => boolean;
   externalControl?: (row: FormGroup) => FormControl<boolean>;

@@ -64,10 +64,18 @@
             <ng-container *ngIf="col.type === 'input' && !col.key.startsWith('_')">
               <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
                 <input class="cell-input" [name]="col.key" [formControlName]="col.key"
+                       [class.invalid]="isCellInvalid(col, item.control)"
                        [placeholder]="col.placeholder || ''"
                        [style.text-transform]="col.uppercase ? 'uppercase' : 'none'"
                        (input)="col.uppercase && onUppercaseInput(item.control, col.key)"
                        (keydown)="onCellKeydown($event)">
+                <mat-icon *ngIf="isCellInvalid(col, item.control)"
+                          class="cell-error-icon tb-error"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="(col.errorText | translate) || ''">
+                  warning
+                </mat-icon>
               </div>
             </ng-container>
 
@@ -75,9 +83,17 @@
             <ng-container *ngIf="col.type === 'number' && !col.key.startsWith('_')">
               <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
                 <input class="cell-input" type="number" [name]="col.key" [formControlName]="col.key"
+                       [class.invalid]="isCellInvalid(col, item.control)"
                        [step]="col.step || 1"
                        [placeholder]="col.placeholder || ''"
                        (keydown)="onCellKeydown($event)">
+                <mat-icon *ngIf="isCellInvalid(col, item.control)"
+                          class="cell-error-icon tb-error"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="(col.errorText | translate) || ''">
+                  warning
+                </mat-icon>
               </div>
             </ng-container>
 

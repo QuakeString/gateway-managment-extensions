@@ -279,6 +279,10 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
 
   onAddClicked(): void {
     this.addKeyRequested.emit();
+    // The host appends the new row and refreshes synchronously. In spreadsheet
+    // mode, scroll to it and focus its first cell so the operator can type
+    // straight away (the ViewChild is null outside spreadsheet mode → no-op).
+    this.spreadsheetKeys?.focusLastRow();
   }
 
   onDeleteClicked(index: number): void {
