@@ -89,7 +89,13 @@ export const addGatewayLocale = (translate: TranslateService) => {
   const sources = [
     languagesMap.get(EN)?.gateway,
     languagesMap.get(lang)?.gateway,
-    translate.translations[lang]?.gateway
+    // Already-loaded runtime translations: once the host has loaded a locale, the
+    // ngx-translate messageformat compiler has REPLACED every string with a compiled
+    // function. Feeding those functions back into setTranslation makes the compiler
+    // call String.prototype.replace on a function ("e.replace is not a function").
+    // Keep only the raw string leaves; host-only keys still survive in
+    // translate.translations and the merge below preserves them.
+    onlyStringLeaves(translate.translations[lang]?.gateway)
   ].filter(isNonEmptyObject);
 
   if (!sources.length) return;
@@ -99,3 +105,24 @@ export const addGatewayLocale = (translate: TranslateService) => {
 
 const isNonEmptyObject = (v: any) =>
   isLiteralObject(v) && Object.keys(v).length !== 0;
+
+// Deep-copy an object keeping only string leaves — drops compiled-function values
+// (and any other non-string leaf) so the result is safe to (re)compile.
+const onlyStringLeaves = (obj: any): any => {
+  if (!isLiteralObject(obj)) {
+    return undefined;
+  }
+  const result: Record<string, any> = {};
+  for (const key of Object.keys(obj)) {
+    const value = obj[key];
+    if (typeof value === 'string') {
+      result[key] = value;
+    } else if (isLiteralObject(value)) {
+      const nested = onlyStringLeaves(value);
+      if (nested && Object.keys(nested).length) {
+        result[key] = nested;
+      }
+    }
+  }
+  return result;
+};
