@@ -150,11 +150,12 @@
             <ng-container *ngIf="col.type === 'select' && col.key.startsWith('_')">
               <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
                 <select class="cell-select"
-                        [value]="getCellValue(col, item.control)"
                         [disabled]="isCellDisabled(col, item.control)"
                         (change)="onCellValueChange(col, item.control, $event)"
                         (keydown)="onCellKeydown($event)">
-                  <option *ngFor="let opt of getColumnOptions(col, item.control)" [value]="opt.value">{{ col.translateLabels ? (opt.label | translate) : opt.label }}</option>
+                  <option *ngFor="let opt of getColumnOptions(col, item.control)"
+                          [value]="opt.value"
+                          [selected]="isOptionSelected(col, item.control, opt.value)">{{ col.translateLabels ? (opt.label | translate) : opt.label }}</option>
                 </select>
               </div>
             </ng-container>

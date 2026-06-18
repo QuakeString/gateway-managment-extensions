@@ -467,6 +467,16 @@ body.tb-dark ${hostSel} input[type="number"] {
     return row.get(col.key)?.value;
   }
 
+  /** True when an imperative-select option matches the cell's current value.
+   *  Drives the native <option [selected]>, which (unlike binding [value] on a
+   *  <select> with *ngFor options) reliably reflects the value regardless of
+   *  option render order. Compared as strings since the DOM value is a string
+   *  while the form value may be a number (e.g. Modbus function codes). */
+  isOptionSelected(col: SpreadsheetColumnConfig, row: FormGroup, optValue: any): boolean {
+    const current = this.getCellValue(col, row);
+    return current != null && String(current) === String(optValue);
+  }
+
   onCellValueChange(col: SpreadsheetColumnConfig, row: FormGroup, event: Event): void {
     const target = event.target as HTMLInputElement | HTMLSelectElement;
     let value: any = target.value;
