@@ -60,6 +60,7 @@ export class EthernetIPTagImportDialogComponent {
 
   tagColumnControl = new FormControl('');
   plcTagColumnControl = new FormControl('');
+  categoryColumnControl = new FormControl('');
 
   detectedColumns: string[] = [];
   rawRows: Record<string, any>[] = [];
@@ -158,11 +159,18 @@ export class EthernetIPTagImportDialogComponent {
       c === 'plctag' || c === 'plc_tag' || c === 'address' || c === 'plcaddress' || c === 'plc_address'
     );
     if (plcTagIdx >= 0) { this.plcTagColumnControl.setValue(this.detectedColumns[plcTagIdx]); }
+
+    const catIdx = cols.findIndex(c =>
+      c === 'category' || c === 'keytype' || c === 'key_type' ||
+      c === 'datakeytype' || c === 'tagtype' || c === 'tag_type'
+    );
+    if (catIdx >= 0) { this.categoryColumnControl.setValue(this.detectedColumns[catIdx]); }
   }
 
   private processRows(): void {
     const tagCol = this.tagColumnControl.value;
     const plcTagCol = this.plcTagColumnControl.value;
+    const catCol = this.categoryColumnControl.value;
 
     if (!tagCol || !plcTagCol) {
       this.parsedTags = [];
@@ -180,10 +188,14 @@ export class EthernetIPTagImportDialogComponent {
 
       if (!tagName && !plcTag) { continue; }
 
+      // Category comes straight from the CSV column (timeseries/attributes).
+      // When unspecified, default to attributes.
+      const rawCat = catCol ? String(row[catCol] || '').trim() : '';
+
       const tag: ParsedTag = {
         tag: tagName,
         plcTag,
-        category: this.classifyTag(tagName),
+        category: this.normalizeCategory(rawCat),
         valid: true,
         error: '',
       };
@@ -212,11 +224,15 @@ export class EthernetIPTagImportDialogComponent {
     this.invalidTags = this.parsedTags.filter(t => !t.valid);
   }
 
-  private classifyTag(name: string): 'timeseries' | 'attributes' {
-    const n = name.toLowerCase();
-    if (/_sp$/i.test(n) || /_sp_/i.test(n) || /set/i.test(n) || /deadband/i.test(n)) {
-      return 'attributes';
+  // Resolve the data-key category from the CSV's explicit category value.
+  // Only an explicit time-series value maps to timeseries; anything else —
+  // including a missing/blank/unknown value — defaults to attributes.
+  private normalizeCategory(raw: string): 'timeseries' | 'attributes' {
+    const v = raw.toLowerCase().trim();
+    if (v === 'timeseries' || v === 'time_series' || v === 'time series' ||
+        v === 'ts' || v.startsWith('telem')) {
+      return 'timeseries';
     }
-    return 'timeseries';
+    return 'attributes';
   }
 }

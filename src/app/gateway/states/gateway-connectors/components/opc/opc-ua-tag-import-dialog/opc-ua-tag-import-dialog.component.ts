@@ -80,7 +80,7 @@ export class OpcUaTagImportDialogComponent {
   typeColumnControl = new FormControl('');
 
   /** Fallback section when the CSV has no `section` column. */
-  defaultSectionControl = new FormControl<'timeseries' | 'attributes'>('timeseries');
+  defaultSectionControl = new FormControl<'timeseries' | 'attributes'>('attributes');
 
   showInvalid = false;
 
@@ -225,7 +225,7 @@ export class OpcUaTagImportDialogComponent {
     const valueCol = this.valueColumnControl.value;
     const sectionCol = this.sectionColumnControl.value;
     const typeCol = this.typeColumnControl.value;
-    const fallbackSection = this.defaultSectionControl.value ?? 'timeseries';
+    const fallbackSection = this.defaultSectionControl.value ?? 'attributes';
 
     if (!keyCol || !valueCol) {
       this.parsedTags = [];

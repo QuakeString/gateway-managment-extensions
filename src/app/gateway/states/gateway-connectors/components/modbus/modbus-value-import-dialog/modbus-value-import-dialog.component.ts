@@ -310,7 +310,7 @@ export class ModbusValueImportDialogComponent {
       const rawAddress = String(row[addrCol] ?? '').trim();
       if (!tagName && !rawAddress) { continue; }
 
-      const category = this.resolveCategory(catCol ? String(row[catCol] ?? '').trim() : '', tagName);
+      const category = this.resolveCategory(catCol ? String(row[catCol] ?? '').trim() : '');
       const type = this.resolveType(typeCol ? String(row[typeCol] ?? '').trim() : '');
 
       const address = rawAddress !== '' && /^-?\d+$/.test(rawAddress) ? Number(rawAddress) : null;
@@ -394,7 +394,10 @@ export class ModbusValueImportDialogComponent {
     return ModbusDataType.UINT16;
   }
 
-  private resolveCategory(raw: string, tagName: string): ModbusKeyCategory {
+  // Category comes straight from the CSV column. Anything unrecognised —
+  // including a missing/blank value — defaults to attributes (never guessed
+  // from the tag name).
+  private resolveCategory(raw: string): ModbusKeyCategory {
     const lower = raw.toLowerCase().trim();
     const direct = VALID_CATEGORIES.find(c => c.toLowerCase() === lower);
     if (direct) { return direct; }
@@ -402,13 +405,10 @@ export class ModbusValueImportDialogComponent {
     if (lower === 'attributeupdate' || lower === 'attribute_update' || lower === 'attribute_updates') {
       return 'attributeUpdates';
     }
-    // No usable category column → classify read keys by tag-name heuristic
-    // (set-points / deadbands lean to attributes, everything else telemetry).
-    const n = tagName.toLowerCase();
-    if (/_sp$/i.test(n) || /_sp_/i.test(n) || /set/i.test(n) || /deadband/i.test(n)) {
-      return 'attributes';
+    if (lower === 'time_series' || lower === 'time series' || lower === 'ts' || lower.startsWith('telem')) {
+      return 'timeseries';
     }
-    return 'timeseries';
+    return 'attributes';
   }
 
   /** Read keys (timeseries / attributes / rpc) default to FC3 (FC1 for

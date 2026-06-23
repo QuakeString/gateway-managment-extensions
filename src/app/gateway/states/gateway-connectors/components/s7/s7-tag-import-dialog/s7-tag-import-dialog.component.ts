@@ -94,6 +94,7 @@ export class S7TagImportDialogComponent {
   dividerColumnControl = new FormControl('');
   reportStrategyTypeColumnControl = new FormControl('');
   reportPeriodColumnControl = new FormControl('');
+  categoryColumnControl = new FormControl('');
 
   detectedColumns: string[] = [];
   rawRows: Record<string, any>[] = [];
@@ -295,6 +296,15 @@ export class S7TagImportDialogComponent {
     if (rpIdx >= 0) {
       this.reportPeriodColumnControl.setValue(this.detectedColumns[rpIdx]);
     }
+
+    // Auto-detect category column (explicit timeseries/attributes per tag)
+    const catIdx = cols.findIndex(c =>
+      c === 'category' || c === 'keytype' || c === 'key_type' ||
+      c === 'datakeytype' || c === 'tagtype' || c === 'tag_type'
+    );
+    if (catIdx >= 0) {
+      this.categoryColumnControl.setValue(this.detectedColumns[catIdx]);
+    }
   }
 
   private processRows(): void {
@@ -305,6 +315,7 @@ export class S7TagImportDialogComponent {
     const divCol = this.dividerColumnControl.value;
     const rsTypeCol = this.reportStrategyTypeColumnControl.value;
     const rpCol = this.reportPeriodColumnControl.value;
+    const catCol = this.categoryColumnControl.value;
 
     if (!tagCol || !addrCol) {
       this.parsedTags = [];
@@ -340,6 +351,10 @@ export class S7TagImportDialogComponent {
         }
       }
 
+      // Category comes straight from the CSV column (timeseries/attributes).
+      // When unspecified, default to attributes.
+      const rawCat = catCol ? String(row[catCol] || '').trim() : '';
+
       const tag: ParsedTag = {
         tag: tagName,
         address: rawAddress,
@@ -347,7 +362,7 @@ export class S7TagImportDialogComponent {
         multiplier,
         divider,
         reportStrategy,
-        category: this.classifyTag(tagName),
+        category: this.normalizeCategory(rawCat),
         valid: true,
         error: '',
       };
@@ -415,13 +430,15 @@ export class S7TagImportDialogComponent {
     return null;
   }
 
-  private classifyTag(name: string): 'timeseries' | 'attributes' {
-    const n = name.toLowerCase();
-    if (/_sp$/i.test(n) || /_sp_/i.test(n) || /set/i.test(n) ||
-        /deadband/i.test(n) || /geiding/i.test(n) || /spacing_interval/i.test(n) ||
-        /slipping_time_set/i.test(n)) {
-      return 'attributes';
+  // Resolve the data-key category from the CSV's explicit category value.
+  // Only an explicit time-series value maps to timeseries; anything else —
+  // including a missing/blank/unknown value — defaults to attributes.
+  private normalizeCategory(raw: string): 'timeseries' | 'attributes' {
+    const v = raw.toLowerCase().trim();
+    if (v === 'timeseries' || v === 'time_series' || v === 'time series' ||
+        v === 'ts' || v.startsWith('telem')) {
+      return 'timeseries';
     }
-    return 'timeseries';
+    return 'attributes';
   }
 }
