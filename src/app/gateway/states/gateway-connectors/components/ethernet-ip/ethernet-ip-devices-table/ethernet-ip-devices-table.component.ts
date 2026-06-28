@@ -201,6 +201,12 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
     addKeys(device.timeseries, 'timeseries');
     addKeys(device.attributes, 'attributes');
     addKeys(device.attributeUpdates, 'attributeUpdates');
+    // RPC methods have a different shape (method / operation, no tag), so map
+    // them explicitly: the method name goes in the tag column.
+    for (const rpc of (device.rpc || [])) {
+      const method = (rpc.method || '').replace(/,/g, ';');
+      rows.push([method, rpc.plcTag || '', 'rpc', '', ''].join(','));
+    }
 
     const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
