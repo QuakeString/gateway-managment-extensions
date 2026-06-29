@@ -185,27 +185,30 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
     const device = this.devices[index];
     if (!device) { return; }
 
-    const rows: string[] = ['tag,plcTag,category,reportStrategyType,reportPeriod'];
+    const rows: string[] = ['tag,plcTag,valueType,category,reportStrategyType,reportPeriod,operation'];
     const addKeys = (keys: EthernetIPDataKey[], category: string) => {
       for (const k of (keys || [])) {
         const tag = (k.tag || '').replace(/,/g, ';');
         rows.push([
           tag,
           k.plcTag || '',
+          '',
           category,
           k.reportStrategy?.type ?? '',
           k.reportStrategy?.reportPeriod ?? '',
+          '',
         ].join(','));
       }
     };
     addKeys(device.timeseries, 'timeseries');
     addKeys(device.attributes, 'attributes');
     addKeys(device.attributeUpdates, 'attributeUpdates');
-    // RPC methods have a different shape (method / operation, no tag), so map
-    // them explicitly: the method name goes in the tag column.
+    // RPC methods have a different shape (method / value type / operation, no
+    // tag), so map them explicitly: the method name goes in the tag column and
+    // the read/write direction goes in the operation column.
     for (const rpc of (device.rpc || [])) {
       const method = (rpc.method || '').replace(/,/g, ';');
-      rows.push([method, rpc.plcTag || '', 'rpc', '', ''].join(','));
+      rows.push([method, rpc.plcTag || '', rpc.valueType || '', 'rpc', '', '', rpc.operation || ''].join(','));
     }
 
     const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
@@ -240,6 +243,8 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
         const updated = { ...device };
         updated.timeseries = [...(updated.timeseries || []), ...result.timeseries];
         updated.attributes = [...(updated.attributes || []), ...result.attributes];
+        updated.attributeUpdates = [...(updated.attributeUpdates || []), ...result.attributeUpdates];
+        updated.rpc = [...(updated.rpc || []), ...result.rpc];
         this.devices = this.devices.map((d, i) => i === index ? updated : d);
         this.updateFilter();
         this.emitChange();

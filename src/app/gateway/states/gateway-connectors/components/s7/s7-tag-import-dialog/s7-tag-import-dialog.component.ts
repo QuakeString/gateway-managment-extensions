@@ -22,7 +22,7 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { SharedModule } from '@shared/public-api';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { S7DataKey, S7ValueType } from '../../../models/public-api';
+import { S7DataKey, S7RpcConfig, S7ValueType } from '../../../models/public-api';
 import { ReportStrategyConfig } from '../../../../../shared/models/public-api';
 import * as XLSX from 'xlsx';
 
@@ -53,7 +53,11 @@ export interface S7TagImportDialogData {
 export interface S7TagImportResult {
   timeseries: S7DataKey[];
   attributes: S7DataKey[];
+  attributeUpdates: S7DataKey[];
+  rpc: S7RpcConfig[];
 }
+
+type S7Category = 'timeseries' | 'attributes' | 'attributeUpdates' | 'rpc';
 
 interface ParsedTag {
   tag: string;
@@ -62,7 +66,9 @@ interface ParsedTag {
   multiplier: number | null;
   divider: number | null;
   reportStrategy: ReportStrategyConfig | null;
-  category: 'timeseries' | 'attributes';
+  category: S7Category;
+  // RPC methods carry a read/write operation; ignored for data keys.
+  operation: 'read' | 'write';
   valid: boolean;
   error: string;
 }
@@ -95,6 +101,7 @@ export class S7TagImportDialogComponent {
   reportStrategyTypeColumnControl = new FormControl('');
   reportPeriodColumnControl = new FormControl('');
   categoryColumnControl = new FormControl('');
+  operationColumnControl = new FormControl('');
 
   detectedColumns: string[] = [];
   rawRows: Record<string, any>[] = [];
@@ -201,6 +208,14 @@ export class S7TagImportDialogComponent {
     return this.validTags.filter(t => t.category === 'attributes').length;
   }
 
+  get validAttributeUpdatesCount(): number {
+    return this.validTags.filter(t => t.category === 'attributeUpdates').length;
+  }
+
+  get validRpcCount(): number {
+    return this.validTags.filter(t => t.category === 'rpc').length;
+  }
+
   toggleInvalid(): void {
     this.showInvalid = !this.showInvalid;
   }
@@ -209,9 +224,26 @@ export class S7TagImportDialogComponent {
     const result: S7TagImportResult = {
       timeseries: [],
       attributes: [],
+      attributeUpdates: [],
+      rpc: [],
     };
 
     for (const tag of this.validTags) {
+      // RPC methods have a different shape (method / address / operation),
+      // so build an S7RpcConfig instead of a data key.
+      if (tag.category === 'rpc') {
+        const rpc: S7RpcConfig = {
+          method: tag.tag,
+          address: tag.address,
+          operation: tag.operation,
+        };
+        if (tag.valueType) {
+          rpc.valueType = tag.valueType;
+        }
+        result.rpc.push(rpc);
+        continue;
+      }
+
       const key: S7DataKey = {
         tag: tag.tag,
         address: tag.address,
@@ -230,6 +262,8 @@ export class S7TagImportDialogComponent {
       }
       if (tag.category === 'attributes') {
         result.attributes.push(key);
+      } else if (tag.category === 'attributeUpdates') {
+        result.attributeUpdates.push(key);
       } else {
         result.timeseries.push(key);
       }
@@ -305,6 +339,14 @@ export class S7TagImportDialogComponent {
     if (catIdx >= 0) {
       this.categoryColumnControl.setValue(this.detectedColumns[catIdx]);
     }
+
+    // Auto-detect operation column (rpc read/write direction)
+    const opIdx = cols.findIndex(c =>
+      c === 'operation' || c === 'rpcoperation' || c === 'rpc_operation' || c === 'direction'
+    );
+    if (opIdx >= 0) {
+      this.operationColumnControl.setValue(this.detectedColumns[opIdx]);
+    }
   }
 
   private processRows(): void {
@@ -316,6 +358,7 @@ export class S7TagImportDialogComponent {
     const rsTypeCol = this.reportStrategyTypeColumnControl.value;
     const rpCol = this.reportPeriodColumnControl.value;
     const catCol = this.categoryColumnControl.value;
+    const opCol = this.operationColumnControl.value;
 
     if (!tagCol || !addrCol) {
       this.parsedTags = [];
@@ -351,9 +394,11 @@ export class S7TagImportDialogComponent {
         }
       }
 
-      // Category comes straight from the CSV column (timeseries/attributes).
+      // Category comes straight from the CSV column
+      // (timeseries/attributes/attributeUpdates/rpc).
       // When unspecified, default to attributes.
       const rawCat = catCol ? String(row[catCol] || '').trim() : '';
+      const rawOp = opCol ? String(row[opCol] || '').trim() : '';
 
       const tag: ParsedTag = {
         tag: tagName,
@@ -363,6 +408,7 @@ export class S7TagImportDialogComponent {
         divider,
         reportStrategy,
         category: this.normalizeCategory(rawCat),
+        operation: this.normalizeOperation(rawOp),
         valid: true,
         error: '',
       };
@@ -431,14 +477,27 @@ export class S7TagImportDialogComponent {
   }
 
   // Resolve the data-key category from the CSV's explicit category value.
-  // Only an explicit time-series value maps to timeseries; anything else —
-  // including a missing/blank/unknown value — defaults to attributes.
-  private normalizeCategory(raw: string): 'timeseries' | 'attributes' {
+  // Recognises all four gateway buckets; anything missing/blank/unknown
+  // defaults to attributes (matching the export's category column).
+  private normalizeCategory(raw: string): S7Category {
     const v = raw.toLowerCase().trim();
     if (v === 'timeseries' || v === 'time_series' || v === 'time series' ||
         v === 'ts' || v.startsWith('telem')) {
       return 'timeseries';
     }
+    if (v === 'rpc' || v.startsWith('rpc')) {
+      return 'rpc';
+    }
+    if (v === 'attributeupdates' || v === 'attribute_updates' || v === 'attribute updates' ||
+        v === 'attribute-updates' || v === 'attributeupdate' || v === 'shared') {
+      return 'attributeUpdates';
+    }
     return 'attributes';
+  }
+
+  // RPC operation direction; defaults to the non-mutating 'read' when the
+  // CSV omits it (e.g. a hand-authored file or a pre-operation export).
+  private normalizeOperation(raw: string): 'read' | 'write' {
+    return raw.toLowerCase().trim() === 'write' ? 'write' : 'read';
   }
 }

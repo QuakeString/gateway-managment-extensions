@@ -54,7 +54,7 @@
       <div class="summary" *ngIf="parsedTags.length > 0">
         <span class="badge valid-badge" (click)="showInvalid = false">
           {{ 'gateway.gw-valid-count' | translate:{ count: validTags.length } }}
-          {{ 'gateway.gw-ts-attr-count' | translate:{ ts: validTimeseriesCount, attr: validAttributesCount } }}
+          {{ 'gateway.gw-ts-attr-count' | translate:{ ts: validTimeseriesCount, attr: validAttributesCount } }}<span *ngIf="validAttributeUpdatesCount">, {{ 'gateway.attribute-updates' | translate }}: {{ validAttributeUpdatesCount }}</span><span *ngIf="validRpcCount">, {{ 'gateway.rpc-methods' | translate }}: {{ validRpcCount }}</span>
         </span>
         <span class="badge invalid-badge" *ngIf="invalidTags.length > 0"
               (click)="toggleInvalid()">

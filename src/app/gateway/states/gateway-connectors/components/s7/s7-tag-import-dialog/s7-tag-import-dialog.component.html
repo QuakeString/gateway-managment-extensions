@@ -52,7 +52,7 @@
         <span class="flex-1"></span>
         <span class="mat-body-2 text-muted summary-counts">
           {{ 'gateway.gw-timeseries' | translate }}: {{ validTimeseriesCount }},
-          {{ 'gateway.attributes' | translate }}: {{ validAttributesCount }}
+          {{ 'gateway.attributes' | translate }}: {{ validAttributesCount }}<span *ngIf="validAttributeUpdatesCount">, {{ 'gateway.attribute-updates' | translate }}: {{ validAttributeUpdatesCount }}</span><span *ngIf="validRpcCount">, {{ 'gateway.rpc-methods' | translate }}: {{ validRpcCount }}</span>
         </span>
       </div>
     </div>
