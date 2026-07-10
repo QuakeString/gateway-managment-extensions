@@ -1,0 +1,44 @@
+{
+  "3.7": {
+    "interface": "eth1",
+    "cycleTimeUs": 1000,
+    "useDistributedClocks": false,
+    "devices": [
+      {
+        "deviceName": "Drive 1",
+        "deviceType": "default",
+        "slave": 0,
+        "pollPeriod": 1000,
+        "timeseries": [
+          {
+            "tag": "statusWord",
+            "address": "pdo:0",
+            "valueType": "uint16"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "errorCode",
+            "address": "sdo:0x603F:0",
+            "valueType": "uint16"
+          }
+        ],
+        "attributeUpdates": [
+          {
+            "tag": "controlWord",
+            "address": "pdo:0",
+            "valueType": "uint16"
+          }
+        ],
+        "rpc": [
+          {
+            "method": "reset",
+            "address": "pdo:2.1",
+            "valueType": "bool",
+            "operation": "write"
+          }
+        ]
+      }
+    ]
+  }
+}

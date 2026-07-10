@@ -1,0 +1,144 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="tag-import-dialog">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.gw-import-tags' | translate }} — {{ data.deviceName }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div mat-dialog-content class="dialog-content">
+    <!-- File picker -->
+    <div class="file-picker">
+      <button mat-stroked-button color="primary" (click)="fileInput.click()" style="white-space: nowrap;">
+        <mat-icon>upload_file</mat-icon>
+        {{ 'gateway.gw-select-file' | translate }}
+      </button>
+      <span class="mat-body-2" *ngIf="fileName">{{ fileName }}</span>
+      <span class="mat-body-2 text-muted" *ngIf="!fileName">{{ 'gateway.ethercat-supported-formats' | translate }}</span>
+      <input #fileInput type="file" hidden
+             accept=".xlsx,.csv,.ods,.xls"
+             (change)="onFileSelected($event)" />
+    </div>
+
+    <!-- Summary -->
+    <div *ngIf="fileLoaded && parsedTags.length > 0" class="summary mb-3">
+      <div class="summary-row">
+        <span class="valid-badge">
+          <mat-icon class="icon-sm">check_circle</mat-icon>
+          {{ 'gateway.ethercat-valid-tags' | translate:{ count: validTags.length } }}
+        </span>
+        <span class="invalid-badge" *ngIf="invalidTags.length > 0"
+              (click)="toggleInvalid()" style="cursor: pointer;">
+          <mat-icon class="icon-sm">error</mat-icon>
+          {{ 'gateway.gw-invalid-count' | translate:{ count: invalidTags.length } }}
+          <mat-icon class="icon-sm">{{ showInvalid ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </span>
+        <span class="flex-1"></span>
+        <span class="mat-body-2 text-muted summary-counts">
+          {{ 'gateway.gw-timeseries' | translate }}: {{ validTimeseriesCount }},
+          {{ 'gateway.attributes' | translate }}: {{ validAttributesCount }}<span *ngIf="validAttributeUpdatesCount">, {{ 'gateway.attribute-updates' | translate }}: {{ validAttributeUpdatesCount }}</span><span *ngIf="validRpcCount">, {{ 'gateway.rpc-methods' | translate }}: {{ validRpcCount }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Invalid tags detail -->
+    <div *ngIf="showInvalid && invalidTags.length > 0" class="invalid-detail mb-3">
+      <table mat-table [dataSource]="invalidTags" class="mat-elevation-z0 compact-table">
+        <ng-container matColumnDef="tag">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-tag' | translate }}</th>
+          <td mat-cell *matCellDef="let row">{{ row.tag }}</td>
+        </ng-container>
+        <ng-container matColumnDef="address">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.address' | translate }}</th>
+          <td mat-cell *matCellDef="let row">{{ row.address }}</td>
+        </ng-container>
+        <ng-container matColumnDef="error">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-error' | translate }}</th>
+          <td mat-cell *matCellDef="let row" class="error-text">{{ row.error }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="['tag', 'address', 'error']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['tag', 'address', 'error'];"></tr>
+      </table>
+    </div>
+
+    <!-- Valid tags preview -->
+    <div *ngIf="validTags.length > 0" class="valid-preview">
+      <div class="table-container">
+        <table mat-table [dataSource]="paginatedValidTags" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z0 compact-table">
+          <ng-container matColumnDef="tag">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'gateway.gw-tag' | translate }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.tag }}</td>
+          </ng-container>
+          <ng-container matColumnDef="address">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'gateway.address' | translate }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.address }}</td>
+          </ng-container>
+          <ng-container matColumnDef="valueType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'gateway.type' | translate }}</th>
+            <td mat-cell *matCellDef="let row">{{ row.valueType || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="modifier">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'gateway.gw-modifier' | translate }}</th>
+            <td mat-cell *matCellDef="let row">
+              <span *ngIf="row.multiplier">×{{ row.multiplier }}</span>
+              <span *ngIf="row.divider">÷{{ row.divider }}</span>
+              <span *ngIf="!row.multiplier && !row.divider">—</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="reportStrategy">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'gateway.gw-report-strategy' | translate }}</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.reportStrategy?.type || '—' }}
+              <span *ngIf="row.reportStrategy?.reportPeriod"> ({{ row.reportStrategy.reportPeriod }}ms)</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'gateway.gw-category' | translate }}</th>
+            <td mat-cell *matCellDef="let row">
+              <span [class]="row.category === 'attributes' ? 'cat-attr' : 'cat-ts'">{{ row.category }}</span>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['tag', 'address', 'valueType', 'modifier', 'reportStrategy', 'category']; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['tag', 'address', 'valueType', 'modifier', 'reportStrategy', 'category'];"></tr>
+        </table>
+      </div>
+      <mat-divider></mat-divider>
+      <mat-paginator
+        [length]="validTags.length"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 20, 50]"
+        showFirstLastButtons
+        (page)="onPageChange($event)">
+      </mat-paginator>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="fileLoaded && parsedTags.length === 0" class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.gw-no-tags-found' | translate }}</div>
+  </div>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="cancel()">{{ 'gateway.gw-cancel' | translate }}</button>
+    <button mat-raised-button color="primary"
+            [disabled]="validTags.length === 0"
+            (click)="importTags()">
+      {{ 'gateway.ethercat-import-n-tags' | translate:{ count: validTags.length } }}
+    </button>
+  </div>
+</div>

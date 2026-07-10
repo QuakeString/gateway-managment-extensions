@@ -28,5 +28,7 @@ export * from './mqtt/public-api';
 export * from './modbus/public-api';
 export * from './socket/public-api';
 export * from './s7/public-api';
+export * from './ads/public-api';
+export * from './ethercat/public-api';
 export * from './ethernet-ip/public-api';
 export * from './iec61850/public-api';

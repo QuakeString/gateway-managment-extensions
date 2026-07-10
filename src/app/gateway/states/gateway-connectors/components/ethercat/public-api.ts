@@ -13,15 +13,10 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
-export * from './ads.models';
-export * from './ethercat.models';
-export * from './ethernet-ip.models';
-export * from './iec61850.models';
+export * from './ethercat-basic-config/ethercat-basic-config.component';
+export * from './ethercat-legacy-basic-config/ethercat-legacy-basic-config.component';
+export * from './ethercat-devices-table/ethercat-devices-table.component';
+export * from './ethercat-device-dialog/ethercat-device-dialog.component';
+export * from './ethercat-data-keys-panel/ethercat-data-keys-panel.component';
+export * from './ethercat-slave-browser-dialog/ethercat-slave-browser-dialog.component';
+export * from './ethercat-tag-import-dialog/ethercat-tag-import-dialog.component';

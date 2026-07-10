@@ -13,15 +13,10 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
-export * from './ads.models';
-export * from './ethercat.models';
-export * from './ethernet-ip.models';
-export * from './iec61850.models';
+export * from './ads-basic-config/ads-basic-config.component';
+export * from './ads-legacy-basic-config/ads-legacy-basic-config.component';
+export * from './ads-devices-table/ads-devices-table.component';
+export * from './ads-device-dialog/ads-device-dialog.component';
+export * from './ads-data-keys-panel/ads-data-keys-panel.component';
+export * from './ads-tag-browser-dialog/ads-tag-browser-dialog.component';
+export * from './ads-tag-import-dialog/ads-tag-import-dialog.component';

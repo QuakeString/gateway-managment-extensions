@@ -85,6 +85,8 @@ import { ReportStrategyComponent } from '../../shared/components/public-api';
 import { BacnetBasicConfigComponent, BacnetLegacyBasicConfigComponent } from './components/bacnet/public-api';
 import { RestLegacyBasicConfigComponent, RestBasicConfigComponent } from './components/rest/public-api';
 import { S7BasicConfigComponent, S7LegacyBasicConfigComponent } from './components/s7/public-api';
+import { AdsBasicConfigComponent, AdsLegacyBasicConfigComponent } from './components/ads/public-api';
+import { EtherCatBasicConfigComponent, EtherCatLegacyBasicConfigComponent } from './components/ethercat/public-api';
 import { EthernetIPBasicConfigComponent, EthernetIPLegacyBasicConfigComponent } from './components/ethernet-ip/public-api';
 import { IEC61850BasicConfigComponent, IEC61850LegacyBasicConfigComponent } from './components/iec61850/public-api';
 
@@ -120,6 +122,10 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
     RestBasicConfigComponent,
     S7BasicConfigComponent,
     S7LegacyBasicConfigComponent,
+    AdsBasicConfigComponent,
+    AdsLegacyBasicConfigComponent,
+    EtherCatBasicConfigComponent,
+    EtherCatLegacyBasicConfigComponent,
     EthernetIPBasicConfigComponent,
     EthernetIPLegacyBasicConfigComponent,
     IEC61850BasicConfigComponent,
@@ -142,6 +148,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     ConnectorType.BACNET,
     ConnectorType.REST,
     ConnectorType.S7,
+    ConnectorType.ADS,
+    ConnectorType.ETHERCAT,
     ConnectorType.ETHERNET_IP,
     ConnectorType.IEC61850,
   ]);

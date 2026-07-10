@@ -1,0 +1,46 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "ADS Device",
+        "deviceType": "default",
+        "host": "192.168.1.20",
+        "amsNetId": "192.168.1.20.1.1",
+        "amsPort": 851,
+        "clientAmsNetId": "192.168.1.5.1.1",
+        "pollPeriod": 1000,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 10000,
+        "timeseries": [
+          {
+            "tag": "temperature",
+            "address": "MAIN.fTemp",
+            "valueType": "float32"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "ready",
+            "address": "MAIN.bReady",
+            "valueType": "bool"
+          }
+        ],
+        "attributeUpdates": [
+          {
+            "tag": "setpoint",
+            "address": "MAIN.fSet",
+            "valueType": "float32"
+          }
+        ],
+        "rpc": [
+          {
+            "method": "reset",
+            "address": "MAIN.bReset",
+            "valueType": "bool",
+            "operation": "write"
+          }
+        ]
+      }
+    ]
+  }
+}

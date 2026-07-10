@@ -29,6 +29,8 @@ import xmpp from '../../assets/connector-default-configs/xmpp.json';
 import ocpp from '../../assets/connector-default-configs/ocpp.json';
 import knx from '../../assets/connector-default-configs/knx.json';
 import s7 from '../../assets/connector-default-configs/s7.json';
+import ads from '../../assets/connector-default-configs/ads.json';
+import ethercat from '../../assets/connector-default-configs/ethercat.json';
 import ethernet_ip from '../../assets/connector-default-configs/ethernet_ip.json';
 import iec61850 from '../../assets/connector-default-configs/iec61850.json';
 
@@ -51,6 +53,8 @@ export const connectorConfigs = {
   [ConnectorType.OCPP]: ocpp,
   [ConnectorType.KNX]: knx,
   [ConnectorType.S7]: s7,
+  [ConnectorType.ADS]: ads,
+  [ConnectorType.ETHERCAT]: ethercat,
   [ConnectorType.ETHERNET_IP]: ethernet_ip,
   [ConnectorType.IEC61850]: iec61850,
 };
