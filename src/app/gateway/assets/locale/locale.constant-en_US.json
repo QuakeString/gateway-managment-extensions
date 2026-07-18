@@ -112,6 +112,8 @@
     "command-copied-message": "Docker command has been copied to clipboard",
     "configuration": "Configuration",
     "add-connector": "Add connector",
+    "import-connector": "Import connector",
+    "import-connector-invalid-file": "Invalid connector file: expected a connector JSON export with \"name\" and \"type\"",
     "delete-connector": "Delete connector",
     "connector-add": "Add new connector",
     "connector-enabled": "Enable connector",

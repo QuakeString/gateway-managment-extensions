@@ -21,11 +21,21 @@
         <button *ngIf="dataSource?.data?.length"
                 mat-icon-button
                 [disabled]="isLoading$ | async"
-                (click)="onAddConnector($event)"
+                [matMenuTriggerFor]="addConnectorMenu"
                 matTooltip="{{ 'action.add' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
         </button>
+        <mat-menu #addConnectorMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="onAddConnector($event)">
+            <mat-icon>insert_drive_file</mat-icon>
+            <span>{{ 'gateway.connector-add' | translate }}</span>
+          </button>
+          <button mat-menu-item (click)="importConnector($event)">
+            <mat-icon>file_upload</mat-icon>
+            <span>{{ 'gateway.import-connector' | translate }}</span>
+          </button>
+        </mat-menu>
         <button *ngIf="dataSource?.data?.length"
                 mat-icon-button
                 [disabled]="isLoading$ | async"
@@ -40,7 +50,7 @@
       <section *ngIf="!dataSource?.data?.length"
                class="mat-headline-5 tb-absolute-fill tb-add-new items-center justify-center">
         <button mat-button class="connector"
-        (click)="onAddConnector($event)">
+        [matMenuTriggerFor]="addConnectorMenu">
           <mat-icon class="tb-mat-96">add</mat-icon>
           <span>{{ 'gateway.add-connector' | translate }}</span>
         </button>

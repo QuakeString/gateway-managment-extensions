@@ -541,19 +541,46 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   exportConnectorConfig(attribute: GatewayAttributeData, $event: Event): void {
     $event?.stopPropagation();
-    const config = attribute.value?.configurationJson || {};
+    const { ts, basicConfig, ...connector } = (attribute.value ?? {}) as any;
     const name = attribute.key || 'connector';
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(connector, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${name}-config.json`;
+    a.download = `${name}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
   importConnectorConfig(attribute: GatewayAttributeData, $event: Event): void {
     $event?.stopPropagation();
+    this.readConnectorFile(json => {
+      // Accept both a full connector export and a bare configurationJson
+      const config = (json?.configurationJson && isString(json?.type)) ? json.configurationJson : json;
+      attribute.value.configurationJson = config;
+      attribute.value.ts = new Date().getTime();
+      this.attributeUpdateSubject.next(attribute);
+      this.selectConnector(null, attribute);
+      this.cd.detectChanges();
+    });
+  }
+
+  importConnector(event?: Event): void {
+    event?.stopPropagation();
+    this.confirmConnectorChange()
+      .pipe(take(1), filter(Boolean))
+      .subscribe(() => this.readConnectorFile(json => {
+        const connector = this.prepareImportedConnector(json);
+        if (connector) {
+          this.addConnector(connector);
+          this.cd.detectChanges();
+        } else {
+          this.ctx.showErrorToast(this.translate.instant('gateway.import-connector-invalid-file'), 'top', 'left');
+        }
+      }));
+  }
+
+  private readConnectorFile(onParsed: (json: any) => void): void {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -562,20 +589,39 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       if (!file) { return; }
       const reader = new FileReader();
       reader.onload = (ev: any) => {
-        try {
-          const config = JSON.parse(ev.target.result);
-          attribute.value.configurationJson = config;
-          attribute.value.ts = new Date().getTime();
-          this.attributeUpdateSubject.next(attribute);
-          this.selectConnector(null, attribute);
-          this.cd.detectChanges();
-        } catch {
-          // invalid JSON — ignore
-        }
+        this.ctx.ngZone.run(() => {
+          try {
+            onParsed(JSON.parse(ev.target.result));
+          } catch {
+            this.ctx.showErrorToast(this.translate.instant('gateway.import-connector-invalid-file'), 'top', 'left');
+          }
+        });
       };
       reader.readAsText(file);
     };
     input.click();
+  }
+
+  private prepareImportedConnector(json: any): GatewayConnector | null {
+    if (!json || !isString(json.name) || !Object.values(ConnectorType).includes(json.type)) {
+      return null;
+    }
+    const { ts, basicConfig, ...connector } = json;
+    connector.name = this.getUniqueConnectorName(connector.name.trim());
+    connector.logLevel = connector.logLevel ?? GatewayLogLevel.INFO;
+    connector.key = connector.key ?? 'auto';
+    connector.configurationJson = connector.configurationJson ?? {};
+    return connector as GatewayConnector;
+  }
+
+  private getUniqueConnectorName(name: string): string {
+    const existing = new Set(this.dataSource.data.map(attr => attr.value.name.toLowerCase()));
+    let candidate = name;
+    let index = 1;
+    while (existing.has(candidate.toLowerCase())) {
+      candidate = `${name}_${index++}`;
+    }
+    return candidate;
   }
 
   onEnableConnector(attribute: GatewayAttributeData): void {
