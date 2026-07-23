@@ -33,6 +33,9 @@ import {
   Validator,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { take } from 'rxjs/operators';
+import { DialogService } from '@core/public-api';
 import { SharedModule } from '@shared/public-api';
 import { MatDialog } from '@angular/material/dialog';
 import { EtherCatDataKey, EtherCatDeviceConfig } from '../../../models/public-api';
@@ -78,6 +81,8 @@ export class EtherCatDevicesTableComponent implements ControlValueAccessor, Vali
 
   private dialog = inject(MatDialog);
   private cd = inject(ChangeDetectorRef);
+  private dialogService = inject(DialogService);
+  private translate = inject(TranslateService);
   private onChange: (value: EtherCatDeviceConfig[]) => void;
 
   writeValue(devices: EtherCatDeviceConfig[]): void {
@@ -170,9 +175,21 @@ export class EtherCatDevicesTableComponent implements ControlValueAccessor, Vali
   }
 
   deleteDevice(index: number): void {
-    this.devices = this.devices.filter((_, i) => i !== index);
-    this.updateFilter();
-    this.emitChange();
+    const device = this.devices[index];
+    if (!device) { return; }
+    this.dialogService.confirm(
+      this.translate.instant('gateway.delete-device-title', { name: device.deviceName }),
+      this.translate.instant('gateway.delete-device-description'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).pipe(take(1)).subscribe((result) => {
+      if (result) {
+        this.devices = this.devices.filter((_, i) => i !== index);
+        this.updateFilter();
+        this.emitChange();
+      }
+    });
   }
 
   exportTags(index: number): void {

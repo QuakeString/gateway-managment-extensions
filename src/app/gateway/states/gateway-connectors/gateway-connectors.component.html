@@ -27,11 +27,11 @@
           <mat-icon>add</mat-icon>
         </button>
         <mat-menu #addConnectorMenu="matMenu" xPosition="before">
-          <button mat-menu-item (click)="onAddConnector($event)">
+          <button mat-menu-item (click)="onAddConnector()">
             <mat-icon>insert_drive_file</mat-icon>
             <span>{{ 'gateway.connector-add' | translate }}</span>
           </button>
-          <button mat-menu-item (click)="importConnector($event)">
+          <button mat-menu-item (click)="importConnector()">
             <mat-icon>file_upload</mat-icon>
             <span>{{ 'gateway.import-connector' | translate }}</span>
           </button>
@@ -132,15 +132,15 @@
               <mat-menu #connectorMenu="matMenu" xPosition="before">
                 <button mat-menu-item
                         [disabled]="!attribute.value.configurationJson.id"
-                        (click)="connectorRpc(attribute, $event)">
+                        (click)="connectorRpc(attribute)">
                   <mat-icon>private_connectivity</mat-icon>
                   <span>{{ 'gateway.rpc.rpc' | translate }}</span>
                 </button>
-                <button mat-menu-item (click)="exportConnectorConfig(attribute, $event)">
+                <button mat-menu-item (click)="exportConnectorConfig(attribute)">
                   <mat-icon>file_download</mat-icon>
                   <span>Export Config</span>
                 </button>
-                <button mat-menu-item (click)="importConnectorConfig(attribute, $event)">
+                <button mat-menu-item (click)="importConnectorConfig(attribute)">
                   <mat-icon>file_upload</mat-icon>
                   <span>Import Config</span>
                 </button>
@@ -157,19 +157,19 @@
                         [matTooltip]="'gateway.rpc.rpc' | translate"
                         matTooltipPosition="above"
                         [disabled]="!attribute.value.configurationJson.id"
-                        (click)="connectorRpc(attribute, $event)">
+                        (click)="connectorRpc(attribute)">
                   <mat-icon>private_connectivity</mat-icon>
                 </button>
                 <button mat-icon-button
                         [matTooltip]="'gateway.logs.logs' | translate"
                         matTooltipPosition="above"
-                        (click)="connectorLogs(attribute, $event)">
+                        (click)="connectorLogs(attribute)">
                   <mat-icon>list</mat-icon>
                 </button>
                 <button mat-icon-button
                         [matTooltip]="'gateway.delete-connector' | translate"
                         matTooltipPosition="above"
-                        (click)="deleteConnector(attribute, $event)">
+                        (click)="deleteConnector(attribute)">
                   <mat-icon>delete</mat-icon>
                 </button>
               </mat-menu>

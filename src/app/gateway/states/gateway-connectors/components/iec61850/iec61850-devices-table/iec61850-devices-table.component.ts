@@ -33,6 +33,9 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { take } from 'rxjs/operators';
+import { DialogService } from '@core/public-api';
 import { SharedModule } from '@shared/public-api';
 import { IEC61850DeviceConfig } from '../../../models/public-api';
 import {
@@ -78,6 +81,8 @@ export class IEC61850DevicesTableComponent implements ControlValueAccessor, Vali
   constructor(
     private dialog: MatDialog,
     private cd: ChangeDetectorRef,
+    private dialogService: DialogService,
+    private translate: TranslateService,
   ) {}
 
   writeValue(value: IEC61850DeviceConfig[]): void {
@@ -109,9 +114,21 @@ export class IEC61850DevicesTableComponent implements ControlValueAccessor, Vali
 
   deleteDevice(index: number): void {
     const originalIndex = this.getOriginalIndex(index);
-    this.devices.splice(originalIndex, 1);
-    this.updateFilter();
-    this.emitChange();
+    const device = this.devices[originalIndex];
+    if (!device) { return; }
+    this.dialogService.confirm(
+      this.translate.instant('gateway.delete-device-title', { name: device.deviceName }),
+      this.translate.instant('gateway.delete-device-description'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).pipe(take(1)).subscribe((result) => {
+      if (result) {
+        this.devices.splice(originalIndex, 1);
+        this.updateFilter();
+        this.emitChange();
+      }
+    });
   }
 
   toggleSearch(): void {

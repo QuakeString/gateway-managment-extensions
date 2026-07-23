@@ -490,7 +490,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     return this.GatewayConnectorTypesTranslatesMap.get(value.type);
   }
 
-  deleteConnector(attribute: GatewayAttributeData, $event: Event): void {
+  deleteConnector(attribute: GatewayAttributeData, $event?: Event): void {
     $event?.stopPropagation();
 
     const title = `Delete connector \"${attribute.key}\"?`;
@@ -522,7 +522,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
   }
 
-  connectorLogs(attribute: GatewayAttributeData, $event: Event): void {
+  connectorLogs(attribute: GatewayAttributeData, $event?: Event): void {
     if ($event) {
       $event.stopPropagation();
     }
@@ -532,7 +532,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.ctx.stateController.openState('connector_logs', params);
   }
 
-  connectorRpc(attribute: GatewayAttributeData, $event: Event): void {
+  connectorRpc(attribute: GatewayAttributeData, $event?: Event): void {
     if ($event) {
       $event.stopPropagation();
     }
@@ -543,7 +543,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
 
-  exportConnectorConfig(attribute: GatewayAttributeData, $event: Event): void {
+  exportConnectorConfig(attribute: GatewayAttributeData, $event?: Event): void {
     $event?.stopPropagation();
     const { ts, basicConfig, ...connector } = (attribute.value ?? {}) as any;
     const name = attribute.key || 'connector';
@@ -556,7 +556,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     URL.revokeObjectURL(url);
   }
 
-  importConnectorConfig(attribute: GatewayAttributeData, $event: Event): void {
+  importConnectorConfig(attribute: GatewayAttributeData, $event?: Event): void {
     $event?.stopPropagation();
     this.readConnectorFile(json => {
       // Accept both a full connector export and a bare configurationJson
