@@ -1,0 +1,51 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "Omron PLC",
+        "deviceType": "default",
+        "host": "192.168.250.1",
+        "port": 9600,
+        "network": 0,
+        "pollPeriod": 1000,
+        "timeoutMs": 3000,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 10000,
+        "lowWordFirst": true,
+        "timeseries": [
+          {
+            "tag": "temperature",
+            "address": "D100",
+            "valueType": "float32"
+          },
+          {
+            "tag": "counter",
+            "address": "D200",
+            "valueType": "uint16"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "ready",
+            "address": "CIO20.07"
+          }
+        ],
+        "attributeUpdates": [
+          {
+            "tag": "setpoint",
+            "address": "D102",
+            "valueType": "float32"
+          }
+        ],
+        "rpc": [
+          {
+            "method": "reset",
+            "address": "W0.00",
+            "valueType": "bool",
+            "operation": "write"
+          }
+        ]
+      }
+    ]
+  }
+}

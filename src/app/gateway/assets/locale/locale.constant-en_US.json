@@ -1071,6 +1071,16 @@
         "tls-ca-cert": "Path to the Certificate Authority (CA) certificate file for verifying the IED's identity.",
         "tls-client-cert": "Path to the client certificate file for mutual TLS authentication.",
         "tls-client-key": "Path to the client private key file for mutual TLS authentication."
+      },
+      "fins": {
+        "tag": "Name for key on the platform.",
+        "address": "A CX-Programmer-style memory address: D100 / DM100 (Data Memory), CIO20 or bare 20 (CIO), W10 (Work), H5 (Holding), A448 (Auxiliary), E0_100 (EM bank 0), T15 (timer PV), C4 (counter PV). Add a .bit suffix (0-15) for a single bit, e.g. D100.5, CIO20.07 — bit addresses are booleans.",
+        "data-keys": "Address is a CX-Programmer-style FINS address (D100, CIO20.07, W10, E0_100, T15, C4...). Value type defaults to WORD (uint16); a bit address always reads as bool.",
+        "port": "FINS/UDP port of the PLC, 9600 by default.",
+        "network": "FINS network number (DNA). 0 addresses the local network.",
+        "destination-node": "FINS node of the PLC (DA1). Leave empty to derive it from the last octet of the PLC's IP address — the Omron Ethernet convention.",
+        "destination-unit": "FINS unit (DA2). 0 addresses the CPU unit; use 10-15 (0x10+unit) for a specific Ethernet unit.",
+        "source-node": "FINS node of the gateway (SA1). Leave empty to derive it from the last octet of the gateway's local IP address."
       }
     },
     "discard-changes-title": "Unsaved changes",
@@ -1335,6 +1345,23 @@
     "dash-name": "Name",
     "dash-status": "Status",
     "dash-type": "Type",
-    "dash-version": "Version"
+    "dash-version": "Version",
+    "fins-device": "Omron FINS Device",
+    "fins-devices-title": "Omron FINS Devices",
+    "fins-no-devices": "No devices configured. Click + to add an Omron FINS device.",
+    "fins-port-required": "Port must be between 1 and 65535",
+    "fins-network": "FINS network (DNA)",
+    "fins-destination-node": "Destination node (DA1)",
+    "fins-destination-unit": "Destination unit (DA2)",
+    "fins-source-node": "Source node (SA1)",
+    "fins-timeout-ms": "Response timeout (ms)",
+    "fins-low-word-first": "Low word first (CX-Programmer convention)",
+    "fins-low-word-first-hint": "Storage convention for 32/64-bit values: ON (default) stores the LOW word at the lower address, matching CX-Programmer and CJ/CS/CP-series PLCs. Turn off only for devices that store the high word first.",
+    "fins-invalid-address": "Enter a FINS address, e.g. D100, D100.5, CIO20.07, W10, H5, A448, E0_100, T15, C4",
+    "fins-bool-only": "A bit address (.NN suffix) always reads as bool",
+    "fins-value-type-default": "Default (word)",
+    "fins-supported-formats": "Supported: .xlsx, .csv, .ods",
+    "fins-valid-tags": "{{count}} valid tags",
+    "fins-import-n-tags": "Import {{count}} Tags"
   }
 }

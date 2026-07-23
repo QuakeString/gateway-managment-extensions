@@ -1,0 +1,125 @@
+<!--
+  Copyright © 2016-2025 The Sentient Authors
+  Licensed under the Apache License, Version 2.0
+-->
+<tb-industrial-keys-panel
+  [keysFormArray]="keysFormArray"
+  [title]="panelTitle"
+  [addKeyLabel]="addKeyTitle"
+  [deleteKeyTitle]="deleteKeyTitle"
+  [emptyText]="noKeysText"
+  [searchFields]="searchFields"
+  [sortFields]="sortFields"
+  [sprefinsheetColumns]="sprefinsheetColumns"
+  hostSelector="tb-fins-data-keys-panel"
+  [rowHeaderTpl]="rowHeaderTpl"
+  [rowBodyTpl]="rowBodyTpl"
+  [applyDisabled]="keysFormArray.invalid || !keysFormArray.dirty"
+  (addKeyRequested)="onAddRequested()"
+  (deleteKeyRequested)="onDeleteRequested($event)"
+  (applyRequested)="onApplyRequested()"
+  (cancelRequested)="onCancelRequested()">
+</tb-industrial-keys-panel>
+
+<!-- Row header — 3 labeled pairs. Same grammar as the other
+     industrial panels so the five dialogs read identically. -->
+<ng-template #rowHeaderTpl let-row let-index="index">
+  <div class="tb-flex">
+    <div class="title-container tb-flex">{{ (isRpc ? 'gateway.method' : 'gateway.gw-key') | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('tag')?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.address' | translate }}:
+      <span class="key-label">{{ row.get('address')?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.type' | translate }}:
+      <span class="key-label">{{ row.get('valueType')?.value || ('gateway.fins-value-type-default' | translate) }}</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #rowBodyTpl let-row let-index="index">
+  <ng-container [formGroup]="row">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ 'gateway.hints.fins.data-keys' | translate }}
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.platform-side' | translate }}</div>
+        <ng-container *ngIf="!isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.fins.tag' | translate }}">{{ 'gateway.key' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="tag" placeholder="temperature">
+            </mat-form-field>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method' | translate }}">{{ 'gateway.method' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="method" placeholder="setValue">
+            </mat-form-field>
+          </div>
+        </ng-container>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.connector-side' | translate }}</div>
+        <ng-container *ngIf="isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required">{{ 'gateway.gw-operation' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="operation">
+                <mat-option value="read">{{ 'gateway.gw-read' | translate }}</mat-option>
+                <mat-option value="write">{{ 'gateway.gw-write' | translate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </ng-container>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.fins.address' | translate }}">{{ 'gateway.address' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="address" placeholder="D100">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.fins-invalid-address' | translate"
+                      *ngIf="(row.get('address').hasError('required') || row.get('address').hasError('invalidFinsAddress'))
+                             && row.get('address').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width">{{ 'gateway.gw-value-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="valueType">
+              <mat-option value="">{{ 'gateway.fins-value-type-default' | translate }}</mat-option>
+              <mat-option *ngFor="let type of valueTypes" [value]="type">{{ type }}</mat-option>
+            </mat-select>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.fins-bool-only' | translate"
+                      *ngIf="row.get('valueType').hasError('boolOnly')"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <ng-container *ngIf="!isRpc">
+          <!-- Calibration CVA — mode dropdown + modifier/scaling
+               inputs live inside. Hidden for non-numeric value types
+               (bool / string) via the canCalibrate gate. -->
+          <tb-calibration-block formControlName="calibration" [canCalibrate]="canCalibrate(row)"/>
+          <tb-report-strategy
+            class="stroked tb-form-panel"
+            [defaultValue]="ReportStrategyDefaultValue.Key"
+            formControlName="reportStrategy"
+            [isExpansionMode]="true"
+          />
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

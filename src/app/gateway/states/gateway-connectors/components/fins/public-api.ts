@@ -13,16 +13,9 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
-export * from './ads.models';
-export * from './fins.models';
-export * from './ethercat.models';
-export * from './ethernet-ip.models';
-export * from './iec61850.models';
+export * from './fins-basic-config/fins-basic-config.component';
+export * from './fins-legacy-basic-config/fins-legacy-basic-config.component';
+export * from './fins-devices-table/fins-devices-table.component';
+export * from './fins-device-dialog/fins-device-dialog.component';
+export * from './fins-data-keys-panel/fins-data-keys-panel.component';
+export * from './fins-tag-import-dialog/fins-tag-import-dialog.component';

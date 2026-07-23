@@ -349,6 +349,25 @@
               />
             </ng-template>
           </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.FINS">
+            <tb-fins-basic-config
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig : ConnectorType.FINS else finsLegacy"
+              class="h-full"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              [gatewayDeviceId]="device?.id"
+              [connectorName]="connectorForm.get('name')?.value"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #finsLegacy>
+              <tb-fins-legacy-basic-config
+                class="h-full"
+                formControlName="basicConfig"
+                (initialized)="basicConfigInitSubject.next()"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
           <ng-container *ngSwitchCase="ConnectorType.ETHERCAT">
             <tb-ethercat-basic-config
               *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig : ConnectorType.ETHERCAT else legacy"
