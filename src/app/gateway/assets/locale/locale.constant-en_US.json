@@ -1008,6 +1008,7 @@
       },
       "s7": {
         "tag": "Name for key on the platform.",
+        "address": "SIMATIC notation (DB1.DBW0, MW100, I0.0, C4, T15 — a leading '%' from TIA exports is accepted), WinCC comma notation (DB1,W0, DB1,X0.0, DB1,INT2, DB1,REAL8, DB1,S20.30 — the operand carries the data type) and German mnemonics (E0.0, AW10, Z4) are supported.",
         "data-keys": "For more information about S7 address format and data types click on help icon"
       },
       "ads": {
@@ -1133,7 +1134,7 @@
     "s7-devices-title": "S7 PLC Devices",
     "s7-no-devices": "No devices configured. Click + to add an S7 PLC device.",
     "s7-plc-model": "PLC Model",
-    "s7-invalid-address": "Invalid S7 address (e.g. DB1.DBD0, M0.0, IW20)",
+    "s7-invalid-address": "Invalid S7 address. SIMATIC (DB1.DBD0, M0.0, IW20, %MW100) and WinCC (DB1,W0, DB1,X0.0, DB1,REAL8, DB1,S20.30) notations are supported",
     "s7-supported-formats": "Supported: .xlsx, .csv, .ods",
     "ads-devices-title": "Beckhoff ADS Devices",
     "ads-no-devices": "No devices configured. Click + to add a Beckhoff ADS device.",

@@ -26,7 +26,25 @@ import { S7DataKey, S7RpcConfig, S7ValueType } from '../../../models/public-api'
 import { ReportStrategyConfig } from '../../../../../shared/models/public-api';
 import * as XLSX from 'xlsx';
 
-const S7_ADDRESS_REGEX = /^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|[MIQC]\d+\.\d+|[MIQC][BWDL]\d+)$/i;
+// Accepts SIMATIC dot notation, WinCC comma notation (DB1,W0 / DB1,X0.0 /
+// DB1,INT2 / DB1,REAL8 / DB1,S20.30) and German mnemonics (E/A/Z).
+// A leading '%' (IEC notation, TIA exports) is stripped before validation.
+const S7_ADDRESS_REGEX = /^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|DB\d+\s*,\s*((DBX|X)\d+(\.\d+)?|(DB[BWDL]|BYTE|BY|B|CHAR|C|WORD|W|INT|I|DWORD|DINT|DW|DI|LREAL|LR|REAL|R)\d+|(STRING|S)\d+\.\d+)|[MIQEA]\d+\.\d+|[MIQEA][BWDLR]\d+|[CTZ]\d+)$/i;
+
+// WinCC typed addresses carry the data type in the operand token — derive
+// the platform value type from the address when the file has no type column.
+const WINCC_TYPE_FROM_ADDRESS: [RegExp, S7ValueType][] = [
+  [/^DB\d+\s*,\s*(STRING|S)\d+\.\d+$/i, S7ValueType.STRING],
+  [/^DB\d+\s*,\s*(DBX|X)\d+(\.\d+)?$/i, S7ValueType.BOOL],
+  [/^DB\d+\s*,\s*(INT|I)\d+$/i, S7ValueType.INT16],
+  [/^DB\d+\s*,\s*(WORD|W|DBW)\d+$/i, S7ValueType.UINT16],
+  [/^DB\d+\s*,\s*(DINT|DI)\d+$/i, S7ValueType.INT32],
+  [/^DB\d+\s*,\s*(DWORD|DW)\d+$/i, S7ValueType.UINT32],
+  [/^DB\d+\s*,\s*(LREAL|LR)\d+$/i, S7ValueType.FLOAT64],
+  [/^DB\d+\s*,\s*(REAL|R|DBD)\d+$/i, S7ValueType.FLOAT32],
+  [/^DB\d+\s*,\s*(BYTE|BY|B|DBB)\d+$/i, S7ValueType.UINT8],
+  [/^(DB\d+[.,]\s*DBX\d+\.\d+|[MIQEA]\d+\.\d+)$/i, S7ValueType.BOOL],
+];
 
 const VALUE_TYPE_MAP: Record<string, S7ValueType> = {
   'bool': S7ValueType.BOOL,
@@ -372,7 +390,13 @@ export class S7TagImportDialogComponent {
 
     for (const row of this.rawRows) {
       const tagName = String(row[tagCol] || '').trim();
-      const rawAddress = String(row[addrCol] || '').trim();
+      let rawAddress = String(row[addrCol] || '').trim();
+      // TIA Portal exports absolute addresses in IEC notation with a
+      // leading '%' (%MW100, %I0.0, %DB1.DBW0) — strip it so stored
+      // configs keep the gateway's plain notation.
+      if (rawAddress.startsWith('%')) {
+        rawAddress = rawAddress.slice(1).trim();
+      }
       const rawType = typeCol ? String(row[typeCol] || '').trim() : '';
 
       if (!tagName && !rawAddress) { continue; }
@@ -403,7 +427,7 @@ export class S7TagImportDialogComponent {
       const tag: ParsedTag = {
         tag: tagName,
         address: rawAddress,
-        valueType: this.resolveValueType(rawType),
+        valueType: this.resolveValueType(rawType) ?? this.deriveValueTypeFromAddress(rawAddress),
         multiplier,
         divider,
         reportStrategy,
@@ -443,6 +467,17 @@ export class S7TagImportDialogComponent {
     this.validTags = this.parsedTags.filter(t => t.valid);
     this.invalidTags = this.parsedTags.filter(t => !t.valid);
     this.pageIndex = 0;
+  }
+
+  // WinCC-notation addresses embed the data type (DB1,REAL8 → float32),
+  // so a missing/blank type column can still yield the right value type.
+  private deriveValueTypeFromAddress(address: string): S7ValueType | null {
+    for (const [regex, type] of WINCC_TYPE_FROM_ADDRESS) {
+      if (regex.test(address)) {
+        return type;
+      }
+    }
+    return null;
   }
 
   private resolveValueType(raw: string): S7ValueType | null {

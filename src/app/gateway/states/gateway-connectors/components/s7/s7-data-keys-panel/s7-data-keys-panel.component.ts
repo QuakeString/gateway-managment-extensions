@@ -56,7 +56,11 @@ import { generateSecret } from '@core/public-api';
  *     math-calibrated).
  */
 
-const S7_ADDRESS_REGEX = /^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|[MIQC]\d+\.\d+|[MIQC][BWDL]\d+|[CT]\d+)$/i;
+// Accepts SIMATIC dot notation (DB1.DBW0, MW100, I0.0), WinCC comma
+// notation (DB1,W0 / DB1,DBW0 / DB1,X0.0 / DB1,INT2 / DB1,REAL8 /
+// DB1,S20.30), German mnemonics (E/A/Z) and an optional leading '%'
+// (IEC notation from TIA Portal exports).
+const S7_ADDRESS_REGEX = /^%?(DB\d+\.DB[XBWDL]\d+(\.\d+)?|DB\d+\s*,\s*((DBX|X)\d+(\.\d+)?|(DB[BWDL]|BYTE|BY|B|CHAR|C|WORD|W|INT|I|DWORD|DINT|DW|DI|LREAL|LR|REAL|R)\d+|(STRING|S)\d+\.\d+)|[MIQEA]\d+\.\d+|[MIQEA][BWDLR]\d+|[CTZ]\d+)$/i;
 
 @Component({
   selector: 'tb-s7-data-keys-panel',
