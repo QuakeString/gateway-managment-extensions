@@ -194,3 +194,17 @@
     }
   }
 }
+
+// Selected sort entry — accent highlight instead of a check mark
+// (matches the spreadsheet header-sort pattern). Global because the
+// mat-menu renders in the CDK overlay, outside this component's DOM;
+// duplicated in the spreadsheet's injected globals for fullscreen mode.
+::ng-deep .spreadsheet-sort-menu-panel .mat-mdc-menu-item.sort-selected {
+  background: color-mix(in srgb, var(--tb-primary, #26a69a) 14%, transparent) !important;
+  color: var(--tb-primary, #26a69a) !important;
+
+  .mdc-list-item__primary-text,
+  .mat-icon {
+    color: var(--tb-primary, #26a69a) !important;
+  }
+}

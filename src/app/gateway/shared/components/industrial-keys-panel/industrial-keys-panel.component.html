@@ -30,12 +30,18 @@
                 matTooltipPosition="above">
           <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
         </button>
+        <!-- Selected entry is shown with the accent highlight (and the
+             asc/desc arrow on a field), matching the spreadsheet header
+             sort pattern — no check marks. -->
         <mat-menu #sortMenu="matMenu" class="spreadsheet-sort-menu-panel">
-          <button mat-menu-item type="button" (click)="setSortField(null)">
-            <mat-icon *ngIf="sortField === null">check</mat-icon>
+          <button mat-menu-item type="button"
+                  [class.sort-selected]="sortField === null"
+                  (click)="setSortField(null)">
             <span>{{ 'gateway.keys-default-order' | translate }}</span>
           </button>
-          <button *ngFor="let f of sortFields" mat-menu-item type="button" (click)="setSortField(f.value)">
+          <button *ngFor="let f of sortFields" mat-menu-item type="button"
+                  [class.sort-selected]="sortField === f.value"
+                  (click)="setSortField(f.value)">
             <mat-icon *ngIf="sortField === f.value">{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             <span>{{ f.label | translate }}</span>
           </button>

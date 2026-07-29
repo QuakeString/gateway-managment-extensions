@@ -220,6 +220,14 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
 .spreadsheet-sort-menu-panel .mat-mdc-menu-item .mat-icon {
   color: var(--tb-text-secondary) !important;
 }
+.spreadsheet-sort-menu-panel .mat-mdc-menu-item.sort-selected {
+  background: color-mix(in srgb, var(--tb-primary, #26a69a) 14%, transparent) !important;
+  color: var(--tb-primary, #26a69a) !important;
+}
+.spreadsheet-sort-menu-panel .mat-mdc-menu-item.sort-selected .mdc-list-item__primary-text,
+.spreadsheet-sort-menu-panel .mat-mdc-menu-item.sort-selected .mat-icon {
+  color: var(--tb-primary, #26a69a) !important;
+}
 .cdk-overlay-pane.spreadsheet-fullscreen-pane {
   position: fixed !important;
   top: 0 !important;
