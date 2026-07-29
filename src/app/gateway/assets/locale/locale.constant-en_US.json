@@ -1082,6 +1082,19 @@
         "destination-node": "FINS node of the PLC (DA1). Leave empty to derive it from the last octet of the PLC's IP address — the Omron Ethernet convention.",
         "destination-unit": "FINS unit (DA2). 0 addresses the CPU unit; use 10-15 (0x10+unit) for a specific Ethernet unit.",
         "source-node": "FINS node of the gateway (SA1). Leave empty to derive it from the last octet of the gateway's local IP address."
+      },
+      "mcprotocol": {
+        "tag": "Name for key on the platform.",
+        "address": "A GX Works-style MELSEC device address. Word devices: D100 (data register), SD210, W0FF (link register, hex), SW0, TN5 / CN3 (timer/counter current value), R100, ZR1000 (file register, hex) — add a .bit suffix (0-15) to read a single bit, e.g. D100.5. Bit devices are always bool: M200, X1A / Y0 (hex), L0, F0, B1F (hex), SM400, TS5 / TC5 (timer contact/coil), CS3 / CC3.",
+        "data-keys": "Address is a GX Works-style MELSEC device (D100, M200, X1A, W0FF, TN5, D100.5...). Value type defaults to INT (signed word); bit devices and .bit addresses always read as bool.",
+        "port": "TCP port of the MC-protocol connection, as configured in the PLC's Ethernet open settings in GX Works (5007 by default).",
+        "plc-series": "MELSEC CPU series: Q (default), L, QnA, iQ-L or iQ-R. Determines device codes and address widths.",
+        "frame": "MC protocol frame type. 3E is the QnA-compatible standard; use 4E only if the PLC module is configured for it.",
+        "comm-type": "Payload encoding of the MC connection — must match the PLC's Ethernet open setting (binary is typical).",
+        "network": "Network No. of the access target. 0 addresses the own (local) network.",
+        "pc-station": "Station No. of the target on the network module. 255 (0xFF) = own station — the usual direct-connection value.",
+        "dest-module-io": "Start I/O number of the multidrop connection source module. 1023 (0x3FF) targets the CPU module directly.",
+        "dest-module-station": "Station No. of the target module in a multidrop configuration. 0 for a direct CPU connection."
       }
     },
     "discard-changes-title": "Unsaved changes",
@@ -1363,6 +1376,24 @@
     "fins-value-type-default": "Default (word)",
     "fins-supported-formats": "Supported: .xlsx, .csv, .ods",
     "fins-valid-tags": "{{count}} valid tags",
-    "fins-import-n-tags": "Import {{count}} Tags"
+    "fins-import-n-tags": "Import {{count}} Tags",
+    "mcprotocol-device": "Mitsubishi MELSEC Device",
+    "mcprotocol-devices-title": "Mitsubishi MELSEC Devices",
+    "mcprotocol-no-devices": "No devices configured. Click + to add a MELSEC device.",
+    "mcprotocol-port-required": "Port must be between 1 and 65535",
+    "mcprotocol-plc-series": "PLC series",
+    "mcprotocol-frame": "MC frame",
+    "mcprotocol-comm-type": "Encoding",
+    "mcprotocol-network": "Network No.",
+    "mcprotocol-pc-station": "PC (station) No.",
+    "mcprotocol-dest-module-io": "Module I/O No.",
+    "mcprotocol-dest-module-station": "Module station No.",
+    "mcprotocol-timeout-ms": "Response timeout (ms)",
+    "mcprotocol-invalid-address": "Enter a MELSEC device address, e.g. D100, D100.5, M200, X1A, W0FF, TN5, ZR1000",
+    "mcprotocol-bool-only": "A bit device (M, X, Y...) or a bit address (.NN suffix) always reads as bool",
+    "mcprotocol-value-type-default": "Default (INT)",
+    "mcprotocol-supported-formats": "Supported: .xlsx, .csv, .ods",
+    "mcprotocol-valid-tags": "{{count}} valid tags",
+    "mcprotocol-import-n-tags": "Import {{count}} Tags"
   }
 }

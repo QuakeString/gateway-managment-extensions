@@ -1,0 +1,54 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "MELSEC PLC",
+        "deviceType": "default",
+        "host": "192.168.1.10",
+        "port": 5007,
+        "plcSeries": "Q",
+        "frame": "3E",
+        "commType": "binary",
+        "network": 0,
+        "pcStation": 255,
+        "pollPeriod": 1000,
+        "timeoutMs": 3000,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 10000,
+        "timeseries": [
+          {
+            "tag": "temperature",
+            "address": "D100",
+            "valueType": "float32"
+          },
+          {
+            "tag": "counter",
+            "address": "D200",
+            "valueType": "uint16"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "ready",
+            "address": "M20"
+          }
+        ],
+        "attributeUpdates": [
+          {
+            "tag": "setpoint",
+            "address": "D102",
+            "valueType": "float32"
+          }
+        ],
+        "rpc": [
+          {
+            "method": "reset",
+            "address": "M21",
+            "valueType": "bool",
+            "operation": "write"
+          }
+        ]
+      }
+    ]
+  }
+}

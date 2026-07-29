@@ -87,6 +87,7 @@ import { RestLegacyBasicConfigComponent, RestBasicConfigComponent } from './comp
 import { S7BasicConfigComponent, S7LegacyBasicConfigComponent } from './components/s7/public-api';
 import { AdsBasicConfigComponent, AdsLegacyBasicConfigComponent } from './components/ads/public-api';
 import { FinsBasicConfigComponent, FinsLegacyBasicConfigComponent } from './components/fins/public-api';
+import { McProtocolBasicConfigComponent, McProtocolLegacyBasicConfigComponent } from './components/mcprotocol/public-api';
 import { EtherCatBasicConfigComponent, EtherCatLegacyBasicConfigComponent } from './components/ethercat/public-api';
 import { EthernetIPBasicConfigComponent, EthernetIPLegacyBasicConfigComponent } from './components/ethernet-ip/public-api';
 import { IEC61850BasicConfigComponent, IEC61850LegacyBasicConfigComponent } from './components/iec61850/public-api';
@@ -127,6 +128,8 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
     AdsLegacyBasicConfigComponent,
     FinsBasicConfigComponent,
     FinsLegacyBasicConfigComponent,
+    McProtocolBasicConfigComponent,
+    McProtocolLegacyBasicConfigComponent,
     EtherCatBasicConfigComponent,
     EtherCatLegacyBasicConfigComponent,
     EthernetIPBasicConfigComponent,
@@ -154,6 +157,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     ConnectorType.ADS,
     ConnectorType.ETHERCAT,
     ConnectorType.FINS,
+    ConnectorType.MCPROTOCOL,
     ConnectorType.ETHERNET_IP,
     ConnectorType.IEC61850,
   ]);

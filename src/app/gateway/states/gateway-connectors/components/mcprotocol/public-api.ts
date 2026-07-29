@@ -13,17 +13,9 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
-export * from './ads.models';
-export * from './fins.models';
-export * from './mcprotocol.models';
-export * from './ethercat.models';
-export * from './ethernet-ip.models';
-export * from './iec61850.models';
+export * from './mcprotocol-basic-config/mcprotocol-basic-config.component';
+export * from './mcprotocol-legacy-basic-config/mcprotocol-legacy-basic-config.component';
+export * from './mcprotocol-devices-table/mcprotocol-devices-table.component';
+export * from './mcprotocol-device-dialog/mcprotocol-device-dialog.component';
+export * from './mcprotocol-data-keys-panel/mcprotocol-data-keys-panel.component';
+export * from './mcprotocol-tag-import-dialog/mcprotocol-tag-import-dialog.component';
