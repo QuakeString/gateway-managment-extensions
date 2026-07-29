@@ -31,6 +31,7 @@ import trTR from '../../assets/locale/locale.constant-tr_TR.json';
 import zhCN from '../../assets/locale/locale.constant-zh_CN.json';
 import zhTW from '../../assets/locale/locale.constant-zh_TW.json';
 import viVN from '../../assets/locale/locale.constant-vi_VN.json';
+import dzBT from '../../assets/locale/locale.constant-dz_BT.json';
 import { isLiteralObject, mergeDeep } from '@core/public-api';
 
 export enum AvailableLanguages {
@@ -49,7 +50,8 @@ export enum AvailableLanguages {
   Turkish = 'tr_TR',
   ChineseSimplified = 'zh_CN',
   ChineseTraditional = 'zh_TW',
-  Vietnamese = 'vi_VN'
+  Vietnamese = 'vi_VN',
+  Dzongkha = 'dz_BT'
 }
 
 type LocaleData = Record<string, any>;
@@ -70,7 +72,8 @@ const languagesMap = new Map<AvailableLanguages, LocaleData>([
   [AvailableLanguages.Turkish, trTR],
   [AvailableLanguages.ChineseSimplified, zhCN],
   [AvailableLanguages.ChineseTraditional, zhTW],
-  [AvailableLanguages.Vietnamese, viVN]
+  [AvailableLanguages.Vietnamese, viVN],
+  [AvailableLanguages.Dzongkha, dzBT]
 ]);
 
 export const addGatewayLocale = (translate: TranslateService) => {

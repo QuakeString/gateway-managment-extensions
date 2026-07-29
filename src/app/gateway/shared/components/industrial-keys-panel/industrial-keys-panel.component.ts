@@ -128,6 +128,8 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
   sortField: string | null = null;
   sortDirection: 'asc' | 'desc' = 'asc';
 
+  private pendingReveal = false;
+
   private destroy$ = new Subject<void>();
   private cd = inject(ChangeDetectorRef);
   private elementRef = inject(ElementRef) as ElementRef<HTMLElement>;
@@ -172,12 +174,47 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
   refresh(): void {
     this.updateFilteredControls();
     this.spreadsheetKeys?.refreshDisplay();
+    if (this.pendingReveal) {
+      this.pendingReveal = false;
+      this.revealLastAdded();
+    }
   }
 
-  /** Host can set which row to auto-expand (e.g. a just-added row). */
+  /** Host can set which row to auto-expand (e.g. a just-added row).
+   *  The next refresh() scrolls that row into view and focuses its
+   *  first input. */
   setLastAddedId(id: string | null): void {
     this.lastAddedId = id;
+    this.pendingReveal = !!id;
     this.cd.markForCheck();
+  }
+
+  /** Bring the just-added row into view and put the cursor in its first
+   *  field. Appended rows land at the end of the list, which may be
+   *  beyond the render limit or below the fold — without this the
+   *  operator has to scroll down manually after every Add. */
+  private revealLastAdded(): void {
+    // An active search would hide the new (empty) row entirely.
+    if (this.searchControl.value) {
+      this.searchControl.setValue('', { emitEvent: false });
+    }
+    // Make sure the appended row is actually rendered despite the
+    // 50-row virtualization window.
+    this.renderLimit = Math.max(this.renderLimit, this.keysFormArray.controls.length);
+    this.updateFilteredControls();
+    // Wait for the row (and its auto-expanded body) to render before
+    // scrolling/focusing; the expansion panel animates open.
+    setTimeout(() => {
+      const row = this.panelRoot.nativeElement
+        .querySelector(`[data-key-id="${this.lastAddedId}"]`) as HTMLElement | null;
+      if (!row) {
+        return;
+      }
+      row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const input = row.querySelector(
+        'input:not([type="hidden"]):not([disabled]), mat-select') as HTMLElement | null;
+      input?.focus({ preventScroll: true });
+    }, 150);
   }
 
   toggleFullscreen(): void {

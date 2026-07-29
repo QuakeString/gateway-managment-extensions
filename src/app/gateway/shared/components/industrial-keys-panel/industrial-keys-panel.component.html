@@ -51,7 +51,8 @@
              *ngIf="displayedControls.length; else noKeys"
              (scroll)="onKeyPanelScroll($event)">
           <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
-               *ngFor="let item of displayedControls; trackBy: trackByFilteredItem">
+               *ngFor="let item of displayedControls; trackBy: trackByFilteredItem"
+               [attr.data-key-id]="item.control.getRawValue().id">
             <div class="tb-form-panel stroked tb-flex">
               <ng-container [formGroup]="item.control">
                 <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
