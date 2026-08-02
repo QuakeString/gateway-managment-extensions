@@ -23,6 +23,9 @@ import {
   FormGroup,
   ReactiveFormsModule,
   Validators,
+  ValidatorFn,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -42,6 +45,7 @@ import {
   EthernetIPDataType,
   EthernetIPRpcConfig,
   EthernetIPValueKey,
+  isValidEthernetIpTag,
 } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
 
@@ -172,6 +176,20 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
     ];
   }
 
+  /** Validates plcTag against the addressing the selected PLC actually
+   *  uses: SLC/MicroLogix data files (N7:0, B3/17, T4:0.ACC) or Logix
+   *  symbolic tags (MotorSpeed, Program:Main.Temp). Without this a typo
+   *  like "N7:" only surfaces as a runtime read error on the PLC. */
+  private plcTagValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = (control.value ?? '').toString();
+      if (!value.trim()) {
+        return null;   // required-validator's job
+      }
+      return isValidEthernetIpTag(value, this.isSLC) ? null : { invalidPlcTag: true };
+    };
+  }
+
   private createKeyForm(key: EthernetIPDataKey | EthernetIPRpcConfig): FormGroup {
     const id = generateSecret(5);
     if (this.isRpc) {
@@ -179,7 +197,7 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
       return this.fb.group({
         id: [{ value: id, disabled: true }],
         method: [rpc.method || '', [Validators.required]],
-        plcTag: [rpc.plcTag || '', [Validators.required]],
+        plcTag: [rpc.plcTag || '', [Validators.required, this.plcTagValidator()]],
         valueType: [rpc.valueType || null],
         operation: [rpc.operation || 'read', [Validators.required]],
       });
@@ -198,7 +216,7 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
     return this.fb.group({
       id: [{ value: id, disabled: true }],
       tag: [dk.tag || '', [Validators.required]],
-      plcTag: [dk.plcTag || '', [Validators.required]],
+      plcTag: [dk.plcTag || '', [Validators.required, this.plcTagValidator()]],
       calibration: [calibration],
       reportStrategy: [dk.reportStrategy || null],
     });

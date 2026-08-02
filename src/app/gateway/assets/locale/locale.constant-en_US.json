@@ -1208,6 +1208,8 @@
     "ethercat-supported-formats": "Supported: .xlsx, .csv, .ods",
     "ethercat-valid-tags": "{{count}} valid tags",
     "ethercat-import-n-tags": "Import {{count}} Tags",
+    "eip-invalid-slc-address": "Enter an SLC/MicroLogix data-file address, e.g. N7:0, F8:1, B3:0/1, B3/17, T4:0.ACC, C5:0.PRE, ST10:0, S:1/15, L9:0",
+    "eip-invalid-logix-tag": "Enter a Logix tag name, e.g. MotorSpeed, Program:MainProgram.Temperature, Tags[3].Member",
     "eip-devices-title": "EtherNet/IP Devices",
     "eip-no-devices": "No devices configured. Click + to add an EtherNet/IP device.",
     "eip-plc-type": "PLC Type",

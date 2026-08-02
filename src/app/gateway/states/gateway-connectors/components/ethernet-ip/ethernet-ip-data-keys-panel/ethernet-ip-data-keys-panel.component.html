@@ -56,6 +56,14 @@
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="plcTag"
                    [placeholder]="isSLC ? 'N7:0' : 'Program:MainProgram.Temperature'">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(isSLC ? 'gateway.eip-invalid-slc-address' : 'gateway.eip-invalid-logix-tag') | translate"
+                      *ngIf="row.get('plcTag').hasError('invalidPlcTag') && row.get('plcTag').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
           </mat-form-field>
         </div>
       </ng-container>
@@ -80,6 +88,14 @@
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="plcTag"
                    [placeholder]="isSLC ? 'N7:0' : 'MotorSpeed'">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(isSLC ? 'gateway.eip-invalid-slc-address' : 'gateway.eip-invalid-logix-tag') | translate"
+                      *ngIf="row.get('plcTag').hasError('invalidPlcTag') && row.get('plcTag').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
           </mat-form-field>
         </div>
         <div class="tb-form-row column-xs">

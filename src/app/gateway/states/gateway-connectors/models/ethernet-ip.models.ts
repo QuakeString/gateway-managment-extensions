@@ -118,3 +118,30 @@ export const ETHERNET_IP_SLC_DRIVER_TYPES = new Set([
   EthernetIPPlcType.SLC500,
   EthernetIPPlcType.MICROLOGIX,
 ]);
+
+/**
+ * SLC / MicroLogix data-file address (PCCC), as written in RSLogix:
+ *   N7:0        integer            F8:1        float
+ *   B3:0/1      bit of an element  B3/17       bit number across the file
+ *   T4:0.ACC    timer member       C5:0.PRE    counter member
+ *   S:1/15      status bit         ST10:0      string
+ *   L9:0        long (MicroLogix)  A10:0       ASCII
+ *   N7:0{4}     element count
+ * Members: ACC PRE EN DN TT CU CD OV UN UA
+ */
+export const SLC_ADDRESS_REGEX =
+  /^\s*(?:(?:[LFBN]\d{1,3}:\d{1,3}(?:\/\d{1,2})?|[CT]\d{1,3}:\d{1,3}\.(?:ACC|PRE|EN|DN|TT|CU|CD|OV|UN|UA)|S:\d{1,3}(?:\/\d{1,2})?|B\d{1,3}\/\d{1,4}|ST\d{1,3}:\d{1,4}|A\d{1,3}:\d{1,4}|[IO]\d{0,3}:\d{1,3}(?:\.\d{1,3})?(?:\/\d{1,2})?)(?:\{\d+\})?)\s*$/i;
+
+/**
+ * Logix symbolic tag: MotorSpeed, Program:Main.Temp, Array[3], UDT.Member.
+ */
+export const LOGIX_TAG_REGEX =
+  /^\s*[A-Za-z_][A-Za-z0-9_]*(?::[A-Za-z_][A-Za-z0-9_]*)?(?:(?:\.[A-Za-z_][A-Za-z0-9_]*)|(?:\[\d+\]))*\s*$/;
+
+export function isValidEthernetIpTag(plcTag: string, isSLC: boolean): boolean {
+  const value = (plcTag ?? '').toString();
+  if (!value.trim()) {
+    return false;
+  }
+  return isSLC ? SLC_ADDRESS_REGEX.test(value) : LOGIX_TAG_REGEX.test(value);
+}
