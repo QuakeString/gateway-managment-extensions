@@ -108,6 +108,11 @@ export class FinsTagImportDialogComponent {
   fileLoaded = false;
   showInvalid = false;
 
+  /** Duplicate addresses are skipped by default; the operator can opt to
+   *  import them anyway (some projects intentionally map one PLC address
+   *  to several platform keys). */
+  allowDuplicates = false;
+
   pageIndex = 0;
   pageSize = 10;
 
@@ -232,6 +237,11 @@ export class FinsTagImportDialogComponent {
 
   get validRpcCount(): number {
     return this.validTags.filter(t => t.category === 'rpc').length;
+  }
+
+  onAllowDuplicatesChange(): void {
+    this.processRows();
+    this.cd.markForCheck();
   }
 
   toggleInvalid(): void {
@@ -446,10 +456,10 @@ export class FinsTagImportDialogComponent {
         errors.push(this.translate.instant('gateway.fins-bool-only'));
       }
       if (rawAddress && this.existingAddresses.has(rawAddress.toLowerCase())) {
-        errors.push(this.translate.instant('gateway.gw-dup-address-device'));
+        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-address-device')); }
       }
       if (rawAddress && seenAddresses.has(rawAddress.toLowerCase())) {
-        errors.push(this.translate.instant('gateway.gw-dup-address-file'));
+        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-address-file')); }
       }
 
       if (errors.length > 0) {

@@ -1314,6 +1314,8 @@
     "eip-keyswitch": "Keyswitch",
     "gw-no-keys-configured": "No keys configured",
     "gw-no-keys-configured-hint": "No keys configured. Add a key to get started.",
+    "gw-import-duplicates": "Import duplicate addresses",
+    "gw-import-duplicates-hint": "Off (default): rows whose address already exists on the device, or repeats earlier in the file, are skipped. On: they are imported anyway — useful when one PLC address is intentionally mapped to several platform keys.",
     "gw-dup-address-device": "Duplicate: address already exists on device",
     "gw-dup-address-file": "Duplicate: address repeated in file",
     "gw-dup-plc-tag-device": "Duplicate: PLC tag already exists on device",

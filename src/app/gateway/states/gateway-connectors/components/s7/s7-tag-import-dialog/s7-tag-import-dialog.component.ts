@@ -29,19 +29,23 @@ import * as XLSX from 'xlsx';
 // Accepts SIMATIC dot notation, WinCC comma notation (DB1,W0 / DB1,X0.0 /
 // DB1,INT2 / DB1,REAL8 / DB1,S20.30) and German mnemonics (E/A/Z).
 // A leading '%' (IEC notation, TIA exports) is stripped before validation.
-const S7_ADDRESS_REGEX = /^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|DB\d+\s*,\s*((DBX|X)\d+(\.\d+)?|(DB[BWDL]|BYTE|BY|B|CHAR|C|WORD|W|INT|I|DWORD|DINT|DW|DI|LREAL|LR|REAL|R)\d+|(STRING|S)\d+\.\d+)|[MIQEA]\d+\.\d+|[MIQEA][BWDLR]\d+|[CTZ]\d+)$/i;
+const S7_ADDRESS_REGEX = /^(DB\d+\.DB[XBWDL]\d+(\.\d+)?|DB\d+\s*,\s*((DBX|X)\d+(\.\d+)?|(DB[BWDL]|BYTE|BY|B|CHAR|C|WORD|W|INT|I|DWORD|DINT|DW|DD|DI|LREAL|LR|REAL|R)\d+|(DB|D)\d+(\.[0-7])?|(STRING|S)\d+\.\d+)|[MIQEA]\d+\.\d+|[MIQEA][BWDLR]\d+|[CTZ]\d+)$/i;
 
 // WinCC typed addresses carry the data type in the operand token — derive
 // the platform value type from the address when the file has no type column.
 const WINCC_TYPE_FROM_ADDRESS: [RegExp, S7ValueType][] = [
   [/^DB\d+\s*,\s*(STRING|S)\d+\.\d+$/i, S7ValueType.STRING],
   [/^DB\d+\s*,\s*(DBX|X)\d+(\.\d+)?$/i, S7ValueType.BOOL],
+  // WinCC bare byte-offset with a bit: DB53,D11.1 is a BOOL
+  [/^DB\d+\s*,\s*(DB|D)\d+\.[0-7]$/i, S7ValueType.BOOL],
   [/^DB\d+\s*,\s*(INT|I)\d+$/i, S7ValueType.INT16],
   [/^DB\d+\s*,\s*(WORD|W|DBW)\d+$/i, S7ValueType.UINT16],
   [/^DB\d+\s*,\s*(DINT|DI)\d+$/i, S7ValueType.INT32],
   [/^DB\d+\s*,\s*(DWORD|DW)\d+$/i, S7ValueType.UINT32],
   [/^DB\d+\s*,\s*(LREAL|LR)\d+$/i, S7ValueType.FLOAT64],
-  [/^DB\d+\s*,\s*(REAL|R|DBD)\d+$/i, S7ValueType.FLOAT32],
+  // DD (Doppelwort) is a 32-bit slot — REAL unless the file's type
+  // column says otherwise (that column always wins on import).
+  [/^DB\d+\s*,\s*(REAL|R|DBD|DD)\d+$/i, S7ValueType.FLOAT32],
   [/^DB\d+\s*,\s*(BYTE|BY|B|DBB)\d+$/i, S7ValueType.UINT8],
   [/^(DB\d+[.,]\s*DBX\d+\.\d+|[MIQEA]\d+\.\d+)$/i, S7ValueType.BOOL],
 ];
@@ -107,6 +111,11 @@ export class S7TagImportDialogComponent {
   invalidTags: ParsedTag[] = [];
   fileLoaded = false;
   showInvalid = false;
+
+  /** Duplicate addresses are skipped by default; the operator can opt to
+   *  import them anyway (some projects intentionally map one PLC address
+   *  to several platform keys). */
+  allowDuplicates = false;
 
   pageIndex = 0;
   pageSize = 10;
@@ -232,6 +241,11 @@ export class S7TagImportDialogComponent {
 
   get validRpcCount(): number {
     return this.validTags.filter(t => t.category === 'rpc').length;
+  }
+
+  onAllowDuplicatesChange(): void {
+    this.processRows();
+    this.cd.markForCheck();
   }
 
   toggleInvalid(): void {
@@ -448,10 +462,10 @@ export class S7TagImportDialogComponent {
         errors.push(this.translate.instant('gateway.s7-invalid-address-prefix', { address: rawAddress }));
       }
       if (rawAddress && this.existingAddresses.has(rawAddress.toLowerCase())) {
-        errors.push(this.translate.instant('gateway.gw-dup-address-device'));
+        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-address-device')); }
       }
       if (rawAddress && seenAddresses.has(rawAddress.toLowerCase())) {
-        errors.push(this.translate.instant('gateway.gw-dup-address-file'));
+        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-address-file')); }
       }
 
       if (errors.length > 0) {

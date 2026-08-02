@@ -66,6 +66,11 @@ export class EthernetIPTagImportDialogComponent {
   fileLoaded = false;
   showInvalid = false;
 
+  /** Duplicate addresses are skipped by default; the operator can opt to
+   *  import them anyway (some projects intentionally map one PLC address
+   *  to several platform keys). */
+  allowDuplicates = false;
+
   tagColumnControl = new FormControl('');
   plcTagColumnControl = new FormControl('');
   categoryColumnControl = new FormControl('');
@@ -140,6 +145,11 @@ export class EthernetIPTagImportDialogComponent {
 
   get validRpcCount(): number {
     return this.validTags.filter(t => t.category === 'rpc').length;
+  }
+
+  onAllowDuplicatesChange(): void {
+    this.processRows();
+    this.cd.markForCheck();
   }
 
   toggleInvalid(): void {
@@ -261,10 +271,10 @@ export class EthernetIPTagImportDialogComponent {
       if (!tagName) { errors.push(this.translate.instant('gateway.gw-missing-tag-name')); }
       if (!plcTag) { errors.push(this.translate.instant('gateway.gw-missing-plc-tag')); }
       if (plcTag && this.existingPlcTags.has(plcTag.toLowerCase())) {
-        errors.push(this.translate.instant('gateway.gw-dup-plc-tag-device'));
+        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-plc-tag-device')); }
       }
       if (plcTag && seenPlcTags.has(plcTag.toLowerCase())) {
-        errors.push(this.translate.instant('gateway.gw-dup-plc-tag-file'));
+        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-plc-tag-file')); }
       }
 
       if (errors.length > 0) {

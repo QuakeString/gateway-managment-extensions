@@ -32,6 +32,16 @@
       <span class="file-hint">{{ 'gateway.eip-supported-formats' | translate }}</span>
     </div>
 
+    <!-- Import options -->
+    <div *ngIf="fileLoaded && parsedTags.length > 0" class="import-options mb-3">
+      <mat-slide-toggle [(ngModel)]="allowDuplicates" [ngModelOptions]="{standalone: true}"
+                        (change)="onAllowDuplicatesChange()">
+        <span tb-hint-tooltip-icon="{{ 'gateway.gw-import-duplicates-hint' | translate }}">
+          {{ 'gateway.gw-import-duplicates' | translate }}
+        </span>
+      </mat-slide-toggle>
+    </div>
+
     <ng-container *ngIf="fileLoaded && detectedColumns.length > 0">
       <div class="column-mapping">
         <h4>{{ 'gateway.gw-column-mapping' | translate }}</h4>
