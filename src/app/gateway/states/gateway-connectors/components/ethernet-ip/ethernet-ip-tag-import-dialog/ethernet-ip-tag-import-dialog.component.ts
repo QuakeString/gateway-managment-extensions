@@ -20,12 +20,18 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { SharedModule } from '@shared/public-api';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
-import { EthernetIPDataKey, EthernetIPDataType, EthernetIPRpcConfig } from '../../../models/public-api';
+import { describeEthernetIpTagProblem, EthernetIPDataKey, EthernetIPDataType, EthernetIPRpcConfig,
+  ETHERNET_IP_SLC_DRIVER_TYPES, EthernetIPPlcType } from '../../../models/public-api';
 import * as XLSX from 'xlsx';
 
 export interface EthernetIPTagImportDialogData {
   deviceName: string;
   existingTags: EthernetIPDataKey[];
+  /** Which addressing dialect the imported addresses must be written in.
+   *  An SLC/MicroLogix device speaks PCCC data files (N7:0), a Logix one
+   *  symbolic tags (MotorSpeed) — a file written for the wrong one imports
+   *  cleanly and then fails on every poll. */
+  plcType?: EthernetIPPlcType;
 }
 
 export interface EthernetIPTagImportResult {
@@ -81,6 +87,7 @@ export class EthernetIPTagImportDialogComponent {
   rawRows: Record<string, any>[] = [];
 
   private existingPlcTags: Set<string>;
+  private isSLC = false;
 
   constructor(
     private dialogRef: MatDialogRef<EthernetIPTagImportDialogComponent>,
@@ -91,6 +98,7 @@ export class EthernetIPTagImportDialogComponent {
     this.existingPlcTags = new Set(
       (data.existingTags || []).map(t => t.plcTag?.toLowerCase())
     );
+    this.isSLC = ETHERNET_IP_SLC_DRIVER_TYPES.has(data.plcType);
   }
 
   onFileSelected(event: Event): void {
@@ -275,6 +283,10 @@ export class EthernetIPTagImportDialogComponent {
       }
       if (plcTag && seenPlcTags.has(plcTag.toLowerCase())) {
         if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-plc-tag-file')); }
+      }
+      if (plcTag) {
+        const problem = describeEthernetIpTagProblem(plcTag, this.isSLC);
+        if (problem) { errors.push(this.translate.instant(problem.key, problem.params)); }
       }
 
       if (errors.length > 0) {

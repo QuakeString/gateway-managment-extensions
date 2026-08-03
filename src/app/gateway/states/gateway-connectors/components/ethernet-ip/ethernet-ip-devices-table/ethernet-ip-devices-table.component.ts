@@ -249,7 +249,7 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
 
     this.dialog.open<EthernetIPTagImportDialogComponent, EthernetIPTagImportDialogData, EthernetIPTagImportResult>(
       EthernetIPTagImportDialogComponent, {
-        data: { deviceName: device.deviceName, existingTags },
+        data: { deviceName: device.deviceName, existingTags, plcType: device.plcType },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         autoFocus: false,

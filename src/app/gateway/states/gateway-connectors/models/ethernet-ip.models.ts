@@ -145,3 +145,66 @@ export function isValidEthernetIpTag(plcTag: string, isSLC: boolean): boolean {
   }
   return isSLC ? SLC_ADDRESS_REGEX.test(value) : LOGIX_TAG_REGEX.test(value);
 }
+
+export const SLC_FILE_TYPES: {[letter: string]: string} = {
+  N: 'integer', F: 'float', B: 'binary/bit', L: 'long', T: 'timer',
+  C: 'counter', S: 'status', ST: 'string', A: 'ASCII', I: 'input', O: 'output',
+};
+
+const SLC_ADDRESS_EXAMPLES = 'N7:0, F8:1, B3:0/1, B3/17, T4:0.ACC, C5:0.PRE, S:1/15, ST10:0, L9:0';
+
+/** A wrong file letter is nearly always the neighbouring key. */
+const SLC_NEIGHBOURING_KEY: {[letter: string]: string} = {M: 'N', V: 'B', G: 'F', D: 'S'};
+
+/**
+ * Why an address will not be readable — a translation key plus its
+ * parameters, or null when there is nothing wrong.
+ *
+ * Rejecting a row with "invalid" tells an operator holding a 200-line
+ * RSLogix export nothing they can act on. This names the mistake and, where
+ * it can, the address they meant. It mirrors describe_slc_address_problem()
+ * in the gateway's ethernet_ip connector, which explains the same two
+ * mistakes when a config predates this check.
+ */
+export function describeEthernetIpTagProblem(
+  plcTag: string, isSLC: boolean): {key: string; params?: {[key: string]: string}} | null {
+  const value = (plcTag ?? '').toString().trim();
+  if (!value) {
+    return {key: 'gateway.eip-address-empty'};
+  }
+  if (isValidEthernetIpTag(value, isSLC)) {
+    return null;
+  }
+  if (!isSLC) {
+    return {key: 'gateway.eip-invalid-logix-tag'};
+  }
+
+  // A dot where the element separator belongs: B3.17/6 -> B3:17/6.
+  // (A dot only ever introduces a member, as in T4:0.ACC.)
+  const dotted = /^([A-Za-z]{1,2})(\d{1,3})\.(\d.*)$/.exec(value);
+  if (dotted && SLC_FILE_TYPES[dotted[1].toUpperCase()]) {
+    const suggestion = `${dotted[1]}${dotted[2]}:${dotted[3]}`;
+    if (SLC_ADDRESS_REGEX.test(suggestion)) {
+      return {key: 'gateway.eip-address-dot-separator', params: {address: value, suggestion}};
+    }
+  }
+
+  const letters = /^([A-Za-z]{1,2})/.exec(value);
+  const fileType = letters ? letters[1].toUpperCase() : '';
+  if (fileType && !SLC_FILE_TYPES[fileType]) {
+    const near = SLC_NEIGHBOURING_KEY[fileType.charAt(0)];
+    const suggestion = near ? near + value.substring(fileType.length) : '';
+    return {
+      key: suggestion && SLC_ADDRESS_REGEX.test(suggestion)
+        ? 'gateway.eip-address-unknown-file-suggest'
+        : 'gateway.eip-address-unknown-file',
+      params: {
+        fileType,
+        suggestion,
+        types: Object.keys(SLC_FILE_TYPES).map(k => `${k} (${SLC_FILE_TYPES[k]})`).join(', '),
+      },
+    };
+  }
+
+  return {key: 'gateway.eip-address-invalid', params: {address: value, examples: SLC_ADDRESS_EXAMPLES}};
+}
