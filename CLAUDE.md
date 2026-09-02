@@ -9,9 +9,10 @@ SENTIENT's module map (`modules-map.ts`) at load time.
 - `package.json` depends on `sentient-ui-types` (github QuakeString/sentient-ui-types),
   generated from SENTIENT's `ui-ngx`. NOT upstream `thingsboard-ui-types` —
   SENTIENT has diverged (e.g. `WidgetContext.units` is `TbUnit`, not `string`).
-- The pinned tag MUST equal the SENTIENT version this build will run in.
-  New SENTIENT release → run `scripts/publish-ui-types.sh` in the SENTIENT
-  repo → bump the pin here → rebuild.
+- The pinned tag MUST equal the SENTIENT release (image tag, e.g. 4.3.0.22)
+  this build will run in — not ui-ngx's package.json version. New SENTIENT
+  release → `scripts/publish-ui-types.sh <release-tag>` in the SENTIENT repo
+  → bump the pin here → rebuild.
 - `@angular/*`, `@ngrx/store`, echarts pins mirror SENTIENT `ui-ngx` exactly;
   the runtime supplies them. The `thingsboard/echarts` tarball URL is the
   shared fork — it is correct, don't "fix" it.

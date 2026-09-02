@@ -60,14 +60,15 @@ definitions, published from `ui-ngx` as
 [`sentient-ui-types`](https://github.com/QuakeString/sentient-ui-types) — not
 against upstream `thingsboard-ui-types`, which SENTIENT has diverged from.
 
-The pinned tag **must equal the SENTIENT release the extension will run in**:
+The pinned tag **must equal the SENTIENT release (image tag) the extension will run in**:
 
 ```
-"sentient-ui-types": "https://github.com/QuakeString/sentient-ui-types.git#4.3.0"
+"sentient-ui-types": "https://github.com/QuakeString/sentient-ui-types.git#4.3.0.22"
 ```
 
-When SENTIENT is released, publish its types with `scripts/publish-ui-types.sh`
-in the SENTIENT repo, bump this pin to the new tag, and rebuild. A mismatch
+When SENTIENT is released, publish its types with
+`scripts/publish-ui-types.sh <release-tag>` in the SENTIENT repo, bump this pin
+to that tag, and rebuild. A mismatch
 fails here at compile time rather than on a running plant.
 
 The `@angular/*` pins in `package.json` are kept identical to SENTIENT's

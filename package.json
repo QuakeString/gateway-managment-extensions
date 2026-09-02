@@ -73,7 +73,7 @@
     "prettier": "^2.8.3",
     "rxjs": "~7.8.1",
     "tailwindcss": "^3.4.14",
-    "sentient-ui-types": "https://github.com/QuakeString/sentient-ui-types.git#4.3.0",
+    "sentient-ui-types": "https://github.com/QuakeString/sentient-ui-types.git#4.3.0.22",
     "ts-node": "^10.9.2",
     "tslib": "^2.7.0",
     "typescript": "~5.5.4",
