@@ -35,22 +35,22 @@
         "dist/gateway-extension/*"
       ],
       "@env/*": [
-        "node_modules/thingsboard/src/environments/*"
+        "node_modules/sentient-ui-types/src/environments/*"
       ],
       "@app/*": [
-        "node_modules/thingsboard/src/app/*"
+        "node_modules/sentient-ui-types/src/app/*"
       ],
       "@core/*": [
-        "node_modules/thingsboard/src/app/core/*"
+        "node_modules/sentient-ui-types/src/app/core/*"
       ],
       "@shared/*": [
-        "node_modules/thingsboard/src/app/shared/*"
+        "node_modules/sentient-ui-types/src/app/shared/*"
       ],
       "@modules/*": [
-        "node_modules/thingsboard/src/app/modules/*"
+        "node_modules/sentient-ui-types/src/app/modules/*"
       ],
       "@home/*": [
-        "node_modules/thingsboard/src/app/modules/home/*"
+        "node_modules/sentient-ui-types/src/app/modules/home/*"
       ],
       "ace": [
         "node_modules/ace-builds/src-noconflict/ace.js"

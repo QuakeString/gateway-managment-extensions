@@ -39,11 +39,19 @@ import {
 } from 'echarts/components';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
-import { LegendConfig, LegendData, LegendKey, SharedModule, WidgetTimewindow } from '@shared/public-api';
+import {
+  isNotEmptyTbUnits,
+  LegendConfig,
+  LegendData,
+  LegendKey,
+  SharedModule,
+  TbUnit,
+  WidgetTimewindow
+} from '@shared/public-api';
 import { CallbackDataParams, XAXisOption, YAXisOption } from 'echarts/types/dist/shared';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { DomSanitizer } from '@angular/platform-browser';
-import { formatValue, isDefinedAndNotNull } from '@core/public-api';
+import { formatValue, isDefinedAndNotNull, UnitService } from '@core/public-api';
 import { calculateAxisSize, measureAxisNameSize } from '@home/components/public-api';
 import { ECharts } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { CommonModule } from '@angular/common';
@@ -81,8 +89,17 @@ export class GatewayStatisticsChartComponent implements OnInit, AfterViewInit {
   constructor(
     private renderer: Renderer2,
     private sanitizer: DomSanitizer,
+    private unitService: UnitService,
     public widgetComponent: WidgetComponent,
   ) {}
+
+  // SENTIENT units are a TbUnit (a plain symbol or a {from,to} mapping), not a
+  // string: values are converted into the target unit and displayed with the
+  // target symbol, exactly as SENTIENT's own time-series chart does.
+  private unitsOf(dataIndex: number): TbUnit {
+    const keyUnits = this.ctx.data[dataIndex]?.dataKey?.units;
+    return isNotEmptyTbUnits(keyUnits) ? keyUnits : this.ctx.units;
+  }
 
   ngOnInit(): void {
     this.initEchart();
@@ -156,12 +173,13 @@ export class GatewayStatisticsChartComponent implements OnInit, AfterViewInit {
     this.updateXAxisTimeWindow(this.xAxis, this.ctx.defaultSubscription.timeWindow);
     for(const key in this.ctx.data) {
       newData[key] = [];
+      const convert = this.unitService.geUnitConverter(this.unitsOf(Number(key)));
       for(const [ts, value] of this.ctx.data[key].data) {
         newData[key].push({
           name: ts,
           value: [
             ts,
-            value
+            typeof value === 'number' ? convert(value) : value
           ]
         })
       }
@@ -298,8 +316,7 @@ export class GatewayStatisticsChartComponent implements OnInit, AfterViewInit {
     this.renderer.appendChild(labelElement, labelTextElement);
     const decimals = isDefinedAndNotNull(this.ctx.data[index].dataKey.decimals) ?
       this.ctx.data[index].dataKey.decimals : this.ctx.decimals;
-    const units = isDefinedAndNotNull(this.ctx.data[index].dataKey.units) ?
-      this.ctx.data[index].dataKey.units : this.ctx.units;
+    const units = this.unitService.getTargetUnitSymbol(this.unitsOf(index));
     const value  = formatValue(param.value[1], decimals, units, false);
     const valueElement: HTMLElement = this.renderer.createElement('div');
     this.renderer.setProperty(valueElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, value));
@@ -383,7 +400,7 @@ export class GatewayStatisticsChartComponent implements OnInit, AfterViewInit {
         fontWeight: 400,
         show: true,
         formatter: (value: any) => {
-          return  formatValue(value, this.ctx.decimals,  this.ctx.units, false);
+          return  formatValue(value, this.ctx.decimals, this.unitService.getTargetUnitSymbol(this.ctx.units), false);
         }
       },
       splitLine: {

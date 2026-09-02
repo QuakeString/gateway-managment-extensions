@@ -18,7 +18,7 @@ const postcss = require('postcss');
 const selectorParser = require('postcss-selector-parser');
 const path = require("path");
 
-const tbStylesCss = path.resolve(path.join('.', 'node_modules', 'thingsboard', 'src', 'styles.css'));
+const tbStylesCss = path.resolve(path.join('.', 'node_modules', 'sentient-ui-types', 'src', 'styles.css'));
 const distDir = path.resolve(path.join('.', 'dist'));
 const tbClassesJson = path.resolve(path.join(distDir, 'tbClasses.json'));
 const classes = new Set();

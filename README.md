@@ -51,6 +51,28 @@ http://localhost:4201/static/gateway/gateway-management-extension.js
 ```
 You must also check "Is module"
 
+## SENTIENT UI types (the compile-time contract)
+
+This extension is loaded into the SENTIENT UI at runtime and resolves its
+imports (`@shared/...`, `@core/...`, `@home/...`, `@angular/...`) through
+SENTIENT's module map. It therefore compiles against **SENTIENT's own** type
+definitions, published from `ui-ngx` as
+[`sentient-ui-types`](https://github.com/QuakeString/sentient-ui-types) — not
+against upstream `thingsboard-ui-types`, which SENTIENT has diverged from.
+
+The pinned tag **must equal the SENTIENT release the extension will run in**:
+
+```
+"sentient-ui-types": "https://github.com/QuakeString/sentient-ui-types.git#4.3.0"
+```
+
+When SENTIENT is released, publish its types with `scripts/publish-ui-types.sh`
+in the SENTIENT repo, bump this pin to the new tag, and rebuild. A mismatch
+fails here at compile time rather than on a running plant.
+
+The `@angular/*` pins in `package.json` are kept identical to SENTIENT's
+`ui-ngx` for the same reason — the runtime supplies those packages.
+
 ## Build project
 
 ```
