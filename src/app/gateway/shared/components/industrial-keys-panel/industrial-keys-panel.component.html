@@ -101,6 +101,7 @@
           [hostSelector]="hostSelector"
           (fullscreenToggled)="onFullscreenToggled($event)"
           (addRowRequested)="onAddClicked()"
+          (addRowsRequested)="onAddRowsRequested($event)"
           (deleteRowsRequested)="onSpreadsheetDeleteRowsRequested($event)">
         </tb-spreadsheet-keys>
       </ng-template>

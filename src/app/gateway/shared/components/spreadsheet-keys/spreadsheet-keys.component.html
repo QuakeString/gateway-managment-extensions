@@ -25,6 +25,24 @@
     <button type="button"
             mat-icon-button
             class="header-action-btn"
+            (click)="openImport()"
+            [matTooltip]="'gateway.keys-import' | translate"
+            matTooltipPosition="above">
+      <mat-icon>file_upload</mat-icon>
+    </button>
+    <input #fileInput type="file" class="import-file-input" [accept]="importAccept" (change)="onImportFile($event)">
+    <button type="button"
+            mat-icon-button
+            class="header-action-btn"
+            (click)="exportCsv()"
+            [disabled]="!filteredControls.length"
+            [matTooltip]="'gateway.keys-export' | translate"
+            matTooltipPosition="above">
+      <mat-icon>file_download</mat-icon>
+    </button>
+    <button type="button"
+            mat-icon-button
+            class="header-action-btn"
             (click)="toggleFullscreen()"
             [matTooltip]="(isFullscreen ? 'gateway.keys-exit-fullscreen' : 'gateway.keys-fullscreen') | translate"
             matTooltipPosition="above">
@@ -34,8 +52,14 @@
   <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
     {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.length } }}
   </div>
+  <div *ngIf="importStatus" class="import-status" [class.error]="importStatus.error">
+    <span>{{ importStatus.key | translate:importStatus.params }}</span>
+    <button type="button" class="import-status-close" (click)="clearImportStatus()"><mat-icon>close</mat-icon></button>
+  </div>
 
   <div class="spreadsheet-wrapper key-panel" *ngIf="displayedControls.length; else noKeysFs"
+       tabindex="0"
+       (keydown)="onGridKeydown($event)"
        (scroll)="onKeyPanelScroll($event)">
     <div class="spreadsheet-table" [style.grid-template-columns]="gridTemplateColumns">
       <!-- Header row -->
@@ -44,6 +68,8 @@
         <div class="header-cell"
              [class.center]="col.headerClass === 'center'"
              [class.sortable]="col.sortable"
+             [class.active-col]="isActiveColumn(col.key)"
+             [title]="'gateway.keys-resize-hint' | translate"
              (click)="col.sortable ? setSortField(col.key) : null">
           {{ col.label | translate }}
           <mat-icon *ngIf="col.sortable && sortField === col.key" class="sort-icon">
@@ -62,7 +88,7 @@
           <ng-container *ngFor="let col of columns">
             <!-- Regular input -->
             <ng-container *ngIf="col.type === 'input' && !col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input class="cell-input" [name]="col.key" [formControlName]="col.key"
                        [class.invalid]="isCellInvalid(col, item.control)"
                        [placeholder]="col.placeholder || ''"
@@ -81,7 +107,7 @@
 
             <!-- Number input with formControlName -->
             <ng-container *ngIf="col.type === 'number' && !col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input class="cell-input" type="number" [name]="col.key" [formControlName]="col.key"
                        [class.invalid]="isCellInvalid(col, item.control)"
                        [step]="col.step || 1"
@@ -99,7 +125,7 @@
 
             <!-- Select with formControlName -->
             <ng-container *ngIf="col.type === 'select' && !col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <select class="cell-select" [formControlName]="col.key" (keydown)="onCellKeydown($event)">
                   <option *ngFor="let opt of getColumnOptions(col, item.control)" [ngValue]="opt.value">{{ col.translateLabels ? (opt.label | translate) : opt.label }}</option>
                 </select>
@@ -108,14 +134,14 @@
 
             <!-- Checkbox with formControlName -->
             <ng-container *ngIf="col.type === 'checkbox' && !col.key.startsWith('_') && !col.externalControl">
-              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input type="checkbox" class="cell-checkbox" [formControlName]="col.key">
               </div>
             </ng-container>
 
             <!-- Checkbox with externalControl -->
             <ng-container *ngIf="col.type === 'checkbox' && col.externalControl">
-              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input type="checkbox" class="cell-checkbox"
                        [formControl]="col.externalControl(item.control)">
               </div>
@@ -123,7 +149,7 @@
 
             <!-- Imperative input (_prefixed key) -->
             <ng-container *ngIf="col.type === 'input' && col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input class="cell-input" [name]="col.key"
                        [value]="getCellValue(col, item.control) ?? ''"
                        [disabled]="isCellDisabled(col, item.control)"
@@ -135,7 +161,7 @@
 
             <!-- Imperative number (_prefixed key) -->
             <ng-container *ngIf="col.type === 'number' && col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input class="cell-input" type="number" [name]="col.key"
                        [value]="getCellValue(col, item.control) ?? ''"
                        [disabled]="isCellDisabled(col, item.control)"
@@ -148,7 +174,7 @@
 
             <!-- Imperative select (_prefixed key) -->
             <ng-container *ngIf="col.type === 'select' && col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <select class="cell-select"
                         [disabled]="isCellDisabled(col, item.control)"
                         (change)="onCellValueChange(col, item.control, $event)"
@@ -162,7 +188,7 @@
 
             <!-- Imperative checkbox (_prefixed key, no externalControl) -->
             <ng-container *ngIf="col.type === 'checkbox' && col.key.startsWith('_') && !col.externalControl">
-              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" (mousedown)="onCellClick(item.control)">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
                 <input type="checkbox" class="cell-checkbox"
                        [checked]="getCellValue(col, item.control)"
                        [disabled]="isCellDisabled(col, item.control)"

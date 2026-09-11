@@ -322,6 +322,14 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
     this.spreadsheetKeys?.focusLastRow();
   }
 
+  /** Spreadsheet import: the host appends one default row per request,
+   *  synchronously, and the spreadsheet fills them in afterwards. */
+  onAddRowsRequested(count: number): void {
+    for (let i = 0; i < count; i++) {
+      this.addKeyRequested.emit();
+    }
+  }
+
   onDeleteClicked(index: number): void {
     this.deleteKeyRequested.emit(index);
   }
