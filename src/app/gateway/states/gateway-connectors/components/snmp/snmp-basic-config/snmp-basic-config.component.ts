@@ -19,6 +19,7 @@ import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
 import {
+  SNMP_ENGINE_ID_REGEX,
   SNMP_TRAP_DEFAULT_HOST,
   SNMP_TRAP_DEFAULT_PORT,
   SnmpBasicConfig,
@@ -81,6 +82,7 @@ export class SnmpBasicConfigComponent extends GatewayConnectorBasicConfigDirecti
         host: [SNMP_TRAP_DEFAULT_HOST],
         port: [SNMP_TRAP_DEFAULT_PORT, [Validators.min(1), Validators.max(65535)]],
         community: [''],
+        engineId: ['', [Validators.pattern(SNMP_ENGINE_ID_REGEX)]],
       }),
       devices: [[]],
     });

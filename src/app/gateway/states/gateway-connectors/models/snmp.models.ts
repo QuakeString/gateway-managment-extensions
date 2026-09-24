@@ -210,6 +210,11 @@ export interface SnmpNotificationsConfig {
   port?: number;
   /** Accepted community strings; none accepts any. */
   community?: string | string[];
+  /**
+   * This receiver's SNMPv3 engine ID (hex), the one v3 inform senders
+   * discover or are configured with. Omitted: derived from the connector id.
+   */
+  engineId?: string;
 }
 
 export interface SnmpDeviceConfig {
@@ -272,7 +277,11 @@ export interface SnmpNotificationsForm {
   host: string;
   port: number | null;
   community: string;
+  engineId: string;
 }
+
+/** RFC 3411 SnmpEngineID: 5 to 32 octets of hex, optionally 0x-prefixed or colon-separated. */
+export const SNMP_ENGINE_ID_REGEX = /^(0x)?([0-9a-fA-F]{2}:?){5,32}$/;
 
 export interface SnmpBasicConfigForm {
   notifications: SnmpNotificationsForm;
@@ -286,6 +295,7 @@ export function snmpNotificationsToForm(config?: SnmpNotificationsConfig): SnmpN
     host: config?.host ?? SNMP_TRAP_DEFAULT_HOST,
     port: config?.port ?? SNMP_TRAP_DEFAULT_PORT,
     community: Array.isArray(community) ? community.join(', ') : (community ?? ''),
+    engineId: config?.engineId ?? '',
   };
 }
 
@@ -308,6 +318,10 @@ export function snmpNotificationsFromForm(form?: SnmpNotificationsForm): SnmpNot
     out.community = communities[0];
   } else if (communities.length > 1) {
     out.community = communities;
+  }
+  const engineId = (form.engineId ?? '').trim();
+  if (engineId) {
+    out.engineId = engineId;
   }
   return out;
 }

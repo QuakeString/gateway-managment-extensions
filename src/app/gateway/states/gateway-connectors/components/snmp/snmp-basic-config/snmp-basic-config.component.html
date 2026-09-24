@@ -64,6 +64,23 @@
               </mat-form-field>
             </div>
           </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.trap-engine-id' | translate }}">{{ 'gateway.snmp-trap-engine-id' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="engineId" [placeholder]="'gateway.snmp-trap-engine-id-derived' | translate"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'gateway.snmp-trap-engine-id-invalid' | translate"
+                          *ngIf="basicFormGroup.get('notifications.engineId').hasError('pattern')
+                                  && basicFormGroup.get('notifications.engineId').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
           <div class="tb-form-hint tb-primary-fill tb-flex align-center">
             {{ 'gateway.snmp-trap-receiver-hint' | translate }}
           </div>
