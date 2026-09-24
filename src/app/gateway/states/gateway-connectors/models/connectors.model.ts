@@ -96,6 +96,7 @@ export const GatewayConnectorConfigVersionMap = new Map<ConnectorType, GatewayVe
   [ConnectorType.MCPROTOCOL, GatewayVersion.v3_7_0],
   [ConnectorType.ETHERNET_IP, GatewayVersion.v3_7_0],
   [ConnectorType.IEC61850, GatewayVersion.v3_7_0],
+  [ConnectorType.SNMP, GatewayVersion.v3_7_0],
 ]);
 
 export interface ConnectorDeviceInfo {

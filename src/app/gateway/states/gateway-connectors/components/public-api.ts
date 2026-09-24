@@ -34,3 +34,4 @@ export * from './mcprotocol/public-api';
 export * from './ethercat/public-api';
 export * from './ethernet-ip/public-api';
 export * from './iec61850/public-api';
+export * from './snmp/public-api';

@@ -1,0 +1,209 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<tb-industrial-keys-panel
+  [keysFormArray]="keysFormArray"
+  [title]="panelTitle"
+  [addKeyLabel]="addKeyTitle"
+  [deleteKeyTitle]="deleteKeyTitle"
+  [emptyText]="noKeysText"
+  [searchFields]="searchFields"
+  [sortFields]="sortFields"
+  [spreadsheetColumns]="spreadsheetColumns"
+  hostSelector="tb-snmp-data-keys-panel"
+  [rowHeaderTpl]="rowHeaderTpl"
+  [rowBodyTpl]="rowBodyTpl"
+  [applyDisabled]="keysFormArray.invalid || !keysFormArray.dirty"
+  (addKeyRequested)="onAddRequested()"
+  (deleteKeyRequested)="onDeleteRequested($event)"
+  (applyRequested)="onApplyRequested()"
+  (cancelRequested)="onCancelRequested()">
+</tb-industrial-keys-panel>
+
+<!-- Row header — the same three labeled pairs as the other industrial panels. -->
+<ng-template #rowHeaderTpl let-row let-index="index">
+  <div class="tb-flex">
+    <div class="title-container tb-flex">{{ nameLabel | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ row.get(nameField)?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.method' | translate }}:
+      <span class="key-label">{{ SnmpMethodTranslationsMap.get(row.get('method')?.value) | translate }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.snmp-oid' | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ targetOf(row) }}</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #rowBodyTpl let-row let-index="index">
+  <ng-container [formGroup]="row">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ 'gateway.hints.snmp.data-keys' | translate }}
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.platform-side' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ (isRpc ? 'gateway.hints.snmp.request-filter' : (isAttributeUpdate ? 'gateway.hints.snmp.attribute-filter' : 'gateway.hints.snmp.key')) | translate }}">{{ nameLabel | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput [formControlName]="nameField" [placeholder]="isPolled ? 'sysUpTime' : (isRpc ? 'setValue' : 'sysContact')">
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.connector-side' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.method' | translate }}">{{ 'gateway.method' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="method">
+              <mat-option *ngFor="let method of methods" [value]="method">{{ SnmpMethodTranslationsMap.get(method) | translate }}</mat-option>
+            </mat-select>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.snmp-bulk-v1' | translate"
+                      *ngIf="row.get('method').hasError('bulkV1')"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs" *ngIf="shapeOf(row) === 'single' || shapeOf(row) === 'list'">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ (shapeOf(row) === 'list' ? 'gateway.hints.snmp.oids' : 'gateway.hints.snmp.oid') | translate }}">{{ (shapeOf(row) === 'list' ? 'gateway.snmp-oids' : 'gateway.snmp-oid') | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="oid" [placeholder]="shapeOf(row) === 'list' ? '1.3.6.1.2.1.1.1.0, 1.3.6.1.2.1.1.2.0' : '1.3.6.1.2.1.1.1.0'">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(row.get('oid').hasError('oidRequired') ? 'gateway.snmp-oid-required' : 'gateway.snmp-invalid-oid') | translate"
+                      *ngIf="(row.get('oid').hasError('oidRequired') || row.get('oid').hasError('invalidOid'))
+                             && row.get('oid').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <ng-container *ngIf="shapeOf(row) === 'bulkget'">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.scalar-oids' | translate }}">{{ 'gateway.snmp-scalar-oids' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="scalarOid" placeholder="1.3.6.1.2.1.1.3.0, 1.3.6.1.2.1.1.5.0">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="(row.get('scalarOid').hasError('oidRequired') ? 'gateway.snmp-bulkget-required' : 'gateway.snmp-invalid-oid') | translate"
+                        *ngIf="(row.get('scalarOid').hasError('oidRequired') || row.get('scalarOid').hasError('invalidOid'))
+                               && row.get('scalarOid').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.repeating-oids' | translate }}">{{ 'gateway.snmp-repeating-oids' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="repeatingOid" placeholder="1.3.6.1.2.1.2.2.1.10, 1.3.6.1.2.1.2.2.1.16">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'gateway.snmp-invalid-oid' | translate"
+                        *ngIf="row.get('repeatingOid').hasError('invalidOid') && row.get('repeatingOid').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.max-list-size' | translate }}">{{ 'gateway.snmp-max-list-size' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="maxListSize">
+            </mat-form-field>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="shapeOf(row) === 'mappings'">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" [class.tb-required]="isPolled" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.mappings' | translate }}">{{ 'gateway.snmp-mappings' | translate }}</div>
+            <div class="tb-flex no-gap flex-col">
+              <div class="tb-form-hint tb-primary-fill" *ngIf="!isPolled && mappingsOf(row).length === 0">
+                {{ 'gateway.snmp-mappings-from-request' | translate }}
+              </div>
+              <div class="tb-form-hint tb-primary-fill" *ngIf="row.hasError('mappingsRequired')">
+                {{ 'gateway.snmp-mappings-required' | translate }}
+              </div>
+              <ng-container formArrayName="mappings">
+                <div class="tb-form-row no-padding" *ngFor="let mapping of mappingsOf(row).controls; let i = index" [formGroupName]="i">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="oid" placeholder="1.3.6.1.2.1.1.5.0">
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="'gateway.snmp-invalid-oid' | translate"
+                              *ngIf="mapping.get('oid').invalid && mapping.get('oid').touched"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="value" [placeholder]="isRpc ? '${value}' : '${attribute}'">
+                  </mat-form-field>
+                  <button type="button"
+                          mat-icon-button
+                          [matTooltip]="'gateway.gw-delete' | translate"
+                          matTooltipPosition="above"
+                          (click)="removeMapping(row, i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </ng-container>
+              <div>
+                <button type="button" mat-stroked-button color="primary" (click)="addMapping(row)">
+                  <mat-icon>add</mat-icon>
+                  {{ 'gateway.snmp-add-mapping' | translate }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <div class="tb-form-row column-xs" *ngIf="writes(row)">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.value-type' | translate }}">{{ 'gateway.gw-value-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="valueType">
+              <mat-option value="">{{ 'gateway.snmp-value-type-default' | translate }}</mat-option>
+              <mat-option *ngFor="let type of valueTypes" [value]="type">{{ SnmpValueTypeTranslationsMap.get(type) }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.community-override' | translate }}">{{ 'gateway.snmp-community' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="community" [placeholder]="'gateway.snmp-inherited' | translate">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.timeout-override' | translate }}">{{ 'gateway.snmp-timeout-s' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="timeout" [placeholder]="'gateway.snmp-inherited' | translate">
+          </mat-form-field>
+        </div>
+        <ng-container *ngIf="isPolled">
+          <tb-calibration-block formControlName="calibration" [canCalibrate]="true"/>
+          <tb-report-strategy
+            class="stroked tb-form-panel"
+            [defaultValue]="ReportStrategyDefaultValue.Key"
+            formControlName="reportStrategy"
+            [isExpansionMode]="true"
+          />
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

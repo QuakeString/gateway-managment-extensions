@@ -1,0 +1,22 @@
+/*
+ * Copyright © 2016-2025 The Sentient Authors
+ *
+ * Panel-specific styles only — toolbar / search / fullscreen /
+ * footer are owned by the shared IndustrialKeysPanel shell.
+ */
+
+:host {
+  display: block;
+
+  .title-container {
+    width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .key-label {
+    font-weight: 400;
+    padding-left: 4px;
+  }
+}

@@ -13,18 +13,8 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-export * from './connectors.model';
-export * from './modbus.models';
-export * from './mqtt.models';
-export * from './opc.models';
-export * from './socket.models';
-export * from './bacnet.models';
-export * from './rest.models';
-export * from './s7.models';
-export * from './ads.models';
-export * from './fins.models';
-export * from './mcprotocol.models';
-export * from './ethercat.models';
-export * from './ethernet-ip.models';
-export * from './iec61850.models';
-export * from './snmp.models';
+export * from './snmp-basic-config/snmp-basic-config.component';
+export * from './snmp-legacy-basic-config/snmp-legacy-basic-config.component';
+export * from './snmp-devices-table/snmp-devices-table.component';
+export * from './snmp-device-dialog/snmp-device-dialog.component';
+export * from './snmp-data-keys-panel/snmp-data-keys-panel.component';

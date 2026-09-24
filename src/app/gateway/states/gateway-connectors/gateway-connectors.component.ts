@@ -91,6 +91,7 @@ import { McProtocolBasicConfigComponent, McProtocolLegacyBasicConfigComponent } 
 import { EtherCatBasicConfigComponent, EtherCatLegacyBasicConfigComponent } from './components/ethercat/public-api';
 import { EthernetIPBasicConfigComponent, EthernetIPLegacyBasicConfigComponent } from './components/ethernet-ip/public-api';
 import { IEC61850BasicConfigComponent, IEC61850LegacyBasicConfigComponent } from './components/iec61850/public-api';
+import { SnmpBasicConfigComponent, SnmpLegacyBasicConfigComponent } from './components/snmp/public-api';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null): boolean {
@@ -136,6 +137,8 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
     EthernetIPLegacyBasicConfigComponent,
     IEC61850BasicConfigComponent,
     IEC61850LegacyBasicConfigComponent,
+    SnmpBasicConfigComponent,
+    SnmpLegacyBasicConfigComponent,
   ],
 })
 export class GatewayConnectorComponent extends PageComponent implements AfterViewInit, OnDestroy {
@@ -160,6 +163,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     ConnectorType.MCPROTOCOL,
     ConnectorType.ETHERNET_IP,
     ConnectorType.IEC61850,
+    ConnectorType.SNMP,
   ]);
   readonly gatewayLogLevel = Object.values(GatewayLogLevel);
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];

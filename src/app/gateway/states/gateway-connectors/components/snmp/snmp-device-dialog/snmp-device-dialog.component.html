@@ -1,0 +1,344 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+<div [formGroup]="deviceForm" class="dialog-mapping">
+  <mat-toolbar color="primary">
+    <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} {{ 'gateway.snmp-device' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="deviceName" placeholder="Core switch"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.gw-device-name-required' | translate"
+                      *ngIf="deviceForm.get('deviceName').hasError('required')
+                                           && deviceForm.get('deviceName').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ 'gateway.device-profile' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.ip' | translate }}">{{ 'gateway.snmp-ip' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="ip" placeholder="192.168.10.2"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.gw-host-required' | translate"
+                      *ngIf="deviceForm.get('ip').hasError('required')
+                                           && deviceForm.get('ip').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.port' | translate }}">{{ 'gateway.port' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="port"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.snmp-port-required' | translate"
+                      *ngIf="(deviceForm.get('port').hasError('required')
+                              || deviceForm.get('port').hasError('min')
+                              || deviceForm.get('port').hasError('max'))
+                              && deviceForm.get('port').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.version' | translate }}">{{ 'gateway.snmp-version' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="version">
+              <mat-option *ngFor="let version of versions" [value]="version">{{ SnmpVersionTranslationsMap.get(version) | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="!isV3">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.community' | translate }}">{{ 'gateway.snmp-community' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="community" placeholder="public"/>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked" *ngIf="isV3">
+        <div class="tb-form-panel-title">{{ 'gateway.snmp-security-title' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.security-name' | translate }}">{{ 'gateway.snmp-security-name' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="securityName"/>
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'gateway.snmp-security-name-required' | translate"
+                        *ngIf="deviceForm.get('securityName').hasError('required')
+                                             && deviceForm.get('securityName').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.security-level' | translate }}">{{ 'gateway.snmp-security-level' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="securityLevel">
+                <mat-option *ngFor="let level of securityLevels" [value]="level">{{ level }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+        <ng-container *ngIf="needsAuth">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.snmp-auth-protocol' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="authProtocol">
+                  <mat-option *ngFor="let protocol of authProtocols" [value]="protocol">{{ protocol }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.auth-key' | translate }}">{{ 'gateway.snmp-auth-key' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="password" formControlName="authKey" autocomplete="new-password"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'gateway.snmp-auth-key-required' | translate"
+                          *ngIf="deviceForm.get('authKey').hasError('required')
+                                               && deviceForm.get('authKey').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="needsPriv">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.snmp-priv-protocol' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="privProtocol">
+                  <mat-option *ngFor="let protocol of privProtocols" [value]="protocol">{{ protocol }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.priv-key' | translate }}">{{ 'gateway.snmp-priv-key' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="password" formControlName="privKey" autocomplete="new-password"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'gateway.snmp-priv-key-required' | translate"
+                          *ngIf="deviceForm.get('privKey').hasError('required')
+                                               && deviceForm.get('privKey').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </ng-container>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.context-name' | translate }}">{{ 'gateway.snmp-context-name' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="contextName"/>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.engine-id' | translate }}">{{ 'gateway.snmp-engine-id' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="engineId" placeholder="80001f8880e9bd5b3c0b2d5b6a"/>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ 'gateway.advanced-connection-settings' | translate }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding">
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.timeout' | translate }}">{{ 'gateway.snmp-timeout-s' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="timeout"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.gw-poll-period-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="pollPeriod"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.gw-connect-attempts' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="connectAttemptCount"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.gw-wait-after-failed-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="waitAfterFailedAttemptsMs"/>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+      <div *ngIf="bulkOnV1" class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ 'gateway.snmp-bulk-v1' | translate }}
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('telemetry').value">
+            <mat-chip *ngFor="let ts of (deviceForm.get('telemetry').value | slice: 0 : 50)">
+              {{ chipLabel(ts) }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #telemetryButton
+                  (click)="manageKeys($event, telemetryButton, SnmpValueKey.TELEMETRY)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
+            <mat-chip *ngFor="let attr of (deviceForm.get('attributes').value | slice: 0 : 50)">
+              {{ chipLabel(attr) }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #attributesButton
+                  (click)="manageKeys($event, attributesButton, SnmpValueKey.ATTRIBUTES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-attribute-updates' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdateRequests').value">
+            <mat-chip *ngFor="let au of (deviceForm.get('attributeUpdateRequests').value | slice: 0 : 50)">
+              {{ chipLabel(au) }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #attributeUpdatesButton
+                  (click)="manageKeys($event, attributeUpdatesButton, SnmpValueKey.ATTRIBUTES_UPDATES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-rpc-methods' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('serverSideRpcRequests').value">
+            <mat-chip *ngFor="let rpc of (deviceForm.get('serverSideRpcRequests').value | slice: 0 : 50)">
+              {{ chipLabel(rpc) }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #rpcButton
+                  (click)="manageKeys($event, rpcButton, SnmpValueKey.RPC)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'gateway.gw-cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="deviceForm.invalid || bulkOnV1 || !keysPopupClosed">
+      {{ (isEdit ? 'action.update' : 'action.add') | translate }}
+    </button>
+  </div>
+</div>
