@@ -52,7 +52,11 @@ import {
   SnmpKeyEntry,
   SnmpMethod,
   SnmpMethodTranslationsMap,
+  SnmpNotification,
+  SnmpNotificationTarget,
+  SnmpNotificationTargetTranslationsMap,
   SnmpOidShape,
+  SnmpPolledEntry,
   SnmpValueKey,
   SnmpValueType,
   SnmpValueTypeTranslationsMap,
@@ -74,7 +78,9 @@ import { generateSecret } from '@core/public-api';
  *     attributes and telemetry, an attribute filter for attribute
  *     updates, a request filter for RPC;
  *   - a GETBULK method on a v1 device is an error here, as it is when
- *     the gateway loads the configuration.
+ *     the gateway loads the configuration;
+ *   - the notifications list has no method at all: a row names the trap
+ *     it takes and the varbind it publishes, both optional.
  */
 
 function toggleError(control: AbstractControl | null, name: string, on: boolean): void {
@@ -134,6 +140,22 @@ function oidValidator(control: AbstractControl): ValidationErrors | null {
   return isValidOid(control.value) ? null : { invalidOid: true };
 }
 
+/** An OID that may be left empty. */
+function optionalOidValidator(control: AbstractControl): ValidationErrors | null {
+  const value = (control.value ?? '').toString().trim();
+  return !value || isValidOid(value) ? null : { invalidOid: true };
+}
+
+function calibrationOf(entry: Partial<SnmpDataKey>): CalibrationConfig {
+  return {
+    ...(entry.multiplier !== undefined && { multiplier: entry.multiplier }),
+    ...(entry.divider !== undefined && { divider: entry.divider }),
+    ...(entry.adder !== undefined && { adder: entry.adder }),
+    ...(entry.subtractor !== undefined && { subtractor: entry.subtractor }),
+    ...(entry.scaling && { scaling: entry.scaling }),
+  };
+}
+
 @Component({
   selector: 'tb-snmp-data-keys-panel',
   templateUrl: './snmp-data-keys-panel.component.html',
@@ -170,6 +192,8 @@ export class SnmpDataKeysPanelComponent implements OnInit {
   readonly SnmpMethodTranslationsMap = SnmpMethodTranslationsMap;
   readonly valueTypes = Object.values(SnmpValueType);
   readonly SnmpValueTypeTranslationsMap = SnmpValueTypeTranslationsMap;
+  readonly notificationTargets = Object.values(SnmpNotificationTarget);
+  readonly SnmpNotificationTargetTranslationsMap = SnmpNotificationTargetTranslationsMap;
 
   keysFormArray: FormArray;
   methods: SnmpMethod[] = [];
@@ -190,6 +214,11 @@ export class SnmpDataKeysPanelComponent implements OnInit {
 
   get isAttributeUpdate(): boolean {
     return this.keysType === SnmpValueKey.ATTRIBUTES_UPDATES;
+  }
+
+  /** Traps and informs the device sends: no method, a trap filter and a varbind instead. */
+  get isNotification(): boolean {
+    return this.keysType === SnmpValueKey.NOTIFICATIONS;
   }
 
   /** The platform-side field of a row: key, attributeFilter or requestFilter. */
@@ -242,7 +271,9 @@ export class SnmpDataKeysPanelComponent implements OnInit {
 
   onAddRequested(): void {
     const method = this.isPolled ? SnmpMethod.GET : SnmpMethod.SET;
-    const form = this.createKeyForm({ [this.nameField]: '', method } as unknown as SnmpKeyEntry);
+    const form = this.isNotification
+      ? this.createNotificationForm({ key: '', type: SnmpNotificationTarget.TELEMETRY })
+      : this.createKeyForm({ [this.nameField]: '', method } as unknown as SnmpKeyEntry);
     this.keysFormArray.push(form);
     this.keysFormArray.markAsDirty();
     this.shell?.setLastAddedId(form.getRawValue().id);
@@ -278,6 +309,10 @@ export class SnmpDataKeysPanelComponent implements OnInit {
   }
 
   private buildColumnConfigs(): void {
+    if (this.isNotification) {
+      this.buildNotificationColumns();
+      return;
+    }
     const methodOptions = this.methods.map(m => ({ value: m, label: SnmpMethodTranslationsMap.get(m) }));
     const valueTypeOptions = [
       { value: '', label: 'gateway.snmp-value-type-default' },
@@ -312,6 +347,41 @@ export class SnmpDataKeysPanelComponent implements OnInit {
     ];
   }
 
+  private buildNotificationColumns(): void {
+    const targetOptions = this.notificationTargets
+      .map(t => ({ value: t, label: SnmpNotificationTargetTranslationsMap.get(t) }));
+    this.searchFields = ['key', 'trapOid', 'oid'];
+    this.sortFields = [
+      { value: 'key', label: 'gateway.gw-key' },
+      { value: 'trapOid', label: 'gateway.snmp-trap-oid' },
+      { value: 'oid', label: 'gateway.snmp-oid' },
+    ];
+    this.spreadsheetColumns = [
+      { key: 'key', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(130px, 1.2fr)',
+        placeholder: 'linkDown' },
+      { key: 'trapOid', label: 'gateway.snmp-trap-oid', type: 'input', sortable: true, width: 'minmax(190px, 1.6fr)',
+        placeholder: '1.3.6.1.6.3.1.1.5.3', errorText: 'gateway.snmp-invalid-oid' },
+      { key: 'oid', label: 'gateway.snmp-oid', type: 'input', sortable: true, width: 'minmax(190px, 1.6fr)',
+        placeholder: '1.3.6.1.2.1.2.2.1.8', errorText: 'gateway.snmp-invalid-oid' },
+      { key: 'type', label: 'gateway.snmp-notification-type', type: 'select', width: 'minmax(130px, 1fr)',
+        translateLabels: true, options: targetOptions },
+      ...calibrationColumns(() => true),
+      ...reportStrategyColumns(),
+    ];
+  }
+
+  private createNotificationForm(entry: SnmpNotification): FormGroup {
+    return this.fb.group({
+      id: [{ value: generateSecret(5), disabled: true }],
+      key: [entry.key || '', [Validators.required]],
+      trapOid: [entry.trapOid ?? '', [optionalOidValidator]],
+      oid: [entry.oid ?? '', [optionalOidValidator]],
+      type: [entry.type || SnmpNotificationTarget.TELEMETRY],
+      calibration: [calibrationOf(entry)],
+      reportStrategy: [entry.reportStrategy || null],
+    });
+  }
+
   private createMappingForm(oid: string, value: string): FormGroup {
     return this.fb.group({
       oid: [oid, [Validators.required, oidValidator]],
@@ -319,7 +389,11 @@ export class SnmpDataKeysPanelComponent implements OnInit {
     });
   }
 
-  private createKeyForm(entry: SnmpKeyEntry): FormGroup {
+  private createKeyForm(anyEntry: SnmpKeyEntry): FormGroup {
+    if (this.isNotification) {
+      return this.createNotificationForm(anyEntry as SnmpNotification);
+    }
+    const entry = anyEntry as SnmpPolledEntry;
     const id = generateSecret(5);
     const mappings = this.fb.array(
       Object.entries(entry.mappings ?? {}).map(([oid, value]) => this.createMappingForm(oid, String(value ?? '')))
@@ -339,20 +413,25 @@ export class SnmpDataKeysPanelComponent implements OnInit {
     };
     if (this.isPolled) {
       const dataKey = entry as SnmpDataKey;
-      const calibration: CalibrationConfig = {
-        ...(dataKey.multiplier !== undefined && { multiplier: dataKey.multiplier }),
-        ...(dataKey.divider !== undefined && { divider: dataKey.divider }),
-        ...(dataKey.adder !== undefined && { adder: dataKey.adder }),
-        ...(dataKey.subtractor !== undefined && { subtractor: dataKey.subtractor }),
-        ...(dataKey.scaling && { scaling: dataKey.scaling }),
-      };
-      controls.calibration = [calibration];
+      controls.calibration = [calibrationOf(dataKey)];
       controls.reportStrategy = [dataKey.reportStrategy || null];
     }
     return this.fb.group(controls, { validators: snmpKeyRowValidator(this.version, this.isPolled) });
   }
 
   private getFormValue(): SnmpKeyEntry[] {
+    if (this.isNotification) {
+      return this.keysFormArray.getRawValue().map((row: any) => {
+        const out: SnmpNotification = { key: row.key, type: row.type || SnmpNotificationTarget.TELEMETRY };
+        const trapOid = (row.trapOid ?? '').toString().trim();
+        const oid = (row.oid ?? '').toString().trim();
+        if (trapOid) out.trapOid = trapOid;
+        if (oid) out.oid = oid;
+        if (row.calibration) Object.assign(out, row.calibration);
+        if (row.reportStrategy) out.reportStrategy = row.reportStrategy;
+        return out;
+      });
+    }
     return this.keysFormArray.getRawValue().map((row: any) => {
       const out: any = {
         [this.nameField]: row[this.nameField],

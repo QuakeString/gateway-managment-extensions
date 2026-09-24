@@ -330,6 +330,28 @@
           </button>
         </div>
       </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.snmp-notifications' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('notifications').value">
+            <mat-chip *ngFor="let notification of (deviceForm.get('notifications').value | slice: 0 : 50)">
+              {{ chipLabel(notification) }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #notificationsButton
+                  (click)="manageKeys($event, notificationsButton, SnmpValueKey.NOTIFICATIONS)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <div mat-dialog-actions class="justify-end">

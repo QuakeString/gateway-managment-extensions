@@ -173,6 +173,45 @@ export interface SnmpRpcRequest extends SnmpKeyBase {
   requestFilter: string;
 }
 
+/** Where a received notification's value goes. */
+export enum SnmpNotificationTarget {
+  TELEMETRY = 'telemetry',
+  ATTRIBUTE = 'attribute',
+}
+
+export const SnmpNotificationTargetTranslationsMap = new Map<SnmpNotificationTarget, string>([
+  [SnmpNotificationTarget.TELEMETRY, 'gateway.snmp-notification-as-telemetry'],
+  [SnmpNotificationTarget.ATTRIBUTE, 'gateway.snmp-notification-as-attribute'],
+]);
+
+/**
+ * One entry of a device's `notifications` list — the push side of SNMP.
+ * `trapOid` selects which traps/informs the entry takes (exact or prefix;
+ * none takes every notification); `oid` picks the varbind to publish
+ * (exact or prefix; none publishes the whole varbind set as {oid: value}).
+ */
+export interface SnmpNotification {
+  key: string;
+  trapOid?: string;
+  oid?: string;
+  type?: SnmpNotificationTarget | string;
+  multiplier?: number;
+  divider?: number;
+  adder?: number;
+  subtractor?: number;
+  scaling?: SnmpScaling;
+  reportStrategy?: ReportStrategyConfig;
+}
+
+/** The connector-level receiver of traps and informs. Off unless enabled. */
+export interface SnmpNotificationsConfig {
+  enabled: boolean;
+  host?: string;
+  port?: number;
+  /** Accepted community strings; none accepts any. */
+  community?: string | string[];
+}
+
 export interface SnmpDeviceConfig {
   deviceName: string;
   deviceType: string;
@@ -200,9 +239,12 @@ export interface SnmpDeviceConfig {
   telemetry: SnmpDataKey[];
   attributeUpdateRequests: SnmpAttributeUpdate[];
   serverSideRpcRequests: SnmpRpcRequest[];
+  /** Traps and informs this device sends, and what to publish from them. */
+  notifications?: SnmpNotification[];
 }
 
 export interface SnmpBasicConfig {
+  notifications?: SnmpNotificationsConfig;
   devices: SnmpDeviceConfig[];
 }
 
@@ -211,9 +253,64 @@ export enum SnmpValueKey {
   TELEMETRY = 'telemetry',
   ATTRIBUTES_UPDATES = 'attributeUpdateRequests',
   RPC = 'serverSideRpcRequests',
+  NOTIFICATIONS = 'notifications',
 }
 
-export type SnmpKeyEntry = SnmpDataKey | SnmpAttributeUpdate | SnmpRpcRequest;
+/** An entry with a method: the four lists the connector polls or acts on. */
+export type SnmpPolledEntry = SnmpDataKey | SnmpAttributeUpdate | SnmpRpcRequest;
+
+export type SnmpKeyEntry = SnmpPolledEntry | SnmpNotification;
+
+// ── The receiver as the General tab edits it ─────────────────────────────
+
+export const SNMP_TRAP_DEFAULT_HOST = '0.0.0.0';
+export const SNMP_TRAP_DEFAULT_PORT = 162;
+
+/** Communities as one comma-separated line, as the form field holds them. */
+export interface SnmpNotificationsForm {
+  enabled: boolean;
+  host: string;
+  port: number | null;
+  community: string;
+}
+
+export interface SnmpBasicConfigForm {
+  notifications: SnmpNotificationsForm;
+  devices: SnmpDeviceConfig[];
+}
+
+export function snmpNotificationsToForm(config?: SnmpNotificationsConfig): SnmpNotificationsForm {
+  const community = config?.community;
+  return {
+    enabled: !!config?.enabled,
+    host: config?.host ?? SNMP_TRAP_DEFAULT_HOST,
+    port: config?.port ?? SNMP_TRAP_DEFAULT_PORT,
+    community: Array.isArray(community) ? community.join(', ') : (community ?? ''),
+  };
+}
+
+/**
+ * The stored shape. `undefined` while the receiver is off, so a
+ * configuration that never had the section stays without it; one
+ * community is written as a string, several as a list, none omitted.
+ */
+export function snmpNotificationsFromForm(form?: SnmpNotificationsForm): SnmpNotificationsConfig | undefined {
+  if (!form?.enabled) {
+    return undefined;
+  }
+  const out: SnmpNotificationsConfig = {
+    enabled: true,
+    host: (form.host ?? '').trim() || SNMP_TRAP_DEFAULT_HOST,
+    port: Number(form.port) || SNMP_TRAP_DEFAULT_PORT,
+  };
+  const communities = (form.community ?? '').split(/[\s,;]+/).map(c => c.trim()).filter(c => !!c);
+  if (communities.length === 1) {
+    out.community = communities[0];
+  } else if (communities.length > 1) {
+    out.community = communities;
+  }
+  return out;
+}
 
 /** A dotted numeric OID, with or without a leading dot: 1.3.6.1.2.1.1.1.0 */
 export const SNMP_OID_REGEX = /^\.?\d+(\.\d+)+$/;

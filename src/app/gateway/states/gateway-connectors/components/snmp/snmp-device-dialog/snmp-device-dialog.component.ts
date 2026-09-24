@@ -108,6 +108,7 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
     telemetry: [[] as SnmpKeyEntry[]],
     attributeUpdateRequests: [[] as SnmpKeyEntry[]],
     serverSideRpcRequests: [[] as SnmpKeyEntry[]],
+    notifications: [[] as SnmpKeyEntry[]],
   });
 
   private popoverComponent: TbPopoverComponent<SnmpDataKeysPanelComponent>;
@@ -157,9 +158,10 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
     if (this.deviceForm.get('version').value !== SnmpVersion.V1) {
       return false;
     }
-    return Object.values(SnmpValueKey).some(list =>
-      ((this.deviceForm.get(list).value ?? []) as SnmpKeyEntry[])
-        .some(entry => SNMP_BULK_METHODS.includes(entry.method as SnmpMethod)));
+    return Object.values(SnmpValueKey)
+      .filter(list => list !== SnmpValueKey.NOTIFICATIONS)
+      .some(list => ((this.deviceForm.get(list).value ?? []) as SnmpKeyEntry[])
+        .some(entry => SNMP_BULK_METHODS.includes((entry as { method?: string }).method as SnmpMethod)));
   }
 
   chipLabel(entry: SnmpKeyEntry): string {
@@ -195,6 +197,10 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
           delete result[field];
         }
       }
+      // A device that receives nothing keeps the shape it had before 4.1.
+      if (!result.notifications?.length) {
+        delete result.notifications;
+      }
       this.dialogRef.close(result);
     }
   }
@@ -216,6 +222,7 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
       [SnmpValueKey.ATTRIBUTES]: 'gateway.attributes',
       [SnmpValueKey.ATTRIBUTES_UPDATES]: 'gateway.gw-attribute-updates',
       [SnmpValueKey.RPC]: 'gateway.gw-rpc-methods',
+      [SnmpValueKey.NOTIFICATIONS]: 'gateway.snmp-notifications',
     };
     const ctx = {
       keys: keysControl.value,
@@ -224,7 +231,9 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
       panelTitle: panelTitles[keysType],
       addKeyTitle: keysType === SnmpValueKey.RPC ? 'gateway.gw-add-method' : 'gateway.gw-add-key',
       deleteKeyTitle: 'gateway.gw-delete-key',
-      noKeysText: 'gateway.gw-no-keys-configured-hint',
+      noKeysText: keysType === SnmpValueKey.NOTIFICATIONS
+        ? 'gateway.snmp-no-notifications-hint'
+        : 'gateway.gw-no-keys-configured-hint',
     };
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(

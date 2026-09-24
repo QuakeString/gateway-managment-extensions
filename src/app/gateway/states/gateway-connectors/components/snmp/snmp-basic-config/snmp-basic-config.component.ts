@@ -15,10 +15,18 @@
 ///
 
 import { ChangeDetectionStrategy, Component, Input, forwardRef } from '@angular/core';
-import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
-import { SnmpBasicConfig } from '../../../models/public-api';
+import {
+  SNMP_TRAP_DEFAULT_HOST,
+  SNMP_TRAP_DEFAULT_PORT,
+  SnmpBasicConfig,
+  SnmpBasicConfigForm,
+  SnmpDeviceConfig,
+  snmpNotificationsFromForm,
+  snmpNotificationsToForm,
+} from '../../../models/public-api';
 import { GatewayConnectorBasicConfigDirective } from '../../../abstract/public-api';
 import { SnmpDevicesTableComponent } from '../snmp-devices-table/snmp-devices-table.component';
 
@@ -42,25 +50,45 @@ import { SnmpDevicesTableComponent } from '../snmp-devices-table/snmp-devices-ta
   imports: [CommonModule, SharedModule, SnmpDevicesTableComponent],
   styleUrls: ['./snmp-basic-config.component.scss'],
 })
-export class SnmpBasicConfigComponent extends GatewayConnectorBasicConfigDirective<SnmpBasicConfig, SnmpBasicConfig> {
+export class SnmpBasicConfigComponent extends GatewayConnectorBasicConfigDirective<SnmpBasicConfigForm, SnmpBasicConfig> {
 
   @Input() gatewayDeviceId: string;
   @Input() connectorName: string;
 
   isLegacy = false;
 
-  protected getMappedValue(config: SnmpBasicConfig): SnmpBasicConfig {
-    return config;
+  /** Devices that list notifications while the receiver is off: nothing reaches them. */
+  get devicesAwaitingReceiver(): number {
+    if (this.basicFormGroup.get('notifications.enabled').value) {
+      return 0;
+    }
+    return ((this.basicFormGroup.get('devices').value ?? []) as SnmpDeviceConfig[])
+      .filter(device => device.notifications?.length).length;
+  }
+
+  protected getMappedValue(form: SnmpBasicConfigForm): SnmpBasicConfig {
+    const notifications = snmpNotificationsFromForm(form?.notifications);
+    return {
+      ...(notifications && { notifications }),
+      devices: form?.devices || [],
+    };
   }
 
   protected initBasicFormGroup(): FormGroup {
     return this.fb.group({
+      notifications: this.fb.group({
+        enabled: [false],
+        host: [SNMP_TRAP_DEFAULT_HOST],
+        port: [SNMP_TRAP_DEFAULT_PORT, [Validators.min(1), Validators.max(65535)]],
+        community: [''],
+      }),
       devices: [[]],
     });
   }
 
-  protected mapConfigToFormValue(config: SnmpBasicConfig): SnmpBasicConfig {
+  protected mapConfigToFormValue(config: SnmpBasicConfig): SnmpBasicConfigForm {
     return {
+      notifications: snmpNotificationsToForm(config?.notifications),
       devices: config?.devices || [],
     };
   }

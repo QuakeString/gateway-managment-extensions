@@ -16,6 +16,60 @@
 <mat-tab-group [formGroup]="basicFormGroup">
   <mat-tab label="{{ 'gateway.general' | translate }}">
     <ng-container [ngTemplateOutlet]="generalTabContent"/>
+    <section class="tb-form-panel no-border no-padding padding-top" formGroupName="notifications">
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>gateway.snmp-trap-receiver</div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="enabled">
+            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.trap-enabled' | translate }}">
+              {{ 'gateway.snmp-trap-enabled' | translate }}
+            </mat-label>
+          </mat-slide-toggle>
+        </div>
+        <div *ngIf="devicesAwaitingReceiver" class="tb-form-hint tb-primary-fill tb-flex align-center">
+          {{ 'gateway.snmp-trap-receiver-off' | translate: { count: devicesAwaitingReceiver } }}
+        </div>
+        <ng-container *ngIf="basicFormGroup.get('notifications.enabled').value">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.trap-host' | translate }}">{{ 'gateway.snmp-trap-host' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="host" placeholder="0.0.0.0"/>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.trap-port' | translate }}">{{ 'gateway.snmp-trap-port' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="port" placeholder="162"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'gateway.snmp-port-required' | translate"
+                          *ngIf="(basicFormGroup.get('notifications.port').hasError('min')
+                                  || basicFormGroup.get('notifications.port').hasError('max'))
+                                  && basicFormGroup.get('notifications.port').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.trap-community' | translate }}">{{ 'gateway.snmp-trap-community' | translate }}</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="community" placeholder="public, ops"/>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+            {{ 'gateway.snmp-trap-receiver-hint' | translate }}
+          </div>
+        </ng-container>
+      </div>
+    </section>
   </mat-tab>
   <mat-tab label="Devices*">
     <tb-snmp-devices-table formControlName="devices"

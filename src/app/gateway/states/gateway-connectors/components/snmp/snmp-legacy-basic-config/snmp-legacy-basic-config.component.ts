@@ -15,13 +15,13 @@
 ///
 
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
-import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
-import { SnmpBasicConfig } from '../../../models/public-api';
-import { GatewayConnectorBasicConfigDirective } from '../../../abstract/public-api';
 import { SnmpDevicesTableComponent } from '../snmp-devices-table/snmp-devices-table.component';
+import { SnmpBasicConfigComponent } from '../snmp-basic-config/snmp-basic-config.component';
 
+/** The same form as the current one; only the legacy flag differs. */
 @Component({
   selector: 'tb-snmp-legacy-basic-config',
   templateUrl: '../snmp-basic-config/snmp-basic-config.component.html',
@@ -42,23 +42,7 @@ import { SnmpDevicesTableComponent } from '../snmp-devices-table/snmp-devices-ta
   imports: [CommonModule, SharedModule, SnmpDevicesTableComponent],
   styleUrls: ['../snmp-basic-config/snmp-basic-config.component.scss'],
 })
-export class SnmpLegacyBasicConfigComponent extends GatewayConnectorBasicConfigDirective<SnmpBasicConfig, SnmpBasicConfig> {
+export class SnmpLegacyBasicConfigComponent extends SnmpBasicConfigComponent {
 
-  isLegacy = true;
-
-  protected getMappedValue(config: SnmpBasicConfig): SnmpBasicConfig {
-    return config;
-  }
-
-  protected initBasicFormGroup(): FormGroup {
-    return this.fb.group({
-      devices: [[]],
-    });
-  }
-
-  protected mapConfigToFormValue(config: SnmpBasicConfig): SnmpBasicConfig {
-    return {
-      devices: config?.devices || [],
-    };
-  }
+  override isLegacy = true;
 }

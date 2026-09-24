@@ -34,6 +34,18 @@
 
 <!-- Row header — the same three labeled pairs as the other industrial panels. -->
 <ng-template #rowHeaderTpl let-row let-index="index">
+  <div class="tb-flex" *ngIf="isNotification; else pollHeader">
+    <div class="title-container tb-flex">{{ 'gateway.gw-key' | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ row.get('key')?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.snmp-trap-oid' | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ row.get('trapOid')?.value || ('gateway.snmp-any-trap' | translate) }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.snmp-oid' | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ row.get('oid')?.value || ('gateway.snmp-whole-varbind-set' | translate) }}</span>
+    </div>
+  </div>
+  <ng-template #pollHeader>
   <div class="tb-flex">
     <div class="title-container tb-flex">{{ nameLabel | translate }}:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get(nameField)?.value }}</span>
@@ -45,10 +57,80 @@
       <span class="key-label" tbTruncateWithTooltip>{{ targetOf(row) }}</span>
     </div>
   </div>
+  </ng-template>
 </ng-template>
 
 <ng-template #rowBodyTpl let-row let-index="index">
   <ng-container [formGroup]="row">
+    <div class="tb-form-panel no-border no-padding" *ngIf="isNotification; else pollBody">
+      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ 'gateway.hints.snmp.notifications' | translate }}
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.platform-side' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.key' | translate }}">{{ 'gateway.gw-key' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="key" placeholder="linkDown">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.gw-key-required' | translate"
+                      *ngIf="row.get('key').hasError('required') && row.get('key').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.notification-type' | translate }}">{{ 'gateway.snmp-notification-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let target of notificationTargets" [value]="target">{{ SnmpNotificationTargetTranslationsMap.get(target) | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.connector-side' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.trap-oid' | translate }}">{{ 'gateway.snmp-trap-oid' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="trapOid" [placeholder]="'gateway.snmp-any-trap' | translate">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.snmp-invalid-oid' | translate"
+                      *ngIf="row.get('trapOid').hasError('invalidOid') && row.get('trapOid').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.snmp.notification-oid' | translate }}">{{ 'gateway.snmp-oid' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="oid" [placeholder]="'gateway.snmp-whole-varbind-set' | translate">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.snmp-invalid-oid' | translate"
+                      *ngIf="row.get('oid').hasError('invalidOid') && row.get('oid').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <tb-calibration-block formControlName="calibration" [canCalibrate]="true"/>
+        <tb-report-strategy
+          class="stroked tb-form-panel"
+          [defaultValue]="ReportStrategyDefaultValue.Key"
+          formControlName="reportStrategy"
+          [isExpansionMode]="true"
+        />
+      </div>
+    </div>
+    <ng-template #pollBody>
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-hint tb-primary-fill tb-flex align-center">
         {{ 'gateway.hints.snmp.data-keys' | translate }}
@@ -208,5 +290,6 @@
         </ng-container>
       </div>
     </div>
+    </ng-template>
   </ng-container>
 </ng-template>
