@@ -45,15 +45,26 @@ export enum Dnp3FlowControl {
   HARDWARE = 'hardware',
 }
 
+/** Another address of a channel's outstation; its port is the channel's unless set. */
+export interface Dnp3Alternate {
+  host: string;
+  port?: number;
+}
+
 export interface Dnp3ChannelConfig {
   name: string;
   type: Dnp3ChannelType | string;
   // tcpClient, tls and udp
   host?: string;
   port?: number;
-  // udp: where the gateway's own socket is bound
+  // tcpClient and tls (gateway 4.7.0): more addresses, tried in turn
+  alternates?: Dnp3Alternate[];
+  // udp: where the gateway's own socket is bound; tcpClient and tls
+  // (4.7.0): the address it connects from
   localAddress?: string;
   localPort?: number;
+  // all (4.7.0): the wait before reopening a link that dropped
+  reconnectDelayMs?: number;
   connectTimeoutMs?: number;
   minRetryDelayMs?: number;
   maxRetryDelayMs?: number;
@@ -287,3 +298,6 @@ export const DNP3_SECURE_AUTH_VERSION = '4.5.0';
 
 /** The gateway that brings UDP channels. */
 export const DNP3_UDP_VERSION = '4.6.0';
+
+/** The gateway that brings alternate addresses, a TCP local address and the reconnect delay. */
+export const DNP3_FAILOVER_VERSION = '4.7.0';

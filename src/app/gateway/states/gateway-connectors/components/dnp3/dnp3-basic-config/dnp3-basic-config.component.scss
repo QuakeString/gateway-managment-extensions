@@ -27,3 +27,11 @@
   display: flex;
   justify-content: flex-end;
 }
+
+:host ::ng-deep .tb-form-row.dnp3-alternate {
+  gap: 8px;
+  .mat-mdc-form-field.dnp3-alternate-port {
+    width: 120px;
+    flex: none;
+  }
+}

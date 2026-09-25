@@ -22,7 +22,9 @@ import {
   DNP3_SECURE_AUTH_VERSION,
   DNP3_SERIAL_TLS_VERSION,
   DNP3_TLS_DEFAULT_PORT,
+  DNP3_FAILOVER_VERSION,
   DNP3_UDP_VERSION,
+  Dnp3Alternate,
   Dnp3BasicConfig,
   Dnp3ChannelConfig,
   Dnp3ChannelType,
@@ -37,19 +39,26 @@ const NOT_BLANK: ValidatorFn[] = [Validators.required, Validators.pattern(/\S/)]
 
 /** The keys each channel type writes; the rest of the form is left out. */
 const CHANNEL_KEYS: Record<string, (keyof Dnp3ChannelConfig)[]> = {
-  [Dnp3ChannelType.TCP_CLIENT]: ['name', 'type', 'host', 'port', 'connectTimeoutMs', 'minRetryDelayMs', 'maxRetryDelayMs'],
+  [Dnp3ChannelType.TCP_CLIENT]: [
+    'name', 'type', 'host', 'port', 'alternates', 'localAddress', 'connectTimeoutMs', 'minRetryDelayMs',
+    'maxRetryDelayMs', 'reconnectDelayMs',
+  ],
   [Dnp3ChannelType.TLS]: [
-    'name', 'type', 'host', 'port', 'connectTimeoutMs', 'minRetryDelayMs', 'maxRetryDelayMs',
-    'serverName', 'caCert', 'cert', 'key', 'minTlsVersion',
+    'name', 'type', 'host', 'port', 'alternates', 'localAddress', 'connectTimeoutMs', 'minRetryDelayMs',
+    'maxRetryDelayMs', 'reconnectDelayMs', 'serverName', 'caCert', 'cert', 'key', 'minTlsVersion',
   ],
   [Dnp3ChannelType.UDP]: [
     'name', 'type', 'host', 'port', 'localAddress', 'localPort', 'minRetryDelayMs', 'maxRetryDelayMs',
+    'reconnectDelayMs',
   ],
   [Dnp3ChannelType.SERIAL]: [
     'name', 'type', 'path', 'baudRate', 'dataBits', 'parity', 'stopBits', 'flowControl', 'openDelayMs',
-    'minRetryDelayMs', 'maxRetryDelayMs',
+    'minRetryDelayMs', 'maxRetryDelayMs', 'reconnectDelayMs',
   ],
 };
+
+/** Keys a gateway before 4.7.0 does not read: left out for it. */
+const FAILOVER_KEYS: (keyof Dnp3ChannelConfig)[] = ['alternates', 'reconnectDelayMs'];
 
 /** A TLS channel's certificate and key go together. */
 function certAndKeyTogether(group: AbstractControl): ValidationErrors | null {
@@ -122,6 +131,27 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
         >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_UDP_VERSION);
   }
 
+  /** Unknown counts as able, as for serial and TLS. */
+  get failoverSupported(): boolean {
+    return !this.gatewayVersion
+      || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
+        >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_FAILOVER_VERSION);
+  }
+
+  alternatesArray(channel: AbstractControl): FormArray {
+    return channel.get('alternates') as FormArray;
+  }
+
+  addAlternate(channel: AbstractControl): void {
+    this.alternatesArray(channel).push(this.alternateForm({ host: '' }));
+    this.alternatesArray(channel).markAsDirty();
+  }
+
+  removeAlternate(channel: AbstractControl, index: number): void {
+    this.alternatesArray(channel).removeAt(index);
+    this.alternatesArray(channel).markAsDirty();
+  }
+
   get channelsArray(): FormArray {
     return this.basicFormGroup.get('channels') as FormArray;
   }
@@ -162,12 +192,32 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
   /** Only the chosen type's keys, trimmed; empty optional strings left out. */
   private channelToWrite(channel: Dnp3ChannelConfig): Dnp3ChannelConfig {
     const keys = CHANNEL_KEYS[channel.type] ?? CHANNEL_KEYS[Dnp3ChannelType.TCP_CLIENT];
+    const tcp = channel.type === Dnp3ChannelType.TCP_CLIENT || channel.type === Dnp3ChannelType.TLS;
     const out: Record<string, unknown> = {};
     for (const key of keys) {
+      if (!this.failoverSupported && (FAILOVER_KEYS.includes(key) || (tcp && key === 'localAddress'))) {
+        continue;
+      }
+      if (key === 'alternates') {
+        const alternates = (channel.alternates ?? [])
+          .map(a => {
+            const port = a.port === null || a.port === undefined || `${a.port}` === '' ? undefined : Number(a.port);
+            return port === undefined ? { host: (a.host ?? '').trim() } : { host: (a.host ?? '').trim(), port };
+          })
+          .filter(a => a.host);
+        if (alternates.length) {
+          out[key] = alternates;
+        }
+        continue;
+      }
       let value = channel[key] as unknown;
       if (typeof value === 'string') {
         value = value.trim();
         if (value === '' && key !== 'name') {
+          continue;
+        }
+        // A TCP or TLS channel's unspecified local address is the system's choice.
+        if (tcp && key === 'localAddress' && (value === '0.0.0.0' || value === '::')) {
           continue;
         }
       }
@@ -210,8 +260,10 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
       type: [type],
       host: [channel.host ?? ''],
       port: [channel.port ?? defaultPort],
-      localAddress: [channel.localAddress ?? '0.0.0.0'],
+      alternates: this.fb.array((channel.alternates ?? []).map(a => this.alternateForm(a))),
+      localAddress: [channel.localAddress ?? (type === Dnp3ChannelType.UDP ? '0.0.0.0' : '')],
       localPort: [channel.localPort ?? DNP3_DEFAULT_PORT],
+      reconnectDelayMs: [channel.reconnectDelayMs ?? null, [Validators.min(0)]],
       connectTimeoutMs: [channel.connectTimeoutMs ?? 5000, [Validators.min(100)]],
       minRetryDelayMs: [channel.minRetryDelayMs ?? 1000, [Validators.min(100)]],
       maxRetryDelayMs: [channel.maxRetryDelayMs ?? 60000, [Validators.min(100)]],
@@ -238,9 +290,29 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
       } else if ((next === Dnp3ChannelType.TCP_CLIENT || next === Dnp3ChannelType.UDP) && port.value === DNP3_TLS_DEFAULT_PORT) {
         port.setValue(DNP3_DEFAULT_PORT);
       }
+      // UDP binds a local address (any, unless set); a TCP client
+      // connects from the system's choice unless one is set.
+      const local = group.get('localAddress');
+      const blank = !(local.value ?? '').trim();
+      if (next === Dnp3ChannelType.UDP && blank) {
+        local.setValue('0.0.0.0');
+      } else if (next !== Dnp3ChannelType.UDP && local.value === '0.0.0.0') {
+        local.setValue('');
+      }
+      // Alternates are TCP and TLS addresses only.
+      if (next !== Dnp3ChannelType.TCP_CLIENT && next !== Dnp3ChannelType.TLS) {
+        (group.get('alternates') as FormArray).clear();
+      }
       this.applyTypeValidators(group, next);
     });
     return group;
+  }
+
+  private alternateForm(alternate: Dnp3Alternate): FormGroup {
+    return this.fb.group({
+      host: [alternate.host ?? '', NOT_BLANK],
+      port: [alternate.port ?? null, [Validators.min(1), Validators.max(65535)]],
+    });
   }
 
   /** Require what the chosen type needs, and nothing the others do. */

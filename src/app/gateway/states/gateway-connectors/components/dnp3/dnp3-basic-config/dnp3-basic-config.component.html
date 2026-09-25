@@ -112,6 +112,52 @@
                 </div>
               </div>
             </ng-container>
+            <ng-container *ngIf="channel.get('type').value === ChannelType.TCP_CLIENT || channel.get('type').value === ChannelType.TLS">
+              <ng-container *ngIf="failoverSupported; else failoverNeedsVersion">
+                <div class="tb-form-row column-xs">
+                  <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.tcp-local-address' | translate }}">{{ 'gateway.dnp3-local-address' | translate }}</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="localAddress" [placeholder]="'gateway.dnp3-local-address-any' | translate"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-panel stroked no-gap" formArrayName="alternates">
+                  <div class="tb-form-row no-border no-padding space-between">
+                    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.alternates' | translate }}">
+                      {{ 'gateway.dnp3-alternates' | translate }}
+                    </div>
+                    <button mat-stroked-button color="primary" type="button" (click)="addAlternate(channel)">
+                      {{ 'gateway.dnp3-add-alternate' | translate }}
+                    </button>
+                  </div>
+                  <div class="tb-form-row no-border column-xs dnp3-alternate"
+                       *ngFor="let alternate of alternatesArray(channel).controls; let j = index" [formGroupName]="j">
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <input matInput formControlName="host" [placeholder]="'gateway.host' | translate"/>
+                      <mat-icon matSuffix
+                                matTooltipPosition="above"
+                                matTooltipClass="tb-error-tooltip"
+                                [matTooltip]="'gateway.gw-host-required' | translate"
+                                *ngIf="alternate.get('host').invalid && alternate.get('host').touched"
+                                class="tb-error">
+                        warning
+                      </mat-icon>
+                    </mat-form-field>
+                    <mat-form-field class="dnp3-alternate-port" appearance="outline" subscriptSizing="dynamic">
+                      <input matInput type="number" formControlName="port" [placeholder]="channel.get('port').value"/>
+                    </mat-form-field>
+                    <button mat-icon-button type="button" (click)="removeAlternate(channel, j)"
+                            [matTooltip]="'action.remove' | translate" matTooltipPosition="above">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+              <ng-template #failoverNeedsVersion>
+                <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+                  {{ 'gateway.dnp3-failover-need-version' | translate }}
+                </div>
+              </ng-template>
+            </ng-container>
             <ng-container *ngIf="channel.get('type').value === ChannelType.UDP">
               <div class="tb-form-row column-xs">
                 <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.local-address' | translate }}">{{ 'gateway.dnp3-local-address' | translate }}</div>
@@ -283,6 +329,12 @@
                   <div class="fixed-title-width">{{ 'gateway.dnp3-max-retry-delay-ms' | translate }}</div>
                   <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                     <input matInput type="number" formControlName="maxRetryDelayMs"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-row column-xs" *ngIf="failoverSupported">
+                  <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.reconnect-delay' | translate }}">{{ 'gateway.dnp3-reconnect-delay-ms' | translate }}</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="reconnectDelayMs" [placeholder]="channel.get('minRetryDelayMs').value"/>
                   </mat-form-field>
                 </div>
               </div>
