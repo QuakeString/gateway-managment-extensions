@@ -1,0 +1,323 @@
+<!--
+  Copyright © 2016-2025 The Sentient Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div [formGroup]="deviceForm" class="dialog-mapping">
+  <mat-toolbar color="primary">
+    <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} {{ 'gateway.dnp3-device' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="deviceName" placeholder="RTU Substation 01"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(deviceForm.get('deviceName').hasError('duplicateName') ? 'gateway.dnp3-device-name-duplicate' : 'gateway.gw-device-name-required') | translate"
+                      *ngIf="deviceForm.get('deviceName').invalid && deviceForm.get('deviceName').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ 'gateway.device-profile' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.channel' | translate }}">{{ 'gateway.dnp3-channel' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="channel">
+              <mat-option *ngFor="let channel of data.channels" [value]="channel">{{ channel }}</mat-option>
+              <mat-option *ngIf="channelUnknown" [value]="deviceForm.get('channel').value">{{ deviceForm.get('channel').value }}</mat-option>
+            </mat-select>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.dnp3-channel-unknown' | translate"
+                      *ngIf="channelUnknown"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.master-address' | translate }}">{{ 'gateway.dnp3-master-address' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" formControlName="masterAddress" placeholder="1"/>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'gateway.dnp3-address-range' | translate"
+                    *ngIf="deviceForm.get('masterAddress').invalid && deviceForm.get('masterAddress').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.outstation-address' | translate }}">{{ 'gateway.dnp3-outstation-address' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" formControlName="outstationAddress" placeholder="10"/>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'gateway.dnp3-address-range' | translate"
+                    *ngIf="deviceForm.get('outstationAddress').invalid && deviceForm.get('outstationAddress').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+      <div *ngIf="deviceForm.hasError('sameAddress')" class="tb-form-hint tb-error tb-flex align-center">
+        {{ 'gateway.dnp3-same-address' | translate }}
+      </div>
+      <div *ngIf="deviceForm.hasError('outstationAddressTaken')" class="tb-form-hint tb-error tb-flex align-center">
+        {{ 'gateway.dnp3-outstation-address-taken' | translate }}
+      </div>
+
+      <div class="tb-form-panel stroked" formGroupName="startup">
+        <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.startup' | translate }}">{{ 'gateway.dnp3-startup' | translate }}</div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="disableUnsolicited">
+            <mat-label>{{ 'gateway.dnp3-disable-unsolicited' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="integrityPoll">
+            <mat-label>{{ 'gateway.dnp3-integrity-poll' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.enable-unsolicited' | translate }}">{{ 'gateway.dnp3-enable-unsolicited' | translate }}</div>
+          <div class="dnp3-classes">
+            <mat-checkbox formControlName="unsolicitedClass1">{{ 'gateway.dnp3-class' | translate: { class: 1 } }}</mat-checkbox>
+            <mat-checkbox formControlName="unsolicitedClass2">{{ 'gateway.dnp3-class' | translate: { class: 2 } }}</mat-checkbox>
+            <mat-checkbox formControlName="unsolicitedClass3">{{ 'gateway.dnp3-class' | translate: { class: 3 } }}</mat-checkbox>
+          </div>
+        </div>
+      </div>
+
+      <div class="tb-form-panel stroked" formGroupName="polls">
+        <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.polls' | translate }}">{{ 'gateway.dnp3-polls' | translate }}</div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.dnp3-integrity-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="integrityMs" placeholder="0"/>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.dnp3-class1-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="class1Ms" placeholder="0"/>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.dnp3-class2-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="class2Ms" placeholder="0"/>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.dnp3-class3-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="class3Ms" placeholder="0"/>
+            </mat-form-field>
+          </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" [formControl]="$any(deviceForm.get('eventScanOnIin'))">
+            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.event-scan-on-iin' | translate }}">{{ 'gateway.dnp3-event-scan-on-iin' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+      </div>
+
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.dnp3-time' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.time-sync' | translate }}">{{ 'gateway.dnp3-time-sync' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="timeSync">
+              <mat-option *ngFor="let mode of timeSyncModes" [value]="mode">{{ 'gateway.dnp3-time-sync-' + mode | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="useOutstationTime">
+            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.use-outstation-time' | translate }}">{{ 'gateway.dnp3-use-outstation-time' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+      </div>
+
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ 'gateway.advanced-connection-settings' | translate }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding">
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.response-timeout' | translate }}">{{ 'gateway.dnp3-response-timeout-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="responseTimeoutMs" placeholder=""/>
+            </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.retries' | translate }}">{{ 'gateway.dnp3-retries' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="retries" placeholder=""/>
+            </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.task-retry' | translate }}">{{ 'gateway.dnp3-task-retry-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="taskRetryMs" placeholder=""/>
+            </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.dnp3-max-task-retry-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="maxTaskRetryMs" placeholder=""/>
+            </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.keep-alive' | translate }}">{{ 'gateway.dnp3-keep-alive-ms' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="keepAliveMs" placeholder=""/>
+            </mat-form-field>
+            </div>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide" formControlName="allowRestart">
+                <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.allow-restart' | translate }}">{{ 'gateway.dnp3-allow-restart' | translate }}</mat-label>
+              </mat-slide-toggle>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('timeseries').value | slice: 0 : 50)">
+              {{ item.key }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #timeseriesButton
+                  (click)="manageKeys($event, timeseriesButton, Dnp3ValueKey.TIMESERIES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('attributes').value | slice: 0 : 50)">
+              {{ item.key }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #attributesButton
+                  (click)="manageKeys($event, attributesButton, Dnp3ValueKey.ATTRIBUTES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-attribute-updates' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('attributeUpdates').value | slice: 0 : 50)">
+              {{ item.key }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #attributeUpdatesButton
+                  (click)="manageKeys($event, attributeUpdatesButton, Dnp3ValueKey.ATTRIBUTES_UPDATES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-rpc-methods' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('rpc').value | slice: 0 : 50)">
+              {{ item.method }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  [matTooltip]="'gateway.gw-edit' | translate"
+                  matTooltipPosition="above"
+                  #rpcButton
+                  (click)="manageKeys($event, rpcButton, Dnp3ValueKey.RPC)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'gateway.gw-cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="deviceForm.invalid || !keysPopupClosed">
+      {{ (isEdit ? 'action.update' : 'action.add') | translate }}
+    </button>
+  </div>
+</div>

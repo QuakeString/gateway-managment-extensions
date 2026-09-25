@@ -1,0 +1,272 @@
+///
+/// Copyright © 2016-2025 The Sentient Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  Inject,
+  Renderer2,
+  ViewContainerRef,
+} from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { DialogComponent, SharedModule } from '@shared/public-api';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/public-api';
+import { Router } from '@angular/router';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { TbPopoverComponent } from '@shared/components/popover.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import {
+  DNP3_MAX_ADDRESS,
+  Dnp3AttributeUpdate,
+  Dnp3DeviceConfig,
+  Dnp3PointKey,
+  Dnp3RpcConfig,
+  Dnp3TimeSync,
+  Dnp3ValueKey,
+} from '../../../models/public-api';
+import { Dnp3DataKeysPanelComponent } from '../dnp3-data-keys-panel/dnp3-data-keys-panel.component';
+
+export interface Dnp3DeviceDialogData {
+  device?: Dnp3DeviceConfig;
+  isEdit: boolean;
+  /** The connector's channel names. */
+  channels: string[];
+  /** The connector's other devices: names and (channel, address) pairs must stay unique. */
+  otherDevices: Dnp3DeviceConfig[];
+  gatewayDeviceId?: string;
+  connectorName?: string;
+}
+
+type Dnp3Keys = Array<Dnp3PointKey | Dnp3AttributeUpdate | Dnp3RpcConfig>;
+
+@Component({
+  selector: 'tb-dnp3-device-dialog',
+  templateUrl: './dnp3-device-dialog.component.html',
+  styleUrls: ['./dnp3-device-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    CommonModule,
+    SharedModule,
+    EllipsisChipListDirective,
+    DeviceProfileNameAutocompleteComponent,
+  ],
+})
+export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogComponent, Dnp3DeviceConfig> {
+
+  readonly Dnp3ValueKey = Dnp3ValueKey;
+  readonly timeSyncModes = Object.values(Dnp3TimeSync);
+  readonly maxAddress = DNP3_MAX_ADDRESS;
+  isEdit: boolean;
+  keysPopupClosed = true;
+
+  deviceForm = this.fb.group({
+    deviceName: ['', [Validators.required, Validators.pattern(/\S/), this.uniqueName()]],
+    deviceType: ['default'],
+    channel: ['', [Validators.required]],
+    masterAddress: [1, [Validators.required, Validators.min(0), Validators.max(DNP3_MAX_ADDRESS)]],
+    outstationAddress: [10, [Validators.required, Validators.min(0), Validators.max(DNP3_MAX_ADDRESS)]],
+    responseTimeoutMs: [5000, [Validators.required, Validators.min(100)]],
+    retries: [2, [Validators.required, Validators.min(0)]],
+    taskRetryMs: [5000, [Validators.required, Validators.min(100)]],
+    maxTaskRetryMs: [60000, [Validators.required, Validators.min(100)]],
+    keepAliveMs: [60000, [Validators.required, Validators.min(0)]],
+    startup: this.fb.group({
+      disableUnsolicited: [true],
+      integrityPoll: [true],
+      unsolicitedClass1: [true],
+      unsolicitedClass2: [true],
+      unsolicitedClass3: [true],
+    }),
+    polls: this.fb.group({
+      integrityMs: [3600000, [Validators.min(0)]],
+      class1Ms: [0, [Validators.min(0)]],
+      class2Ms: [0, [Validators.min(0)]],
+      class3Ms: [0, [Validators.min(0)]],
+    }),
+    eventScanOnIin: [true],
+    timeSync: [Dnp3TimeSync.NONE as string],
+    useOutstationTime: [true],
+    allowRestart: [false],
+    timeseries: [[] as Dnp3PointKey[]],
+    attributes: [[] as Dnp3PointKey[]],
+    attributeUpdates: [[] as Dnp3AttributeUpdate[]],
+    rpc: [[] as Dnp3RpcConfig[]],
+  }, { validators: [(group: AbstractControl) => this.addressesValid(group)] });
+
+  private popoverComponent: TbPopoverComponent<Dnp3DataKeysPanelComponent>;
+
+  constructor(
+    protected store: Store<AppState>,
+    protected router: Router,
+    @Inject(MAT_DIALOG_DATA) public data: Dnp3DeviceDialogData,
+    public dialogRef: MatDialogRef<Dnp3DeviceDialogComponent, Dnp3DeviceConfig>,
+    private fb: FormBuilder,
+    private popoverService: TbPopoverService,
+    private renderer: Renderer2,
+    private viewContainerRef: ViewContainerRef,
+    private destroyRef: DestroyRef,
+    private cdr: ChangeDetectorRef,
+  ) {
+    super(store, router, dialogRef);
+    this.isEdit = data.isEdit;
+    if (data.device) {
+      const device = data.device;
+      const classes = device.startup?.enableUnsolicited ?? [1, 2, 3];
+      this.deviceForm.patchValue({
+        ...(device as any),
+        startup: {
+          disableUnsolicited: device.startup?.disableUnsolicited ?? true,
+          integrityPoll: device.startup?.integrityPoll ?? true,
+          unsolicitedClass1: classes.includes(1),
+          unsolicitedClass2: classes.includes(2),
+          unsolicitedClass3: classes.includes(3),
+        },
+        polls: {
+          integrityMs: device.polls?.integrityMs ?? 0,
+          class1Ms: device.polls?.class1Ms ?? 0,
+          class2Ms: device.polls?.class2Ms ?? 0,
+          class3Ms: device.polls?.class3Ms ?? 0,
+        },
+      }, { emitEvent: false });
+    } else if (data.channels?.length) {
+      this.deviceForm.patchValue({ channel: data.channels[0] }, { emitEvent: false });
+    }
+  }
+
+  get channelUnknown(): boolean {
+    const channel = this.deviceForm.get('channel').value;
+    return !!channel && !this.data.channels.includes(channel);
+  }
+
+  cancel(): void {
+    if (this.keysPopupClosed) {
+      this.dialogRef.close(null);
+    }
+  }
+
+  save(): void {
+    if (this.deviceForm.invalid) {
+      return;
+    }
+    const form = this.deviceForm.getRawValue();
+    const { startup, ...rest } = form;
+    const enableUnsolicited = [
+      startup.unsolicitedClass1 && 1,
+      startup.unsolicitedClass2 && 2,
+      startup.unsolicitedClass3 && 3,
+    ].filter(Boolean) as number[];
+    const result: Dnp3DeviceConfig = {
+      ...(rest as any),
+      deviceName: (rest.deviceName ?? '').trim(),
+      startup: {
+        disableUnsolicited: startup.disableUnsolicited,
+        integrityPoll: startup.integrityPoll,
+        enableUnsolicited,
+      },
+    };
+    this.dialogRef.close(result);
+  }
+
+  manageKeys($event: Event, matButton: MatButton, keysType: Dnp3ValueKey): void {
+    $event?.stopPropagation();
+    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
+      this.popoverComponent.hide();
+    }
+    const trigger = matButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+      return;
+    }
+
+    const keysControl = this.deviceForm.get(keysType);
+    const panelTitles = {
+      [Dnp3ValueKey.TIMESERIES]: 'gateway.gw-timeseries',
+      [Dnp3ValueKey.ATTRIBUTES]: 'gateway.attributes',
+      [Dnp3ValueKey.ATTRIBUTES_UPDATES]: 'gateway.gw-attribute-updates',
+      [Dnp3ValueKey.RPC]: 'gateway.gw-rpc-methods',
+    };
+    const ctx = {
+      keys: keysControl.value,
+      keysType,
+      panelTitle: panelTitles[keysType],
+      addKeyTitle: keysType === Dnp3ValueKey.RPC ? 'gateway.gw-add-method' : 'gateway.gw-add-key',
+      deleteKeyTitle: 'gateway.gw-delete-key',
+      noKeysText: 'gateway.gw-no-keys-configured-hint',
+    };
+    this.keysPopupClosed = false;
+    this.popoverComponent = this.popoverService.displayPopover(
+      trigger,
+      this.renderer,
+      this.viewContainerRef,
+      Dnp3DataKeysPanelComponent,
+      'leftTop',
+      false,
+      null,
+      ctx,
+      {},
+      {},
+      {},
+      true
+    );
+    this.popoverComponent.tbComponentRef.instance.keysDataApplied
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((keysData: Dnp3Keys) => {
+        this.popoverComponent.hide();
+        keysControl.patchValue(keysData as any);
+        keysControl.markAsDirty();
+        this.cdr.markForCheck();
+      });
+    this.popoverComponent.tbComponentRef.instance.cancelled
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.popoverComponent.hide();
+      });
+    this.popoverComponent.tbHideStart
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.keysPopupClosed = true;
+      });
+  }
+
+  private uniqueName() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const name = (control.value ?? '').trim();
+      const taken = (this.data?.otherDevices ?? []).some(d => (d.deviceName ?? '').trim() === name);
+      return name && taken ? { duplicateName: true } : null;
+    };
+  }
+
+  /** Master and outstation differ, and no other device on the channel has the outstation's address. */
+  private addressesValid(group: AbstractControl): ValidationErrors | null {
+    const master = group.get('masterAddress')?.value;
+    const outstation = group.get('outstationAddress')?.value;
+    const channel = group.get('channel')?.value;
+    if (master !== null && master === outstation) {
+      return { sameAddress: true };
+    }
+    const taken = (this.data?.otherDevices ?? [])
+      .some(d => d.channel === channel && d.outstationAddress === outstation);
+    return taken ? { outstationAddressTaken: true } : null;
+  }
+}

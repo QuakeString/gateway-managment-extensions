@@ -1,0 +1,50 @@
+{
+  "4.3.0": {
+    "channels": [
+      {
+        "name": "substation-lan",
+        "type": "tcpClient",
+        "host": "10.0.0.20",
+        "port": 20000
+      }
+    ],
+    "devices": [
+      {
+        "deviceName": "RTU Substation 01",
+        "deviceType": "default",
+        "channel": "substation-lan",
+        "masterAddress": 1,
+        "outstationAddress": 10,
+        "responseTimeoutMs": 5000,
+        "retries": 2,
+        "startup": {
+          "disableUnsolicited": true,
+          "integrityPoll": true,
+          "enableUnsolicited": [1, 2, 3]
+        },
+        "polls": {
+          "integrityMs": 3600000
+        },
+        "timeSync": "none",
+        "useOutstationTime": true,
+        "timeseries": [
+          {"key": "busVoltage", "pointType": "analogInput", "index": 0, "multiplier": 0.1},
+          {"key": "breaker", "pointType": "doubleBitBinary", "index": 0,
+           "states": {"0": "intermediate", "1": "open", "2": "closed", "3": "indeterminate"}},
+          {"key": "energyKwh", "pointType": "counter", "index": 1}
+        ],
+        "attributes": [
+          {"key": "localRemote", "pointType": "binaryInput", "index": 5}
+        ],
+        "attributeUpdates": [
+          {"key": "voltageSetpoint", "pointType": "analogOutput", "index": 0,
+           "encoding": "float32", "mode": "selectBeforeOperate"}
+        ],
+        "rpc": [
+          {"method": "tripBreaker", "pointType": "binaryOutput", "index": 0,
+           "opType": "pulseOn", "tripClose": "trip", "onTimeMs": 500, "mode": "selectBeforeOperate"}
+        ]
+      }
+    ]
+  }
+}

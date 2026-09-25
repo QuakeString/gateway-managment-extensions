@@ -1,0 +1,228 @@
+<!--
+  Copyright © 2016-2025 The Sentient Authors
+  Licensed under the Apache License, Version 2.0
+-->
+<tb-industrial-keys-panel
+  [keysFormArray]="keysFormArray"
+  [title]="panelTitle"
+  [addKeyLabel]="addKeyTitle"
+  [deleteKeyTitle]="deleteKeyTitle"
+  [emptyText]="noKeysText"
+  [searchFields]="searchFields"
+  [sortFields]="sortFields"
+  [spreadsheetColumns]="spreadsheetColumns"
+  [rowHeaderTpl]="rowHeaderTpl"
+  [rowBodyTpl]="rowBodyTpl"
+  [applyDisabled]="keysFormArray.invalid || !keysFormArray.dirty"
+  (addKeyRequested)="onAddRequested()"
+  (deleteKeyRequested)="onDeleteRequested($event)"
+  (applyRequested)="onApplyRequested()"
+  (cancelRequested)="onCancelRequested()">
+</tb-industrial-keys-panel>
+
+<ng-template #rowHeaderTpl let-row let-index="index">
+  <div class="tb-flex">
+    <div class="title-container tb-flex">{{ (isRpc ? 'gateway.method' : 'gateway.gw-key') | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('key')?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.dnp3-point-type' | translate }}:
+      <span class="key-label">{{ 'gateway.dnp3-point-type-' + row.get('pointType')?.value | translate }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.dnp3-index' | translate }}:
+      <span class="key-label">{{ row.get('index')?.value }}</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #rowBodyTpl let-row let-index="index">
+  <ng-container [formGroup]="row">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ (isCommand ? 'gateway.hints.dnp3.commands' : 'gateway.hints.dnp3.points') | translate }}
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.platform-side' | translate }}</div>
+        <div class="tb-form-row column-xs" *ngIf="!isRpc">
+          <div class="fixed-title-width tb-required">{{ 'gateway.key' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="key" [placeholder]="isUpdate ? 'voltageSetpoint' : 'busVoltage'">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs" *ngIf="isRpc">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.method' | translate }}">{{ 'gateway.method' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="method" placeholder="tripBreaker">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.dnp3-method-reserved' | translate"
+                      *ngIf="row.get('method').hasError('reservedMethod')"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.connector-side' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required">{{ 'gateway.dnp3-point-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="pointType">
+              <ng-container *ngIf="isCommand; else measured">
+                <mat-option *ngFor="let type of outputPointTypes" [value]="type">{{ 'gateway.dnp3-point-type-' + type | translate }}</mat-option>
+              </ng-container>
+              <ng-template #measured>
+                <mat-option *ngFor="let type of pointTypes" [value]="type">{{ 'gateway.dnp3-point-type-' + type | translate }}</mat-option>
+              </ng-template>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.index' | translate }}">{{ 'gateway.dnp3-index' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="index" placeholder="0">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.dnp3-index-range' | translate"
+                      *ngIf="row.get('index').invalid && row.get('index').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+
+        <ng-container *ngIf="!isCommand">
+          <div class="tb-form-row column-xs" *ngIf="isDoubleBit(row)" formGroupName="states">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.states' | translate }}">{{ 'gateway.dnp3-states' | translate }}</div>
+            <div class="tb-flex">
+              <mat-form-field *ngFor="let state of states" class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput [formControlName]="state" [placeholder]="state">
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs" *ngIf="isOctetString(row)">
+            <div class="fixed-title-width">{{ 'gateway.dnp3-encoding' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="encoding">
+                <mat-option value="">{{ 'gateway.dnp3-encoding-auto' | translate }}</mat-option>
+                <mat-option value="text">text</mat-option>
+                <mat-option value="hex">hex</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs" *ngIf="!isOctetString(row)">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.quality' | translate }}">{{ 'gateway.dnp3-quality' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="quality">
+                <mat-option *ngFor="let mode of qualityModes" [value]="mode">{{ 'gateway.dnp3-quality-' + mode | translate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row" *ngIf="!isOctetString(row)">
+            <mat-slide-toggle class="mat-slide" formControlName="onlineOnly">
+              <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.online-only' | translate }}">{{ 'gateway.dnp3-online-only' | translate }}</mat-label>
+            </mat-slide-toggle>
+          </div>
+          <tb-calibration-block formControlName="calibration" [canCalibrate]="canCalibrate(row)"/>
+          <tb-report-strategy
+            class="stroked tb-form-panel"
+            [defaultValue]="ReportStrategyDefaultValue.Key"
+            formControlName="reportStrategy"
+            [isExpansionMode]="true"
+          />
+        </ng-container>
+
+        <ng-container *ngIf="isCommand">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.mode' | translate }}">{{ 'gateway.dnp3-mode' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="mode">
+                <mat-option *ngFor="let mode of commandModes" [value]="mode">{{ 'gateway.dnp3-mode-' + mode | translate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs" *ngIf="!isBinaryOutput(row)">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.encoding' | translate }}">{{ 'gateway.dnp3-encoding' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="encoding">
+                <mat-option *ngFor="let encoding of encodings" [value]="encoding">{{ encoding }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <ng-container *ngIf="isBinaryOutput(row)">
+            <ng-container *ngIf="isRpc">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-op-type' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="opType">
+                    <mat-option *ngFor="let op of opTypes" [value]="op">{{ 'gateway.dnp3-op-type-' + op | translate }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-trip-close' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="tripClose">
+                    <mat-option *ngFor="let tc of tripCloses" [value]="tc">{{ 'gateway.dnp3-trip-close-' + tc | translate }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="isUpdate">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.on-command' | translate }}">{{ 'gateway.dnp3-on-command' | translate }}</div>
+                <div class="tb-flex">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="onOpType">
+                      <mat-option *ngFor="let op of opTypes" [value]="op">{{ 'gateway.dnp3-op-type-' + op | translate }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="onTripClose">
+                      <mat-option *ngFor="let tc of tripCloses" [value]="tc">{{ 'gateway.dnp3-trip-close-' + tc | translate }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-off-command' | translate }}</div>
+                <div class="tb-flex">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="offOpType">
+                      <mat-option *ngFor="let op of opTypes" [value]="op">{{ 'gateway.dnp3-op-type-' + op | translate }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="offTripClose">
+                      <mat-option *ngFor="let tc of tripCloses" [value]="tc">{{ 'gateway.dnp3-trip-close-' + tc | translate }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+            </ng-container>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.dnp3-count' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="count" placeholder="1">
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.dnp3-on-time-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="onTimeMs" placeholder="1000">
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.dnp3-off-time-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="offTimeMs" placeholder="0">
+              </mat-form-field>
+            </div>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
