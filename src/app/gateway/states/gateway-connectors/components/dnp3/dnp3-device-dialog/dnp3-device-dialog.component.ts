@@ -24,7 +24,7 @@ import {
   ViewContainerRef,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
@@ -37,11 +37,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
 import {
   DNP3_MAX_ADDRESS,
+  DNP3_SESSION_KEY_CHANGE_DEFAULT_MS,
   Dnp3AttributeUpdate,
   Dnp3DeviceConfig,
   Dnp3PointKey,
   Dnp3PointType,
   Dnp3RpcConfig,
+  Dnp3SecureAuthentication,
+  Dnp3SecureAuthUser,
   Dnp3TimeSync,
   Dnp3ValueKey,
 } from '../../../models/public-api';
@@ -60,6 +63,8 @@ export interface Dnp3DeviceDialogData {
   isEdit: boolean;
   /** The connector's channel names. */
   channels: string[];
+  /** Whether the gateway has Secure Authentication (4.5.0); unknown counts as yes. */
+  secureAuthSupported?: boolean;
   /** The connector's other devices: names and (channel, address) pairs must stay unique. */
   otherDevices: Dnp3DeviceConfig[];
   gatewayDeviceId?: string;
@@ -127,6 +132,11 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
     timeSync: [Dnp3TimeSync.NONE as string],
     useOutstationTime: [true],
     allowRestart: [false],
+    secureAuthentication: this.fb.group({
+      enabled: [false],
+      users: this.fb.array([] as FormGroup[]),
+      sessionKeyChangeIntervalMs: [DNP3_SESSION_KEY_CHANGE_DEFAULT_MS, [Validators.required, Validators.min(1000)]],
+    }, { validators: [(group: AbstractControl) => this.secureAuthUsersValid(group)] }),
     timeseries: [[] as Dnp3PointKey[]],
     attributes: [[] as Dnp3PointKey[]],
     attributeUpdates: [[] as Dnp3AttributeUpdate[]],
@@ -171,6 +181,104 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
     } else if (data.channels?.length) {
       this.deviceForm.patchValue({ channel: data.channels[0] }, { emitEvent: false });
     }
+    const secureAuth = data.device?.secureAuthentication;
+    for (const user of secureAuth?.users ?? []) {
+      this.saUsers.push(this.saUserGroup(user));
+    }
+    (this.deviceForm.get('secureAuthentication') as FormGroup).patchValue({
+      enabled: !!secureAuth && secureAuth.enabled !== false,
+      sessionKeyChangeIntervalMs: secureAuth?.sessionKeyChangeIntervalMs ?? DNP3_SESSION_KEY_CHANGE_DEFAULT_MS,
+    }, { emitEvent: false });
+    // An older gateway cannot run it; a device that already has it keeps it editable.
+    if (data.secureAuthSupported === false && !secureAuth) {
+      this.deviceForm.get('secureAuthentication.enabled').disable({ emitEvent: false });
+    }
+    this.onSecureAuthToggled(false);
+    this.deviceForm.get('secureAuthentication.enabled').valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onSecureAuthToggled(true));
+  }
+
+  get saUsers(): FormArray {
+    return this.deviceForm.get('secureAuthentication.users') as FormArray;
+  }
+
+  get secureAuthEnabled(): boolean {
+    return !!this.deviceForm.get('secureAuthentication.enabled').value;
+  }
+
+  addSaUser(): void {
+    const taken = new Set((this.saUsers.getRawValue() as Dnp3SecureAuthUser[]).map(u => Number(u.number)));
+    let number = 1;
+    while (taken.has(number)) {
+      number++;
+    }
+    this.saUsers.push(this.saUserGroup({ number, updateKeyFile: '' }));
+    this.deviceForm.get('secureAuthentication').updateValueAndValidity();
+  }
+
+  removeSaUser(index: number): void {
+    this.saUsers.removeAt(index);
+    this.deviceForm.get('secureAuthentication').updateValueAndValidity();
+  }
+
+  private saUserGroup(user: Dnp3SecureAuthUser): FormGroup {
+    return this.fb.group({
+      number: [user.number, [Validators.required, Validators.min(1), Validators.max(65535)]],
+      updateKeyFile: [user.updateKeyFile, [Validators.required, Validators.pattern(/\S/)]],
+    });
+  }
+
+  /** Users and the interval count only while it is on; switching it on offers user 1. */
+  private onSecureAuthToggled(offerDefaultUser: boolean): void {
+    const group = this.deviceForm.get('secureAuthentication');
+    const on = this.secureAuthEnabled;
+    if (on && offerDefaultUser && !this.saUsers.length) {
+      this.saUsers.push(this.saUserGroup({ number: 1, updateKeyFile: '' }));
+    }
+    for (const name of ['users', 'sessionKeyChangeIntervalMs']) {
+      const control = group.get(name);
+      if (on) {
+        control.enable({ emitEvent: false });
+      } else {
+        control.disable({ emitEvent: false });
+      }
+    }
+    group.updateValueAndValidity();
+    this.cdr.markForCheck();
+  }
+
+  /** The device's requests run as user 1, so it must be there; each number once. */
+  private secureAuthUsersValid(group: AbstractControl): ValidationErrors | null {
+    if (!group.get('enabled')?.value) {
+      return null;
+    }
+    const numbers = ((group.get('users') as FormArray).getRawValue() as Dnp3SecureAuthUser[])
+      .map(user => Number(user.number));
+    if (!numbers.includes(1)) {
+      return { needsDefaultUser: true };
+    }
+    if (new Set(numbers).size !== numbers.length) {
+      return { duplicateUser: true };
+    }
+    return null;
+  }
+
+  /** What is saved: the block when on; when off, only if the device had one (kept, switched off). */
+  private secureAuthResult(): Dnp3SecureAuthentication | undefined {
+    const raw = this.deviceForm.get('secureAuthentication').getRawValue();
+    const users = (raw.users as Dnp3SecureAuthUser[]).map(user => ({
+      number: Number(user.number),
+      updateKeyFile: (user.updateKeyFile ?? '').trim(),
+    }));
+    const sessionKeyChangeIntervalMs = Number(raw.sessionKeyChangeIntervalMs);
+    if (raw.enabled) {
+      return { users, sessionKeyChangeIntervalMs };
+    }
+    if (this.data.device?.secureAuthentication) {
+      return { enabled: false, users, sessionKeyChangeIntervalMs };
+    }
+    return undefined;
   }
 
   get channelUnknown(): boolean {
@@ -189,7 +297,7 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
       return;
     }
     const form = this.deviceForm.getRawValue();
-    const { startup, ...rest } = form;
+    const { startup, secureAuthentication: _secureAuthentication, ...rest } = form;
     const enableUnsolicited = [
       startup.unsolicitedClass1 && 1,
       startup.unsolicitedClass2 && 2,
@@ -204,6 +312,10 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
         enableUnsolicited,
       },
     };
+    const secureAuth = this.secureAuthResult();
+    if (secureAuth) {
+      result.secureAuthentication = secureAuth;
+    }
     this.dialogRef.close(result);
   }
 

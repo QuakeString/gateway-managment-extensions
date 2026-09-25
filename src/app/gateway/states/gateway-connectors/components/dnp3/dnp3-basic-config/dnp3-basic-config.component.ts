@@ -19,6 +19,7 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
 import {
   DNP3_DEFAULT_PORT,
+  DNP3_SECURE_AUTH_VERSION,
   DNP3_SERIAL_TLS_VERSION,
   DNP3_TLS_DEFAULT_PORT,
   Dnp3BasicConfig,
@@ -86,7 +87,7 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
 
   @Input() gatewayDeviceId: string;
   @Input() connectorName: string;
-  /** The gateway's own version: serial and TLS channels need 4.4.0. */
+  /** The gateway's own version: serial and TLS channels need 4.4.0, Secure Authentication 4.5.0. */
   @Input() gatewayVersion: string;
 
   readonly ChannelType = Dnp3ChannelType;
@@ -101,6 +102,13 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
     return !this.gatewayVersion
       || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
         >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_SERIAL_TLS_VERSION);
+  }
+
+  /** Unknown counts as able, as for serial and TLS. */
+  get secureAuthSupported(): boolean {
+    return !this.gatewayVersion
+      || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
+        >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_SECURE_AUTH_VERSION);
   }
 
   get channelsArray(): FormArray {

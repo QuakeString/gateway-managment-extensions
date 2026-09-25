@@ -214,12 +214,28 @@ export interface Dnp3DeviceConfig {
   timeSync?: Dnp3TimeSync | string;
   useOutstationTime?: boolean;
   allowRestart?: boolean;
+  secureAuthentication?: Dnp3SecureAuthentication;
   reportStrategy?: ReportStrategyConfig;
   timeseries: Dnp3PointKey[];
   attributes: Dnp3PointKey[];
   attributeUpdates: Dnp3AttributeUpdate[];
   rpc: Dnp3RpcConfig[];
 }
+
+/** A user the gateway authenticates as; its update key is a file on the gateway. */
+export interface Dnp3SecureAuthUser {
+  number: number;
+  updateKeyFile: string;
+}
+
+/** Secure Authentication v5 (IEEE 1815-2012). The device's requests run as user 1. */
+export interface Dnp3SecureAuthentication {
+  enabled?: boolean;
+  users: Dnp3SecureAuthUser[];
+  sessionKeyChangeIntervalMs?: number;
+}
+
+export const DNP3_SESSION_KEY_CHANGE_DEFAULT_MS = 600000;
 
 export interface Dnp3BasicConfig {
   channels: Dnp3ChannelConfig[];
@@ -257,3 +273,6 @@ export const DNP3_TLS_DEFAULT_PORT = 19999;
 
 /** The gateway that brings serial and TLS channels. */
 export const DNP3_SERIAL_TLS_VERSION = '4.4.0';
+
+/** The gateway that brings Secure Authentication. */
+export const DNP3_SECURE_AUTH_VERSION = '4.5.0';

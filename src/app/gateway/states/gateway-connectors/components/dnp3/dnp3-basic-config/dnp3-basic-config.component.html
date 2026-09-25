@@ -260,6 +260,7 @@
   <mat-tab label="Devices*">
     <tb-dnp3-devices-table formControlName="devices"
                            [channels]="channelNames"
+                           [secureAuthSupported]="secureAuthSupported"
                            [gatewayDeviceId]="gatewayDeviceId"
                            [connectorName]="connectorName"/>
   </mat-tab>

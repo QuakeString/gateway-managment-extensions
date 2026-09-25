@@ -67,6 +67,8 @@ export class Dnp3DevicesTableComponent implements ControlValueAccessor, Validato
   @Input() connectorName: string;
   /** The names of the connector's channels; a device picks one. */
   @Input() channels: string[] = [];
+  /** Whether the gateway has Secure Authentication (4.5.0). */
+  @Input() secureAuthSupported = true;
 
   readonly displayedColumns = ['deviceName', 'channel', 'addresses', 'points', 'actions'];
 
@@ -186,6 +188,7 @@ export class Dnp3DevicesTableComponent implements ControlValueAccessor, Validato
           device: index === undefined ? undefined : this.devices[index],
           isEdit: index !== undefined,
           channels: this.channels,
+          secureAuthSupported: this.secureAuthSupported,
           otherDevices: others,
           gatewayDeviceId: this.gatewayDeviceId,
           connectorName: this.connectorName,
