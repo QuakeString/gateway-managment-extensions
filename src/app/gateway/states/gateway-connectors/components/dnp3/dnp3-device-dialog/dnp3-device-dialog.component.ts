@@ -397,6 +397,7 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
       addKeyTitle: keysType === Dnp3ValueKey.RPC ? 'gateway.gw-add-method' : 'gateway.gw-add-key',
       deleteKeyTitle: 'gateway.gw-delete-key',
       noKeysText: 'gateway.gw-no-keys-configured-hint',
+      securityStatistics: this.data.secureAuthSupported !== false,
     };
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(

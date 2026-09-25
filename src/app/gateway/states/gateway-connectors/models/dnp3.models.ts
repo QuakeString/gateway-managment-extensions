@@ -77,6 +77,8 @@ export enum Dnp3PointType {
   ANALOG_INPUT = 'analogInput',
   ANALOG_OUTPUT_STATUS = 'analogOutputStatus',
   OCTET_STRING = 'octetString',
+  /** Secure Authentication's security statistics (g121/g122); gateway 4.5.0. */
+  SECURITY_STATISTIC = 'securityStatistic',
 }
 
 /** Point types whose values are numbers and can be calibrated. */
@@ -85,6 +87,7 @@ export const DNP3_NUMERIC_POINT_TYPES = new Set<string>([
   Dnp3PointType.FROZEN_COUNTER,
   Dnp3PointType.ANALOG_INPUT,
   Dnp3PointType.ANALOG_OUTPUT_STATUS,
+  Dnp3PointType.SECURITY_STATISTIC,
 ]);
 
 export enum Dnp3QualityMode {

@@ -1616,6 +1616,7 @@
     "dnp3-point-type-analogInput": "Analog input",
     "dnp3-point-type-analogOutputStatus": "Analog output status",
     "dnp3-point-type-octetString": "Octet string",
+    "dnp3-point-type-securityStatistic": "Security statistic",
     "dnp3-point-type-binaryOutput": "Binary output (CROB)",
     "dnp3-point-type-analogOutput": "Analog output",
     "dnp3-index": "Index",

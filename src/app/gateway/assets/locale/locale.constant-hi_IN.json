@@ -1600,6 +1600,7 @@
     "dnp3-point-type-analogInput": "एनालॉग इनपुट",
     "dnp3-point-type-analogOutputStatus": "एनालॉग आउटपुट स्थिति",
     "dnp3-point-type-octetString": "ऑक्टेट स्ट्रिंग",
+    "dnp3-point-type-securityStatistic": "सुरक्षा सांख्यिकी",
     "dnp3-point-type-binaryOutput": "बाइनरी आउटपुट (CROB)",
     "dnp3-point-type-analogOutput": "एनालॉग आउटपुट",
     "dnp3-index": "इंडेक्स",

@@ -96,13 +96,18 @@ export class Dnp3DataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Dnp3Key[] = [];
   @Input() keysType: Dnp3ValueKey = Dnp3ValueKey.TIMESERIES;
+  /** Offer security statistics (gateway 4.5.0). */
+  @Input() securityStatistics = true;
 
   @Output() keysDataApplied = new EventEmitter<Dnp3Key[]>();
   @Output() cancelled = new EventEmitter<void>();
 
   @ViewChild(IndustrialKeysPanelComponent) shell!: IndustrialKeysPanelComponent;
 
-  readonly pointTypes = Object.values(Dnp3PointType);
+  get pointTypes(): string[] {
+    return Object.values(Dnp3PointType)
+      .filter(type => this.securityStatistics || type !== Dnp3PointType.SECURITY_STATISTIC);
+  }
   readonly outputPointTypes = Object.values(Dnp3OutputPointType);
   readonly qualityModes = Object.values(Dnp3QualityMode);
   readonly commandModes = Object.values(Dnp3CommandMode);
