@@ -55,52 +55,181 @@
               <div class="tb-flex no-gap">
                 <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                   <mat-select formControlName="type">
-                    <mat-option value="tcpClient">{{ 'gateway.dnp3-channel-tcp-client' | translate }}</mat-option>
+                    <mat-option [value]="ChannelType.TCP_CLIENT">{{ 'gateway.dnp3-channel-tcp-client' | translate }}</mat-option>
+                    <mat-option [value]="ChannelType.TLS"
+                                [disabled]="!serialAndTlsSupported && channel.get('type').value !== ChannelType.TLS">
+                      {{ 'gateway.dnp3-channel-tls' | translate }}
+                    </mat-option>
+                    <mat-option [value]="ChannelType.SERIAL"
+                                [disabled]="!serialAndTlsSupported && channel.get('type').value !== ChannelType.SERIAL">
+                      {{ 'gateway.dnp3-channel-serial' | translate }}
+                    </mat-option>
                   </mat-select>
                 </mat-form-field>
               </div>
             </div>
-            <div class="tb-form-row column-xs">
-              <div class="fixed-title-width tb-required">{{ 'gateway.host' | translate }}</div>
-              <div class="tb-flex no-gap">
+            <div *ngIf="!serialAndTlsSupported" class="tb-form-hint tb-primary-fill tb-flex align-center">
+              {{ 'gateway.dnp3-serial-tls-need-version' | translate }}
+            </div>
+            <ng-container *ngIf="channel.get('type').value !== ChannelType.SERIAL">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width tb-required">{{ 'gateway.host' | translate }}</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="host" placeholder="10.0.0.20"/>
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="'gateway.gw-host-required' | translate"
+                              *ngIf="channel.get('host').invalid && channel.get('host').touched"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ (channel.get('type').value === ChannelType.TLS ? 'gateway.hints.dnp3.tls-port' : 'gateway.hints.dnp3.port') | translate }}">{{ 'gateway.port' | translate }}</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="port" placeholder="20000"/>
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="'gateway.dnp3-port-required' | translate"
+                              *ngIf="channel.get('port').invalid && channel.get('port').touched"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="channel.get('type').value === ChannelType.TLS">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.ca-cert' | translate }}">{{ 'gateway.dnp3-ca-cert' | translate }}</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="caCert" placeholder="/etc/sentient-gateway/dnp3/ca.pem"/>
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="'gateway.dnp3-ca-cert-required' | translate"
+                              *ngIf="channel.get('caCert').invalid && channel.get('caCert').touched"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.client-cert' | translate }}">{{ 'gateway.dnp3-client-cert' | translate }}</div>
                 <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput formControlName="host" placeholder="10.0.0.20"/>
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="'gateway.gw-host-required' | translate"
-                            *ngIf="channel.get('host').invalid && channel.get('host').touched"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
+                  <input matInput formControlName="cert" placeholder="/etc/sentient-gateway/dnp3/gateway.pem"/>
                 </mat-form-field>
               </div>
-            </div>
-            <div class="tb-form-row column-xs">
-              <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.port' | translate }}">{{ 'gateway.port' | translate }}</div>
-              <div class="tb-flex no-gap">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-client-key' | translate }}</div>
                 <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput type="number" formControlName="port" placeholder="20000"/>
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="'gateway.dnp3-port-required' | translate"
-                            *ngIf="channel.get('port').invalid && channel.get('port').touched"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
+                  <input matInput formControlName="key" placeholder="/etc/sentient-gateway/dnp3/gateway.key"/>
                 </mat-form-field>
               </div>
-            </div>
+              <div *ngIf="channel.hasError('certAndKey')" class="tb-form-hint tb-error tb-flex align-center">
+                {{ 'gateway.dnp3-cert-and-key-together' | translate }}
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.server-name' | translate }}">{{ 'gateway.dnp3-server-name' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="serverName" [placeholder]="channel.get('host').value || 'rtu1.example.net'"/>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-min-tls-version' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="minTlsVersion">
+                    <mat-option value="1.2">TLS 1.2</mat-option>
+                    <mat-option value="1.3">TLS 1.3</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="channel.get('type').value === ChannelType.SERIAL">
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.serial-path' | translate }}">{{ 'gateway.dnp3-serial-path' | translate }}</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput formControlName="path" placeholder="/dev/ttyUSB0"/>
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="'gateway.dnp3-serial-path-required' | translate"
+                              *ngIf="channel.get('path').invalid && channel.get('path').touched"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-baud-rate' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="baudRate">
+                    <mat-option *ngFor="let rate of baudRates" [value]="rate">{{ rate }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-data-bits' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="dataBits">
+                    <mat-option *ngFor="let bits of [8, 7, 6, 5]" [value]="bits">{{ bits }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-parity' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="parity">
+                    <mat-option *ngFor="let parity of parities" [value]="parity">{{ ('gateway.dnp3-parity-' + parity) | translate }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-stop-bits' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="stopBits">
+                    <mat-option [value]="1">1</mat-option>
+                    <mat-option [value]="2">2</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width">{{ 'gateway.dnp3-flow-control' | translate }}</div>
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="flowControl">
+                    <mat-option *ngFor="let flow of flowControls" [value]="flow">{{ ('gateway.dnp3-flow-control-' + flow) | translate }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+                {{ 'gateway.dnp3-rs485-hint' | translate }}
+              </div>
+            </ng-container>
             <mat-expansion-panel class="tb-settings">
               <mat-expansion-panel-header>
                 <mat-panel-title>{{ 'gateway.advanced-connection-settings' | translate }}</mat-panel-title>
               </mat-expansion-panel-header>
               <div class="tb-form-panel no-border no-padding">
-                <div class="tb-form-row column-xs">
+                <div class="tb-form-row column-xs" *ngIf="channel.get('type').value !== ChannelType.SERIAL">
                   <div class="fixed-title-width">{{ 'gateway.dnp3-connect-timeout-ms' | translate }}</div>
                   <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                     <input matInput type="number" formControlName="connectTimeoutMs"/>
+                  </mat-form-field>
+                </div>
+                <div class="tb-form-row column-xs" *ngIf="channel.get('type').value === ChannelType.SERIAL">
+                  <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.open-delay' | translate }}">{{ 'gateway.dnp3-open-delay-ms' | translate }}</div>
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" formControlName="openDelayMs"/>
                   </mat-form-field>
                 </div>
                 <div class="tb-form-row column-xs">

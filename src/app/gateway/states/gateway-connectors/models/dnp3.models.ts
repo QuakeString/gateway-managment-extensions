@@ -25,16 +25,47 @@ import { ReportStrategyConfig } from '../../../shared/models/public-api';
 
 export enum Dnp3ChannelType {
   TCP_CLIENT = 'tcpClient',
+  /** From gateway 4.4.0: TCP wrapped in TLS (IEC 62351-3). */
+  TLS = 'tls',
+  /** From gateway 4.4.0: RS-232, or an RS-485 line with several outstations. */
+  SERIAL = 'serial',
+}
+
+export enum Dnp3Parity {
+  NONE = 'none',
+  EVEN = 'even',
+  ODD = 'odd',
+}
+
+export enum Dnp3FlowControl {
+  NONE = 'none',
+  SOFTWARE = 'software',
+  HARDWARE = 'hardware',
 }
 
 export interface Dnp3ChannelConfig {
   name: string;
   type: Dnp3ChannelType | string;
-  host: string;
-  port: number;
+  // tcpClient and tls
+  host?: string;
+  port?: number;
   connectTimeoutMs?: number;
   minRetryDelayMs?: number;
   maxRetryDelayMs?: number;
+  // serial
+  path?: string;
+  baudRate?: number;
+  dataBits?: number;
+  parity?: Dnp3Parity | string;
+  stopBits?: number;
+  flowControl?: Dnp3FlowControl | string;
+  openDelayMs?: number;
+  // tls: files on the gateway
+  serverName?: string;
+  caCert?: string;
+  cert?: string;
+  key?: string;
+  minTlsVersion?: '1.2' | '1.3' | string;
 }
 
 export enum Dnp3PointType {
@@ -212,9 +243,17 @@ export const DNP3_RESERVED_RPCS = [
   'disableUnsolicited',
   'coldRestart',
   'warmRestart',
+  'freeze',
+  'freezeAtTime',
 ];
 
 /** DNP3 link addresses: 0–65519 (0xFFF0 and up are reserved). */
 export const DNP3_MAX_ADDRESS = 65519;
 
 export const DNP3_DEFAULT_PORT = 20000;
+
+/** IANA's dnp-sec, the port of DNP3 over TLS. */
+export const DNP3_TLS_DEFAULT_PORT = 19999;
+
+/** The gateway that brings serial and TLS channels. */
+export const DNP3_SERIAL_TLS_VERSION = '4.4.0';

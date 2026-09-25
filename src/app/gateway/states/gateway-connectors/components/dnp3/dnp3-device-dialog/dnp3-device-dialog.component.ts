@@ -40,11 +40,20 @@ import {
   Dnp3AttributeUpdate,
   Dnp3DeviceConfig,
   Dnp3PointKey,
+  Dnp3PointType,
   Dnp3RpcConfig,
   Dnp3TimeSync,
   Dnp3ValueKey,
 } from '../../../models/public-api';
 import { Dnp3DataKeysPanelComponent } from '../dnp3-data-keys-panel/dnp3-data-keys-panel.component';
+import { Dnp3ProfilePoint, parseDnp3DeviceProfile } from '../dnp3-device-profile';
+
+/** The points of an imported Device Profile of one type, and whether to take them. */
+interface ProfileGroup {
+  pointType: string;
+  points: Dnp3ProfilePoint[];
+  selected: boolean;
+}
 
 export interface Dnp3DeviceDialogData {
   device?: Dnp3DeviceConfig;
@@ -79,6 +88,16 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
   readonly maxAddress = DNP3_MAX_ADDRESS;
   isEdit: boolean;
   keysPopupClosed = true;
+
+  /** A Device Profile read and waiting for the user to choose. */
+  profileImport: { documentName?: string; groups: ProfileGroup[]; alreadyConfigured: number } | null = null;
+  profileError = '';
+
+  get profileSelectedCount(): number {
+    return (this.profileImport?.groups ?? [])
+      .filter(group => group.selected)
+      .reduce((sum, group) => sum + group.points.length, 0);
+  }
 
   deviceForm = this.fb.group({
     deviceName: ['', [Validators.required, Validators.pattern(/\S/), this.uniqueName()]],
@@ -186,6 +205,59 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
       },
     };
     this.dialogRef.close(result);
+  }
+
+  /** Read an IEEE 1815 Device Profile and offer its points, by type. */
+  onProfileFile(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    file.text().then(xml => {
+      const existing = [
+        ...(this.deviceForm.get('timeseries').value as Dnp3PointKey[]),
+        ...(this.deviceForm.get('attributes').value as Dnp3PointKey[]),
+      ];
+      const configured = new Set(existing.map(point => `${point.pointType}:${point.index}`));
+      try {
+        const profile = parseDnp3DeviceProfile(xml, existing.map(point => point.key));
+        const fresh = profile.points.filter(p => !configured.has(`${p.point.pointType}:${p.point.index}`));
+        const groups: ProfileGroup[] = [];
+        for (const point of fresh) {
+          let group = groups.find(g => g.pointType === point.point.pointType);
+          if (!group) {
+            group = { pointType: point.point.pointType, points: [], selected: true };
+            groups.push(group);
+          }
+          group.points.push(point);
+        }
+        // In the point types' own order, not the order of first appearance.
+        const order = Object.values(Dnp3PointType) as string[];
+        groups.sort((a, b) => order.indexOf(a.pointType) - order.indexOf(b.pointType));
+        this.profileImport = {
+          documentName: profile.documentName,
+          groups,
+          alreadyConfigured: profile.points.length - fresh.length,
+        };
+        this.profileError = '';
+      } catch (e) {
+        this.profileImport = null;
+        this.profileError = (e as Error).message;
+      }
+      this.cdr.markForCheck();
+    });
+  }
+
+  /** Add the chosen groups' points to the time series. */
+  applyProfile(): void {
+    const points = (this.profileImport?.groups ?? [])
+      .filter(group => group.selected)
+      .flatMap(group => group.points.map(point => point.point));
+    const control = this.deviceForm.get('timeseries');
+    control.setValue([...(control.value as Dnp3PointKey[]), ...points]);
+    control.markAsDirty();
+    this.profileImport = null;
   }
 
   manageKeys($event: Event, matButton: MatButton, keysType: Dnp3ValueKey): void {

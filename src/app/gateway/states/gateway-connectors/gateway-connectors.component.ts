@@ -181,7 +181,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   initialConnector: GatewayConnector;
   basicConfigInitSubject = new Subject<void>();
 
-  private gatewayVersion: string;
+  protected gatewayVersion: string;
   private isGatewayActive: boolean;
   private inactiveConnectors: Array<string>;
   private attributeDataSource: AttributeDatasource;

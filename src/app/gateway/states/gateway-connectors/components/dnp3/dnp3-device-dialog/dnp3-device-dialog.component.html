@@ -219,6 +219,42 @@
       </div>
 
       <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.dnp3.device-profile' | translate }}">{{ 'gateway.dnp3-device-profile' | translate }}</div>
+        <button mat-stroked-button color="primary" type="button" (click)="profileFile.click()">
+          {{ 'gateway.dnp3-import-device-profile' | translate }}
+        </button>
+        <input #profileFile type="file" accept=".xml,application/xml,text/xml" hidden (change)="onProfileFile(profileFile)"/>
+      </div>
+      <div *ngIf="profileError" class="tb-form-hint tb-error tb-flex align-center">
+        {{ 'gateway.dnp3-device-profile-error' | translate: { error: profileError } }}
+      </div>
+      <div *ngIf="profileImport" class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">
+          {{ 'gateway.dnp3-device-profile-found' | translate: { name: profileImport.documentName || '—' } }}
+        </div>
+        <div *ngIf="!profileImport.groups.length" class="tb-form-hint tb-primary-fill tb-flex align-center">
+          {{ 'gateway.dnp3-device-profile-nothing-new' | translate }}
+        </div>
+        <mat-checkbox *ngFor="let group of profileImport.groups"
+                      [(ngModel)]="group.selected"
+                      [ngModelOptions]="{ standalone: true }">
+          {{ ('gateway.dnp3-point-type-' + group.pointType) | translate }} ({{ group.points.length }})
+        </mat-checkbox>
+        <div *ngIf="profileImport.alreadyConfigured" class="tb-form-hint tb-flex align-center">
+          {{ 'gateway.dnp3-device-profile-skipped' | translate: { count: profileImport.alreadyConfigured } }}
+        </div>
+        <div class="tb-flex justify-end">
+          <button mat-button color="primary" type="button" (click)="profileImport = null">
+            {{ 'gateway.gw-cancel' | translate }}
+          </button>
+          <button mat-raised-button color="primary" type="button"
+                  [disabled]="!profileSelectedCount"
+                  (click)="applyProfile()">
+            {{ 'gateway.dnp3-device-profile-import' | translate: { count: profileSelectedCount } }}
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
         <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
         <div class="tb-flex ellipsis-chips-container">
           <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">

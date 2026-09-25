@@ -373,6 +373,7 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              [gatewayVersion]="gatewayVersion"
               [gatewayDeviceId]="device?.id"
               [connectorName]="connectorForm.get('name')?.value"
               (initialized)="basicConfigInitSubject.next()"

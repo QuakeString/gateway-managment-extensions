@@ -14,17 +14,47 @@
 /// limitations under the License.
 ///
 import { ChangeDetectionStrategy, Component, Input, forwardRef } from '@angular/core';
-import { AbstractControl, FormArray, FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
 import {
   DNP3_DEFAULT_PORT,
+  DNP3_SERIAL_TLS_VERSION,
+  DNP3_TLS_DEFAULT_PORT,
   Dnp3BasicConfig,
   Dnp3ChannelConfig,
   Dnp3ChannelType,
+  Dnp3FlowControl,
+  Dnp3Parity,
 } from '../../../models/public-api';
+import { GatewayConnectorVersionMappingUtil } from '../../../utils/gateway-connector-version-mapping.util';
 import { GatewayConnectorBasicConfigDirective } from '../../../abstract/public-api';
 import { Dnp3DevicesTableComponent } from '../dnp3-devices-table/dnp3-devices-table.component';
+
+const NOT_BLANK: ValidatorFn[] = [Validators.required, Validators.pattern(/\S/)];
+
+/** The keys each channel type writes; the rest of the form is left out. */
+const CHANNEL_KEYS: Record<string, (keyof Dnp3ChannelConfig)[]> = {
+  [Dnp3ChannelType.TCP_CLIENT]: ['name', 'type', 'host', 'port', 'connectTimeoutMs', 'minRetryDelayMs', 'maxRetryDelayMs'],
+  [Dnp3ChannelType.TLS]: [
+    'name', 'type', 'host', 'port', 'connectTimeoutMs', 'minRetryDelayMs', 'maxRetryDelayMs',
+    'serverName', 'caCert', 'cert', 'key', 'minTlsVersion',
+  ],
+  [Dnp3ChannelType.SERIAL]: [
+    'name', 'type', 'path', 'baudRate', 'dataBits', 'parity', 'stopBits', 'flowControl', 'openDelayMs',
+    'minRetryDelayMs', 'maxRetryDelayMs',
+  ],
+};
+
+/** A TLS channel's certificate and key go together. */
+function certAndKeyTogether(group: AbstractControl): ValidationErrors | null {
+  if (group.get('type')?.value !== Dnp3ChannelType.TLS) {
+    return null;
+  }
+  const cert = (group.get('cert')?.value ?? '').trim();
+  const key = (group.get('key')?.value ?? '').trim();
+  return !cert === !key ? null : { certAndKey: true };
+}
 
 /** Channel names must be unique: devices refer to their channel by name. */
 function uniqueChannelNames(array: AbstractControl): ValidationErrors | null {
@@ -56,8 +86,22 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
 
   @Input() gatewayDeviceId: string;
   @Input() connectorName: string;
+  /** The gateway's own version: serial and TLS channels need 4.4.0. */
+  @Input() gatewayVersion: string;
+
+  readonly ChannelType = Dnp3ChannelType;
+  readonly parities = Object.values(Dnp3Parity);
+  readonly flowControls = Object.values(Dnp3FlowControl);
+  readonly baudRates = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200];
 
   isLegacy = false;
+
+  /** Unknown (no version reported yet) counts as able. */
+  get serialAndTlsSupported(): boolean {
+    return !this.gatewayVersion
+      || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
+        >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_SERIAL_TLS_VERSION);
+  }
 
   get channelsArray(): FormArray {
     return this.basicFormGroup.get('channels') as FormArray;
@@ -91,9 +135,28 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
 
   protected getMappedValue(config: Dnp3BasicConfig): Dnp3BasicConfig {
     return {
-      channels: (config?.channels ?? []).map(channel => ({ ...channel, name: (channel.name ?? '').trim() })),
+      channels: (config?.channels ?? []).map(channel => this.channelToWrite(channel)),
       devices: config?.devices ?? [],
     };
+  }
+
+  /** Only the chosen type's keys, trimmed; empty optional strings left out. */
+  private channelToWrite(channel: Dnp3ChannelConfig): Dnp3ChannelConfig {
+    const keys = CHANNEL_KEYS[channel.type] ?? CHANNEL_KEYS[Dnp3ChannelType.TCP_CLIENT];
+    const out: Record<string, unknown> = {};
+    for (const key of keys) {
+      let value = channel[key] as unknown;
+      if (typeof value === 'string') {
+        value = value.trim();
+        if (value === '' && key !== 'name') {
+          continue;
+        }
+      }
+      if (value !== undefined && value !== null) {
+        out[key] = value;
+      }
+    }
+    return out as unknown as Dnp3ChannelConfig;
   }
 
   protected initBasicFormGroup(): FormGroup {
@@ -121,14 +184,56 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
   }
 
   private channelForm(channel: Dnp3ChannelConfig): FormGroup {
-    return this.fb.group({
-      name: [channel.name ?? '', [Validators.required, Validators.pattern(/\S/)]],
-      type: [channel.type ?? Dnp3ChannelType.TCP_CLIENT],
-      host: [channel.host ?? '', [Validators.required, Validators.pattern(/\S/)]],
-      port: [channel.port ?? DNP3_DEFAULT_PORT, [Validators.required, Validators.min(1), Validators.max(65535)]],
+    const type = channel.type ?? Dnp3ChannelType.TCP_CLIENT;
+    const defaultPort = type === Dnp3ChannelType.TLS ? DNP3_TLS_DEFAULT_PORT : DNP3_DEFAULT_PORT;
+    const group = this.fb.group({
+      name: [channel.name ?? '', NOT_BLANK],
+      type: [type],
+      host: [channel.host ?? ''],
+      port: [channel.port ?? defaultPort],
       connectTimeoutMs: [channel.connectTimeoutMs ?? 5000, [Validators.min(100)]],
       minRetryDelayMs: [channel.minRetryDelayMs ?? 1000, [Validators.min(100)]],
       maxRetryDelayMs: [channel.maxRetryDelayMs ?? 60000, [Validators.min(100)]],
+      path: [channel.path ?? ''],
+      baudRate: [channel.baudRate ?? 9600, [Validators.min(1)]],
+      dataBits: [channel.dataBits ?? 8, [Validators.min(5), Validators.max(8)]],
+      parity: [channel.parity ?? Dnp3Parity.NONE],
+      stopBits: [channel.stopBits ?? 1],
+      flowControl: [channel.flowControl ?? Dnp3FlowControl.NONE],
+      openDelayMs: [channel.openDelayMs ?? 500, [Validators.min(0)]],
+      serverName: [channel.serverName ?? ''],
+      caCert: [channel.caCert ?? ''],
+      cert: [channel.cert ?? ''],
+      key: [channel.key ?? ''],
+      minTlsVersion: [channel.minTlsVersion ?? '1.2'],
+    }, { validators: [certAndKeyTogether] });
+    this.applyTypeValidators(group, type);
+    group.get('type').valueChanges.subscribe(next => {
+      // Carry the port over to the other TCP flavour's default, unless it
+      // was set by hand.
+      const port = group.get('port');
+      if (next === Dnp3ChannelType.TLS && port.value === DNP3_DEFAULT_PORT) {
+        port.setValue(DNP3_TLS_DEFAULT_PORT);
+      } else if (next === Dnp3ChannelType.TCP_CLIENT && port.value === DNP3_TLS_DEFAULT_PORT) {
+        port.setValue(DNP3_DEFAULT_PORT);
+      }
+      this.applyTypeValidators(group, next);
     });
+    return group;
+  }
+
+  /** Require what the chosen type needs, and nothing the others do. */
+  private applyTypeValidators(group: FormGroup, type: string): void {
+    const tcp = type === Dnp3ChannelType.TCP_CLIENT || type === Dnp3ChannelType.TLS;
+    const set = (name: string, validators: ValidatorFn[] | null) => {
+      const control = group.get(name);
+      control.setValidators(validators);
+      control.updateValueAndValidity({ emitEvent: false });
+    };
+    set('host', tcp ? NOT_BLANK : null);
+    set('port', tcp ? [Validators.required, Validators.min(1), Validators.max(65535)] : null);
+    set('path', type === Dnp3ChannelType.SERIAL ? NOT_BLANK : null);
+    set('caCert', type === Dnp3ChannelType.TLS ? NOT_BLANK : null);
+    group.updateValueAndValidity({ emitEvent: false });
   }
 }
