@@ -60,6 +60,12 @@
     .mat-mdc-form-field {
       width: 0;
     }
+    // A Secure Authentication user's number: a fixed width beside the
+    // key file, which the rule above would shrink to nothing.
+    .mat-mdc-form-field.dnp3-sa-user-number {
+      width: 140px;
+      flex: none;
+    }
   }
 
   .mat-mdc-form-field-icon-suffix {
@@ -95,8 +101,4 @@
 .dnp3-sa-user {
   gap: 8px;
   align-items: center;
-}
-
-.dnp3-sa-user-number {
-  width: 140px;
 }
