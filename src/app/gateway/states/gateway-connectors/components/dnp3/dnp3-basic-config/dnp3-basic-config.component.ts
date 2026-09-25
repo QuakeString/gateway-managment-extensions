@@ -22,6 +22,7 @@ import {
   DNP3_SECURE_AUTH_VERSION,
   DNP3_SERIAL_TLS_VERSION,
   DNP3_TLS_DEFAULT_PORT,
+  DNP3_UDP_VERSION,
   Dnp3BasicConfig,
   Dnp3ChannelConfig,
   Dnp3ChannelType,
@@ -40,6 +41,9 @@ const CHANNEL_KEYS: Record<string, (keyof Dnp3ChannelConfig)[]> = {
   [Dnp3ChannelType.TLS]: [
     'name', 'type', 'host', 'port', 'connectTimeoutMs', 'minRetryDelayMs', 'maxRetryDelayMs',
     'serverName', 'caCert', 'cert', 'key', 'minTlsVersion',
+  ],
+  [Dnp3ChannelType.UDP]: [
+    'name', 'type', 'host', 'port', 'localAddress', 'localPort', 'minRetryDelayMs', 'maxRetryDelayMs',
   ],
   [Dnp3ChannelType.SERIAL]: [
     'name', 'type', 'path', 'baudRate', 'dataBits', 'parity', 'stopBits', 'flowControl', 'openDelayMs',
@@ -87,7 +91,7 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
 
   @Input() gatewayDeviceId: string;
   @Input() connectorName: string;
-  /** The gateway's own version: serial and TLS channels need 4.4.0, Secure Authentication 4.5.0. */
+  /** The gateway's own version: serial and TLS channels need 4.4.0, Secure Authentication 4.5.0, UDP 4.6.0. */
   @Input() gatewayVersion: string;
 
   readonly ChannelType = Dnp3ChannelType;
@@ -109,6 +113,13 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
     return !this.gatewayVersion
       || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
         >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_SECURE_AUTH_VERSION);
+  }
+
+  /** Unknown counts as able, as for serial and TLS. */
+  get udpSupported(): boolean {
+    return !this.gatewayVersion
+      || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
+        >= GatewayConnectorVersionMappingUtil.parseVersion(DNP3_UDP_VERSION);
   }
 
   get channelsArray(): FormArray {
@@ -199,6 +210,8 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
       type: [type],
       host: [channel.host ?? ''],
       port: [channel.port ?? defaultPort],
+      localAddress: [channel.localAddress ?? '0.0.0.0'],
+      localPort: [channel.localPort ?? DNP3_DEFAULT_PORT],
       connectTimeoutMs: [channel.connectTimeoutMs ?? 5000, [Validators.min(100)]],
       minRetryDelayMs: [channel.minRetryDelayMs ?? 1000, [Validators.min(100)]],
       maxRetryDelayMs: [channel.maxRetryDelayMs ?? 60000, [Validators.min(100)]],
@@ -222,7 +235,7 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
       const port = group.get('port');
       if (next === Dnp3ChannelType.TLS && port.value === DNP3_DEFAULT_PORT) {
         port.setValue(DNP3_TLS_DEFAULT_PORT);
-      } else if (next === Dnp3ChannelType.TCP_CLIENT && port.value === DNP3_TLS_DEFAULT_PORT) {
+      } else if ((next === Dnp3ChannelType.TCP_CLIENT || next === Dnp3ChannelType.UDP) && port.value === DNP3_TLS_DEFAULT_PORT) {
         port.setValue(DNP3_DEFAULT_PORT);
       }
       this.applyTypeValidators(group, next);
@@ -232,7 +245,8 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
 
   /** Require what the chosen type needs, and nothing the others do. */
   private applyTypeValidators(group: FormGroup, type: string): void {
-    const tcp = type === Dnp3ChannelType.TCP_CLIENT || type === Dnp3ChannelType.TLS;
+    const tcp = type === Dnp3ChannelType.TCP_CLIENT || type === Dnp3ChannelType.TLS || type === Dnp3ChannelType.UDP;
+    const udp = type === Dnp3ChannelType.UDP;
     const set = (name: string, validators: ValidatorFn[] | null) => {
       const control = group.get(name);
       control.setValidators(validators);
@@ -240,6 +254,8 @@ export class Dnp3BasicConfigComponent extends GatewayConnectorBasicConfigDirecti
     };
     set('host', tcp ? NOT_BLANK : null);
     set('port', tcp ? [Validators.required, Validators.min(1), Validators.max(65535)] : null);
+    set('localAddress', udp ? NOT_BLANK : null);
+    set('localPort', udp ? [Validators.required, Validators.min(1), Validators.max(65535)] : null);
     set('path', type === Dnp3ChannelType.SERIAL ? NOT_BLANK : null);
     set('caCert', type === Dnp3ChannelType.TLS ? NOT_BLANK : null);
     group.updateValueAndValidity({ emitEvent: false });

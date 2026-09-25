@@ -29,6 +29,8 @@ export enum Dnp3ChannelType {
   TLS = 'tls',
   /** From gateway 4.4.0: RS-232, or an RS-485 line with several outstations. */
   SERIAL = 'serial',
+  /** From gateway 4.6.0: one frame per datagram, as opendnp3's UDP channel. */
+  UDP = 'udp',
 }
 
 export enum Dnp3Parity {
@@ -46,9 +48,12 @@ export enum Dnp3FlowControl {
 export interface Dnp3ChannelConfig {
   name: string;
   type: Dnp3ChannelType | string;
-  // tcpClient and tls
+  // tcpClient, tls and udp
   host?: string;
   port?: number;
+  // udp: where the gateway's own socket is bound
+  localAddress?: string;
+  localPort?: number;
   connectTimeoutMs?: number;
   minRetryDelayMs?: number;
   maxRetryDelayMs?: number;
@@ -279,3 +284,6 @@ export const DNP3_SERIAL_TLS_VERSION = '4.4.0';
 
 /** The gateway that brings Secure Authentication. */
 export const DNP3_SECURE_AUTH_VERSION = '4.5.0';
+
+/** The gateway that brings UDP channels. */
+export const DNP3_UDP_VERSION = '4.6.0';
