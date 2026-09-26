@@ -1206,7 +1206,8 @@
         "type": "मान का प्रकार; string और bytes लंबाई लेते हैं।",
         "bit": "ऑक्टेट का एक बिट (0–7); पूरे ऑक्टेट के लिए खाली, शून्य से भिन्न true है।",
         "quality": "<key>Quality प्रकाशित करें: डिवाइस ऑनलाइन, डेटा वैध और सबमॉड्यूल की प्रोवाइडर स्थिति GOOD हो तो GOOD; अन्यथा BAD और कारण।",
-        "good-only": "गुणवत्ता BAD रहने तक कुंजी के लिए कुछ प्रकाशित न करें।"
+        "good-only": "गुणवत्ता BAD रहने तक कुंजी के लिए कुछ प्रकाशित न करें।",
+        "commissioning": "TIA Portal के 'Accessible devices' और 'Assign name' जो करते हैं, वही प्लेटफ़ॉर्म से: PROFINET नेटवर्क पर स्टेशन खोजें और उन्हें उनके नाम और पते दें। स्कैन करना और LED चमकाना हमेशा अनुमत है; बदलाव केवल तब जब यह चालू हो।"
       }
     },
     "discard-changes-title": "असहेजे गए परिवर्तन",
@@ -1778,6 +1779,34 @@
     "profinet-operation": "क्रिया",
     "profinet-operation-write": "आउटपुट लिखें",
     "profinet-operation-read": "मान पढ़ें",
-    "profinet-method-reserved": "readRecord, writeRecord, readIm0 और status गेटवे के अपने मेथड हैं"
+    "profinet-method-reserved": "readRecord, writeRecord, readIm0 और status गेटवे के अपने मेथड हैं",
+    "profinet-scan-title": "नेटवर्क पर PROFINET स्टेशन",
+    "profinet-rescan": "फिर से स्कैन करें",
+    "profinet-scan-hint": "इस कनेक्टर के इंटरफ़ेस पर गेटवे के DCP Identify का उत्तर देने वाला हर स्टेशन। उसकी LED चमकाने के लिए, या कमीशनिंग की अनुमति होने पर उसे स्टेशन का नाम या पता देने के लिए, एक चुनें।",
+    "profinet-scan-none": "किसी स्टेशन ने उत्तर नहीं दिया।",
+    "profinet-scan-failed": "गेटवे यह नहीं कर सका",
+    "profinet-scan-unreachable": "गेटवे ने उत्तर नहीं दिया। क्या वह जुड़ा है, और 4.9.0 या बाद का है?",
+    "profinet-unnamed": "(कोई नाम नहीं)",
+    "profinet-no-address": "(कोई पता नहीं)",
+    "profinet-type-of-station": "स्टेशन का प्रकार",
+    "profinet-station": "स्टेशन",
+    "profinet-signal": "LED चमकाएँ",
+    "profinet-assign-name": "नाम दें",
+    "profinet-no-router": "कोई राउटर नहीं",
+    "profinet-assign-ip-now": "पता दें",
+    "profinet-reset": "फ़ैक्टरी सेटिंग्स पर रीसेट करें",
+    "profinet-commissioning-hint": "नाम, पते और रीसेट नेटवर्क पर स्टेशन को बदलते हैं: गेटवे इन्हें तभी भेजता है जब इस कनेक्टर के General टैब में कमीशनिंग की अनुमति हो। चलते AR वाला स्टेशन इन्हें अस्वीकार करता है।",
+    "profinet-use-station": "यह स्टेशन उपयोग करें",
+    "profinet-signal-sent": "स्टेशन अपनी LED चमका रहा है।",
+    "profinet-name-assigned": "स्टेशन का नाम दे दिया गया।",
+    "profinet-ip-assigned": "पता दे दिया गया।",
+    "profinet-reset-title": "स्टेशन {{mac}} को फ़ैक्टरी सेटिंग्स पर रीसेट करें?",
+    "profinet-reset-description": "स्टेशन अपना नाम और पता भूल जाता है। उसे उपयोग करने वाला हर कंट्रोलर उसे तब तक खो देता है जब तक उसे फिर से नाम न दिया जाए।",
+    "profinet-reset-done": "स्टेशन रीसेट हो गया।",
+    "profinet-find-on-network": "नेटवर्क पर खोजें",
+    "profinet-find-on-network-hint": "नेटवर्क स्कैन करें और डिवाइस चुनें: उसका नाम, पता और पहचान फ़ॉर्म में भर जाते हैं",
+    "profinet-commissioning": "कमीशनिंग",
+    "profinet-commissioning-enabled": "प्लेटफ़ॉर्म को स्टेशनों के नाम रखने, उनके पते सेट करने और उन्हें रीसेट करने दें",
+    "profinet-scan-network": "नेटवर्क स्कैन करें"
   }
 }

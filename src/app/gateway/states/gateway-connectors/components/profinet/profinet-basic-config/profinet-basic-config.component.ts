@@ -13,14 +13,22 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-import { ChangeDetectionStrategy, Component, Input, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, forwardRef, inject } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
 import {
+  PROFINET_COMMISSIONING_VERSION,
   PROFINET_DEFAULT_CONTROLLER_NAME,
   ProfinetBasicConfig,
 } from '../../../models/public-api';
+import { MatDialog } from '@angular/material/dialog';
+import { GatewayConnectorVersionMappingUtil } from '../../../utils/gateway-connector-version-mapping.util';
+import {
+  ProfinetScanDialogComponent,
+  ProfinetScanDialogData,
+  ProfinetStation,
+} from '../profinet-scan-dialog/profinet-scan-dialog.component';
 import { GatewayConnectorBasicConfigDirective } from '../../../abstract/public-api';
 import { ProfinetDevicesTableComponent } from '../profinet-devices-table/profinet-devices-table.component';
 
@@ -60,8 +68,38 @@ export class ProfinetBasicConfigComponent extends GatewayConnectorBasicConfigDir
 
   isLegacy = false;
 
+  private matDialog = inject(MatDialog);
+
   /** Keys the form does not show, kept as they were. */
   private extra: Record<string, unknown> = {};
+
+  /** Commissioning came with 4.9.0; unknown counts as able. */
+  get commissioningSupported(): boolean {
+    return !this.gatewayVersion
+      || GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersion)
+        >= GatewayConnectorVersionMappingUtil.parseVersion(PROFINET_COMMISSIONING_VERSION);
+  }
+
+  get canScan(): boolean {
+    return !!(this.gatewayDeviceId && this.connectorName) && this.commissioningSupported;
+  }
+
+  /** The link's stations, and what may be done to them. */
+  scanNetwork(): void {
+    this.matDialog.open<ProfinetScanDialogComponent, ProfinetScanDialogData, ProfinetStation>(
+      ProfinetScanDialogComponent, {
+        data: {
+          gatewayDeviceId: this.gatewayDeviceId,
+          connectorName: this.connectorName,
+          pick: false,
+        },
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        autoFocus: false,
+        width: '900px',
+      }
+    );
+  }
 
   protected initBasicFormGroup(): FormGroup {
     return this.fb.group({
@@ -70,12 +108,13 @@ export class ProfinetBasicConfigComponent extends GatewayConnectorBasicConfigDir
         nameOfStation: [PROFINET_DEFAULT_CONTROLLER_NAME, [...NOT_BLANK, Validators.pattern(/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/)]],
         realtimePriority: [null as number | null, [Validators.min(1), Validators.max(99)]],
       }),
+      commissioningEnabled: [false],
       devices: [[]],
     });
   }
 
   protected mapConfigToFormValue(config: ProfinetBasicConfig): ProfinetBasicConfig {
-    const { interface: nic, controller, devices, ...rest } = (config ?? {}) as any;
+    const { interface: nic, controller, devices, commissioning, ...rest } = (config ?? {}) as any;
     this.extra = rest;
     return {
       interface: nic ?? '',
@@ -83,8 +122,9 @@ export class ProfinetBasicConfigComponent extends GatewayConnectorBasicConfigDir
         nameOfStation: controller?.nameOfStation ?? PROFINET_DEFAULT_CONTROLLER_NAME,
         realtimePriority: controller?.realtimePriority ?? null,
       },
+      commissioningEnabled: !!commissioning?.enabled,
       devices: devices ?? [],
-    };
+    } as any;
   }
 
   protected getMappedValue(config: ProfinetBasicConfig): ProfinetBasicConfig {
@@ -93,11 +133,16 @@ export class ProfinetBasicConfigComponent extends GatewayConnectorBasicConfigDir
     if (priority !== null && priority !== undefined && `${priority}` !== '') {
       controller.realtimePriority = Number(priority);
     }
-    return {
+    const mapped: any = {
       ...this.extra,
       interface: (config?.interface ?? '').trim(),
       controller,
       devices: config?.devices ?? [],
-    } as ProfinetBasicConfig;
+    };
+    // Written only when on: an older gateway has no such key.
+    if ((config as any)?.commissioningEnabled) {
+      mapped.commissioning = { enabled: true };
+    }
+    return mapped as ProfinetBasicConfig;
   }
 }

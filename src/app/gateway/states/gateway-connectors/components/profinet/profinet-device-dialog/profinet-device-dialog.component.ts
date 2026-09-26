@@ -23,7 +23,7 @@ import {
   Renderer2,
   ViewContainerRef,
 } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -64,6 +64,11 @@ import {
   modulesForSlot,
   parseGsdml,
 } from '../profinet-gsdml';
+import {
+  ProfinetScanDialogComponent,
+  ProfinetScanDialogData,
+  ProfinetStation,
+} from '../profinet-scan-dialog/profinet-scan-dialog.component';
 
 export interface ProfinetDeviceDialogData {
   device?: ProfinetDeviceConfig;
@@ -168,6 +173,7 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
     private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
+    private matDialog: MatDialog,
   ) {
     super(store, router, dialogRef);
     this.isEdit = data.isEdit;
@@ -302,6 +308,56 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
       }
     }
     this.dialogRef.close(result);
+  }
+
+  // ── On the network ─────────────────────────────────────────────────────
+
+  get canScan(): boolean {
+    return !!(this.data.gatewayDeviceId && this.data.connectorName);
+  }
+
+  /** Pick the device from a scan of the link: its name, address and
+   * identity fill the form. */
+  findOnNetwork(): void {
+    if (!this.canScan) {
+      return;
+    }
+    this.matDialog.open<ProfinetScanDialogComponent, ProfinetScanDialogData, ProfinetStation>(
+      ProfinetScanDialogComponent, {
+        data: {
+          gatewayDeviceId: this.data.gatewayDeviceId,
+          connectorName: this.data.connectorName,
+          pick: true,
+        },
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        autoFocus: false,
+        width: '900px',
+      }
+    ).afterClosed().subscribe(station => {
+      if (!station) {
+        return;
+      }
+      const hex = (n: number) => `0x${n.toString(16).toUpperCase().padStart(4, '0')}`;
+      const patch: any = {};
+      if (station.nameOfStation) {
+        patch.nameOfStation = station.nameOfStation;
+      }
+      if (station.ipSet !== false && station.ip) {
+        patch.ip = station.ip;
+        patch.netmask = station.netmask ?? '255.255.255.0';
+        patch.gateway = station.gateway && station.gateway !== station.ip ? station.gateway : '';
+      }
+      if (station.vendorId !== undefined && station.vendorId !== null) {
+        patch.vendorId = hex(station.vendorId);
+      }
+      if (station.deviceId !== undefined && station.deviceId !== null) {
+        patch.deviceId = hex(station.deviceId);
+      }
+      this.deviceForm.patchValue(patch);
+      this.deviceForm.markAsDirty();
+      this.cdr.markForCheck();
+    });
   }
 
   // ── GSDML import ───────────────────────────────────────────────────────

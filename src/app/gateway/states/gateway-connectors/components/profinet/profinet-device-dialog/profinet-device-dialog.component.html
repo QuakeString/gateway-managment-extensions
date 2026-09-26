@@ -62,6 +62,11 @@
               warning
             </mat-icon>
           </mat-form-field>
+          <button *ngIf="canScan" mat-stroked-button color="primary" type="button" (click)="findOnNetwork()"
+                  [matTooltip]="'gateway.profinet-find-on-network-hint' | translate">
+            <mat-icon>travel_explore</mat-icon>
+            {{ 'gateway.profinet-find-on-network' | translate }}
+          </button>
         </div>
         <div class="tb-form-row column-xs">
           <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.ip' | translate }}">{{ 'gateway.profinet-ip' | translate }}</div>

@@ -187,6 +187,8 @@ export interface ProfinetControllerConfig {
 
 export interface ProfinetBasicConfig {
   interface: string;
+  /** DCP Sets from the platform (name, address, reset); off by default. */
+  commissioning?: { enabled: boolean };
   controller: ProfinetControllerConfig;
   devices: ProfinetDeviceConfig[];
 }
@@ -210,3 +212,5 @@ export const PROFINET_DEFAULT_CONTROLLER_NAME = 'sentient-gateway';
 
 /** The gateway that brings the PROFINET connector. */
 export const PROFINET_VERSION = '4.8.0';
+/** Commissioning (scan, name, address, reset), diagnosis texts, ports. */
+export const PROFINET_COMMISSIONING_VERSION = '4.9.0';

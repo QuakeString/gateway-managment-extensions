@@ -1206,7 +1206,8 @@
         "type": "The value's type; string and bytes take a length.",
         "bit": "One bit of the octet (0–7); empty for the whole octet, non-zero is true.",
         "quality": "Publish <key>Quality: GOOD when the device is online, its data valid and the submodule's provider status GOOD; BAD and why otherwise.",
-        "good-only": "Publish nothing for the key while its quality is BAD."
+        "good-only": "Publish nothing for the key while its quality is BAD.",
+        "commissioning": "What TIA Portal's 'Accessible devices' and 'Assign name' do, from the platform: find the stations on the PROFINET network and give them their names and addresses. Scanning and flashing an LED are always allowed; changes only when this is on."
       }
     },
     "discard-changes-title": "སྲུང་མ་བཞག་པའི་བསྒྱུར་བཅོས",
@@ -1778,6 +1779,34 @@
     "profinet-operation": "Operation",
     "profinet-operation-write": "Write an output",
     "profinet-operation-read": "Read a value",
-    "profinet-method-reserved": "readRecord, writeRecord, readIm0 and status are the gateway's own methods"
+    "profinet-method-reserved": "readRecord, writeRecord, readIm0 and status are the gateway's own methods",
+    "profinet-scan-title": "PROFINET stations on the network",
+    "profinet-rescan": "Scan again",
+    "profinet-scan-hint": "Every station that answers the gateway's DCP Identify on this connector's interface. Pick one to flash its LED or, with commissioning allowed, to give it a name of station or an address.",
+    "profinet-scan-none": "No station answered.",
+    "profinet-scan-failed": "The gateway could not do it",
+    "profinet-scan-unreachable": "The gateway did not answer. Is it connected, and at 4.9.0 or later?",
+    "profinet-unnamed": "(no name)",
+    "profinet-no-address": "(no address)",
+    "profinet-type-of-station": "Type of station",
+    "profinet-station": "Station",
+    "profinet-signal": "Flash LED",
+    "profinet-assign-name": "Assign name",
+    "profinet-no-router": "No router",
+    "profinet-assign-ip-now": "Assign address",
+    "profinet-reset": "Reset to factory settings",
+    "profinet-commissioning-hint": "Names, addresses and resets change a station on the network: the gateway sends them only while commissioning is allowed in this connector's General tab. A station with a running AR refuses them.",
+    "profinet-use-station": "Use this station",
+    "profinet-signal-sent": "The station is flashing its LED.",
+    "profinet-name-assigned": "The name of station is assigned.",
+    "profinet-ip-assigned": "The address is assigned.",
+    "profinet-reset-title": "Reset station {{mac}} to factory settings?",
+    "profinet-reset-description": "The station forgets its name of station and its address. Any controller using it loses it until it is named again.",
+    "profinet-reset-done": "The station is reset.",
+    "profinet-find-on-network": "Find on network",
+    "profinet-find-on-network-hint": "Scan the network and pick the device: its name, address and identity fill the form",
+    "profinet-commissioning": "Commissioning",
+    "profinet-commissioning-enabled": "Allow the platform to name stations, set their addresses and reset them",
+    "profinet-scan-network": "Scan the network"
   }
 }

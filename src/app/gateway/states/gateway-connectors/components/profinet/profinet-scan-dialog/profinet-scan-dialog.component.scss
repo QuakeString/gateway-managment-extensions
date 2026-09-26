@@ -1,0 +1,72 @@
+/*
+ * Copyright © 2016-2025 The Sentient Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.scan-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 85vh;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px;
+}
+
+.table-container {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.station-row {
+  cursor: pointer;
+}
+
+.selected-row {
+  outline: 2px solid var(--tb-primary, #26a69a);
+  outline-offset: -2px;
+}
+
+.mono {
+  font-family: monospace;
+}
+
+.scan-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.station-actions {
+  gap: 12px;
+}
+
+.tb-form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ip-row mat-form-field {
+  width: 160px;
+}

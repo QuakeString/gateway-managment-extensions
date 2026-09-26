@@ -61,6 +61,23 @@
           </div>
         </ng-container>
       </div>
+      <div class="tb-form-panel stroked" *ngIf="commissioningSupported">
+        <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.commissioning' | translate }}">
+          {{ 'gateway.profinet-commissioning' | translate }}
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="commissioningEnabled">
+            {{ 'gateway.profinet-commissioning-enabled' | translate }}
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-hint">{{ 'gateway.profinet-commissioning-hint' | translate }}</div>
+        <div class="tb-form-row" *ngIf="canScan">
+          <button mat-stroked-button color="primary" type="button" (click)="scanNetwork()">
+            <mat-icon>travel_explore</mat-icon>
+            {{ 'gateway.profinet-scan-network' | translate }}
+          </button>
+        </div>
+      </div>
     </section>
   </mat-tab>
   <mat-tab label="Devices*">

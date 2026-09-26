@@ -11,3 +11,4 @@ export * from './profinet-basic-config/profinet-basic-config.component';
 export * from './profinet-devices-table/profinet-devices-table.component';
 export * from './profinet-device-dialog/profinet-device-dialog.component';
 export * from './profinet-data-keys-panel/profinet-data-keys-panel.component';
+export * from './profinet-scan-dialog/profinet-scan-dialog.component';
