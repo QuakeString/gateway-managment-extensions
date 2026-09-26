@@ -94,6 +94,7 @@ export const GatewayConnectorConfigVersionMap = new Map<ConnectorType, GatewayVe
   [ConnectorType.ETHERCAT, GatewayVersion.v3_7_0],
   [ConnectorType.FINS, GatewayVersion.v3_7_0],
   [ConnectorType.DNP3, GatewayVersion.v4_3_0],
+  [ConnectorType.PROFINET, GatewayVersion.v4_8_0],
   [ConnectorType.MCPROTOCOL, GatewayVersion.v3_7_0],
   [ConnectorType.ETHERNET_IP, GatewayVersion.v3_7_0],
   [ConnectorType.IEC61850, GatewayVersion.v3_7_0],

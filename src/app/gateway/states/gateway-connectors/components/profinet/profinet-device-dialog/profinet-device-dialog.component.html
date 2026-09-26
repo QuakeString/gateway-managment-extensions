@@ -1,0 +1,299 @@
+<!--
+  Copyright © 2016-2025 The Sentient Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div [formGroup]="deviceForm" class="dialog-mapping">
+  <mat-toolbar color="primary">
+    <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} {{ 'gateway.profinet-device' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="deviceName" placeholder="Remote IO 1"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(deviceForm.get('deviceName').hasError('duplicate') ? 'gateway.profinet-device-name-duplicate' : 'gateway.gw-device-name-required') | translate"
+                      *ngIf="deviceForm.get('deviceName').invalid && deviceForm.get('deviceName').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ 'gateway.device-profile' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
+        </div>
+      </div>
+
+      <!-- The device on the network -->
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.network' | translate }}">{{ 'gateway.profinet-network' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.name-of-station' | translate }}">{{ 'gateway.profinet-name-of-station' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="nameOfStation" placeholder="et200sp-1"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(deviceForm.get('nameOfStation').hasError('duplicate') ? 'gateway.profinet-name-of-station-duplicate' : 'gateway.profinet-name-of-station-invalid') | translate"
+                      *ngIf="deviceForm.get('nameOfStation').invalid && deviceForm.get('nameOfStation').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.ip' | translate }}">{{ 'gateway.profinet-ip' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="ip" placeholder="192.168.10.21"/>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width">{{ 'gateway.profinet-netmask' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="netmask" placeholder="255.255.255.0"/>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width">{{ 'gateway.profinet-gateway' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="gateway" placeholder="0.0.0.0"/>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="assignIp">
+            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.assign-ip' | translate }}">{{ 'gateway.profinet-assign-ip' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+        <div *ngIf="deviceForm.hasError('assignNeedsIp')" class="tb-form-hint tb-error tb-flex align-center">
+          {{ 'gateway.profinet-assign-needs-ip' | translate }}
+        </div>
+      </div>
+
+      <!-- Identity and cycle -->
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.identity' | translate }}">{{ 'gateway.profinet-identity' | translate }}</div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required">{{ 'gateway.profinet-vendor-id' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="vendorId" placeholder="0x002A"/>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required">{{ 'gateway.profinet-device-id' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="deviceId" placeholder="0x0313"/>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.cycle' | translate }}">{{ 'gateway.profinet-cycle' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="reductionRatio">
+              <mat-option *ngFor="let rr of reductionRatios" [value]="rr">{{ rr }} ms</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.data-hold-factor' | translate }}">{{ 'gateway.profinet-data-hold-factor' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="dataHoldFactor" placeholder="3"/>
+            <span matSuffix class="profinet-suffix">× {{ cycleMs }} ms</span>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.poll-period' | translate }}">{{ 'gateway.profinet-poll-period' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="pollPeriod" placeholder="1000"/>
+            <span matSuffix class="profinet-suffix">ms</span>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="readIm0">
+            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.read-im0' | translate }}">{{ 'gateway.profinet-read-im0' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+      </div>
+
+      <!-- Safety -->
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.profinet-safety' | translate }}</div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="outputsEnabled">
+            <mat-label>{{ 'gateway.profinet-outputs-enabled' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-hint tb-flex align-center"
+             [class.tb-error]="deviceForm.get('outputsEnabled').value"
+             [class.tb-primary-fill]="!deviceForm.get('outputsEnabled').value">
+          {{ (deviceForm.get('outputsEnabled').value ? 'gateway.profinet-outputs-on-warning' : 'gateway.profinet-outputs-off-hint') | translate }}
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="recordWritesEnabled">
+            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.record-writes' | translate }}">{{ 'gateway.profinet-record-writes-enabled' | translate }}</mat-label>
+          </mat-slide-toggle>
+        </div>
+      </div>
+
+      <!-- Modules -->
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-row no-border no-padding space-between">
+          <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.modules' | translate }}">{{ 'gateway.profinet-modules' | translate }}</div>
+          <button mat-stroked-button color="primary" type="button" (click)="gsdmlInput.click()">
+            <mat-icon>upload_file</mat-icon>
+            {{ 'gateway.profinet-import-gsdml' | translate }}
+          </button>
+          <input #gsdmlInput type="file" accept=".xml,text/xml,application/xml" hidden (change)="onGsdmlFile(gsdmlInput)"/>
+        </div>
+        <div *ngIf="gsdmlFile" class="tb-form-hint tb-flex align-center">
+          {{ 'gateway.profinet-from-gsdml' | translate: { file: gsdmlFile } }}
+        </div>
+        <div *ngIf="gsdmlError" class="tb-form-hint tb-error tb-flex align-center">
+          {{ 'gateway.profinet-gsdml-error' | translate: { error: gsdmlError } }}
+        </div>
+
+        <div *ngIf="gsdmlImport" class="tb-form-panel stroked profinet-import">
+          <div class="tb-form-panel-title">{{ gsdmlImport.file }} — {{ gsdmlImport.doc.vendorName }}</div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.profinet-dap' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select [(value)]="gsdmlImport.dapId" (selectionChange)="onDapChosen()">
+                <mat-option *ngFor="let dap of gsdmlImport.doc.daps" [value]="dap.id">{{ dap.name || dap.id }}<ng-container *ngIf="dap.orderNumber"> ({{ dap.orderNumber }})</ng-container></mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs" *ngFor="let choice of gsdmlImport.slots">
+            <div class="fixed-title-width">{{ 'gateway.profinet-slot' | translate }} {{ choice.slot }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select [(value)]="choice.moduleId" [disabled]="choice.fixed">
+                <mat-option value="">{{ 'gateway.profinet-slot-empty' | translate }}</mat-option>
+                <mat-option *ngFor="let module of choice.options" [value]="module.id">{{ module.name || module.id }}<ng-container *ngIf="module.orderNumber"> ({{ module.orderNumber }})</ng-container></mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <mat-checkbox [(ngModel)]="gsdmlImport.generateKeys" [ngModelOptions]="{ standalone: true }">
+              {{ 'gateway.profinet-generate-keys' | translate }}
+            </mat-checkbox>
+          </div>
+          <div class="tb-form-hint tb-flex align-center">{{ 'gateway.profinet-import-replaces' | translate }}</div>
+          <div class="tb-flex justify-end">
+            <button mat-button color="primary" type="button" (click)="gsdmlImport = null">
+              {{ 'gateway.gw-cancel' | translate }}
+            </button>
+            <button mat-raised-button color="primary" type="button" (click)="applyGsdml()">
+              {{ 'gateway.profinet-import-apply' | translate: { count: importPlacedCount } }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="deviceForm.get('modules').hasError('noDap')" class="tb-form-hint tb-primary-fill tb-flex align-center">
+          {{ 'gateway.profinet-no-modules' | translate }}
+        </div>
+        <table *ngIf="modules.length" class="profinet-modules">
+          <tr>
+            <th>{{ 'gateway.profinet-slot' | translate }}</th>
+            <th>{{ 'gateway.profinet-module' | translate }}</th>
+            <th>{{ 'gateway.profinet-ident' | translate }}</th>
+            <th>{{ 'gateway.profinet-io' | translate }}</th>
+            <th></th>
+          </tr>
+          <tr *ngFor="let module of modules">
+            <td>{{ module.slot }}</td>
+            <td>{{ module.name || '—' }}</td>
+            <td>{{ module.moduleIdent }}</td>
+            <td>{{ moduleIo(module) }}</td>
+            <td>
+              <button *ngIf="module.slot !== 0" mat-icon-button type="button" color="warn"
+                      (click)="removeModule(module.slot)" [matTooltip]="'gateway.gw-delete' | translate">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Keys -->
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('timeseries').value | slice: 0 : 50)">{{ item.key }}</mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip"><label class="ellipsis-text"></label></mat-chip>
+          </mat-chip-listbox>
+          <button type="button" mat-icon-button color="primary" [matTooltip]="'gateway.gw-edit' | translate" matTooltipPosition="above"
+                  #timeseriesButton (click)="manageKeys($event, timeseriesButton, ValueKey.TIMESERIES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('attributes').value | slice: 0 : 50)">{{ item.key }}</mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip"><label class="ellipsis-text"></label></mat-chip>
+          </mat-chip-listbox>
+          <button type="button" mat-icon-button color="primary" [matTooltip]="'gateway.gw-edit' | translate" matTooltipPosition="above"
+                  #attributesButton (click)="manageKeys($event, attributesButton, ValueKey.ATTRIBUTES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-attribute-updates' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('attributeUpdates').value | slice: 0 : 50)">{{ item.key }}</mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip"><label class="ellipsis-text"></label></mat-chip>
+          </mat-chip-listbox>
+          <button type="button" mat-icon-button color="primary" [matTooltip]="'gateway.gw-edit' | translate" matTooltipPosition="above"
+                  #attributeUpdatesButton (click)="manageKeys($event, attributeUpdatesButton, ValueKey.ATTRIBUTES_UPDATES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width">{{ 'gateway.gw-rpc-methods' | translate }}</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
+            <mat-chip *ngFor="let item of (deviceForm.get('rpc').value | slice: 0 : 50)">{{ item.method }}</mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip"><label class="ellipsis-text"></label></mat-chip>
+          </mat-chip-listbox>
+          <button type="button" mat-icon-button color="primary" [matTooltip]="'gateway.gw-edit' | translate" matTooltipPosition="above"
+                  #rpcButton (click)="manageKeys($event, rpcButton, ValueKey.RPC)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" type="button" (click)="cancel()">
+      {{ 'gateway.gw-cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary" (click)="save()" [disabled]="deviceForm.invalid || !keysPopupClosed">
+      {{ (isEdit ? 'action.update' : 'action.add') | translate }}
+    </button>
+  </div>
+</div>

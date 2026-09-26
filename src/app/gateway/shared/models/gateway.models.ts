@@ -37,6 +37,7 @@ export enum GatewayLogLevel {
 }
 
 export enum GatewayVersion {
+  v4_8_0 = '4.8.0',
   v4_5_0 = '4.5.0',
   v4_4_0 = '4.4.0',
   v4_3_0 = '4.3.0',
@@ -58,6 +59,7 @@ export enum ConnectorType {
   ETHERCAT = 'ethercat',
   FINS = 'fins',
   DNP3 = 'dnp3',
+  PROFINET = 'profinet',
   MCPROTOCOL = 'mcprotocol',
   IEC61850 = 'iec61850',
   ETHERNET_IP = 'ethernet_ip',
@@ -86,6 +88,7 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
   [ConnectorType.ETHERCAT, 'EtherCAT'],
   [ConnectorType.FINS, 'OMRON FINS'],
   [ConnectorType.DNP3, 'DNP3'],
+  [ConnectorType.PROFINET, 'PROFINET'],
   [ConnectorType.MCPROTOCOL, 'Mitsubishi MC Protocol'],
   [ConnectorType.IEC61850, 'IEC 61850'],
   [ConnectorType.ETHERNET_IP, 'ETHERNET/IP'],
@@ -107,11 +110,14 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
 ]);
 
 // The first entry at or below the gateway's version wins. DNP3 exists in the
-// Rust gateway from 4.3.0 (sentient-gateway-rs `docs/DNP3_PLAN.md`).
+// Rust gateway from 4.3.0 (sentient-gateway-rs `docs/DNP3_PLAN.md`), PROFINET
+// from 4.8.0 (`docs/PROFINET_PLAN.md`).
 export const ConnectorsTypesByVersion = new Map<GatewayVersion, ConnectorType[]>([
-  [GatewayVersion.v4_3_0, Object.values(ConnectorType)],
-  [GatewayVersion.v3_7_0, Object.values(ConnectorType).filter(type => type !== ConnectorType.DNP3)],
-  [GatewayVersion.Legacy, Object.values(ConnectorType).filter(type => type !== ConnectorType.KNX && type !== ConnectorType.DNP3)],
+  [GatewayVersion.v4_8_0, Object.values(ConnectorType)],
+  [GatewayVersion.v4_3_0, Object.values(ConnectorType).filter(type => type !== ConnectorType.PROFINET)],
+  [GatewayVersion.v3_7_0, Object.values(ConnectorType).filter(type => type !== ConnectorType.DNP3 && type !== ConnectorType.PROFINET)],
+  [GatewayVersion.Legacy, Object.values(ConnectorType)
+    .filter(type => type !== ConnectorType.KNX && type !== ConnectorType.DNP3 && type !== ConnectorType.PROFINET)],
 ]);
 
 export type ConnectorBaseConfig = ConnectorLegacyConfig

@@ -33,6 +33,7 @@ import ads from '../../assets/connector-default-configs/ads.json';
 import ethercat from '../../assets/connector-default-configs/ethercat.json';
 import fins from '../../assets/connector-default-configs/fins.json';
 import dnp3 from '../../assets/connector-default-configs/dnp3.json';
+import profinet from '../../assets/connector-default-configs/profinet.json';
 import mcprotocol from '../../assets/connector-default-configs/mcprotocol.json';
 import ethernet_ip from '../../assets/connector-default-configs/ethernet_ip.json';
 import iec61850 from '../../assets/connector-default-configs/iec61850.json';
@@ -60,6 +61,7 @@ export const connectorConfigs = {
   [ConnectorType.ETHERCAT]: ethercat,
   [ConnectorType.FINS]: fins,
   [ConnectorType.DNP3]: dnp3,
+  [ConnectorType.PROFINET]: profinet,
   [ConnectorType.MCPROTOCOL]: mcprotocol,
   [ConnectorType.ETHERNET_IP]: ethernet_ip,
   [ConnectorType.IEC61850]: iec61850,

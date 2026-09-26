@@ -1,0 +1,184 @@
+{
+  "4.8.0": {
+    "interface": "enp3s0",
+    "controller": {
+      "nameOfStation": "sentient-gateway"
+    },
+    "devices": [
+      {
+        "deviceName": "PN Sample Device",
+        "deviceType": "profinet-io",
+        "nameOfStation": "rt-labs-dev",
+        "ip": "10.42.0.10",
+        "assignIp": false,
+        "vendorId": "0x0493",
+        "deviceId": "0x0002",
+        "reductionRatio": 8,
+        "pollPeriod": 1000,
+        "modules": [
+          {
+            "slot": 0,
+            "moduleIdent": "0x00000001",
+            "submodules": [
+              {
+                "subslot": 1,
+                "submoduleIdent": "0x00000001"
+              },
+              {
+                "subslot": "0x8000",
+                "submoduleIdent": "0x00008000"
+              },
+              {
+                "subslot": "0x8001",
+                "submoduleIdent": "0x00008001"
+              }
+            ]
+          },
+          {
+            "slot": 1,
+            "moduleIdent": "0x00000030",
+            "submodules": [
+              {
+                "subslot": 1,
+                "submoduleIdent": "0x00000130",
+                "inputLength": 1
+              }
+            ]
+          },
+          {
+            "slot": 2,
+            "moduleIdent": "0x00000031",
+            "submodules": [
+              {
+                "subslot": 1,
+                "submoduleIdent": "0x00000131",
+                "outputLength": 1
+              }
+            ]
+          },
+          {
+            "slot": 3,
+            "moduleIdent": "0x00000032",
+            "submodules": [
+              {
+                "subslot": 1,
+                "submoduleIdent": "0x00000132",
+                "inputLength": 1,
+                "outputLength": 1,
+                "records": [
+                  {
+                    "index": 123,
+                    "data": "00000001"
+                  },
+                  {
+                    "index": 124,
+                    "data": "00000002"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "slot": 4,
+            "moduleIdent": "0x00000040",
+            "submodules": [
+              {
+                "subslot": 1,
+                "submoduleIdent": "0x00000140",
+                "inputLength": 8,
+                "outputLength": 8,
+                "records": [
+                  {
+                    "index": 125,
+                    "data": "00000002"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "timeseries": [
+          {
+            "key": "in8",
+            "slot": 1,
+            "offset": 0,
+            "type": "uint8",
+            "quality": "telemetry"
+          },
+          {
+            "key": "in8Bit7",
+            "slot": 1,
+            "offset": 0,
+            "type": "bool",
+            "bit": 7
+          },
+          {
+            "key": "inOut8",
+            "slot": 3,
+            "offset": 0,
+            "type": "uint8"
+          },
+          {
+            "key": "echoFloat",
+            "slot": 4,
+            "offset": 0,
+            "type": "float32"
+          },
+          {
+            "key": "echoCount",
+            "slot": 4,
+            "offset": 4,
+            "type": "uint32",
+            "multiplier": 2
+          }
+        ],
+        "attributes": [
+          {
+            "key": "out8",
+            "slot": 2,
+            "offset": 0,
+            "type": "uint8",
+            "area": "output"
+          }
+        ],
+        "attributeUpdates": [
+          {
+            "key": "out8",
+            "slot": 2,
+            "offset": 0,
+            "type": "uint8"
+          },
+          {
+            "key": "echoCountSet",
+            "slot": 4,
+            "offset": 4,
+            "type": "uint32"
+          }
+        ],
+        "rpc": [
+          {
+            "method": "setOut8Bit7",
+            "slot": 2,
+            "offset": 0,
+            "type": "bool",
+            "bit": 7
+          },
+          {
+            "method": "readEchoCount",
+            "slot": 4,
+            "offset": 4,
+            "type": "uint32",
+            "operation": "read"
+          }
+        ],
+        "outputs": {
+          "enabled": false
+        },
+        "recordWrites": {
+          "enabled": false
+        },
+        "readIm0": true
+      }
+    ]
+  }
+}

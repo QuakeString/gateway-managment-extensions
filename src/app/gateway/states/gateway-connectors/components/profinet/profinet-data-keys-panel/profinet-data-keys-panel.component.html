@@ -1,0 +1,168 @@
+<!--
+  Copyright © 2016-2025 The Sentient Authors
+  Licensed under the Apache License, Version 2.0
+-->
+<tb-industrial-keys-panel
+  [keysFormArray]="keysFormArray"
+  [title]="panelTitle"
+  [addKeyLabel]="addKeyTitle"
+  [deleteKeyTitle]="deleteKeyTitle"
+  [emptyText]="noKeysText"
+  [searchFields]="searchFields"
+  [sortFields]="sortFields"
+  [spreadsheetColumns]="spreadsheetColumns"
+  [rowHeaderTpl]="rowHeaderTpl"
+  [rowBodyTpl]="rowBodyTpl"
+  [applyDisabled]="keysFormArray.invalid || !keysFormArray.dirty"
+  (addKeyRequested)="onAddRequested()"
+  (deleteKeyRequested)="onDeleteRequested($event)"
+  (applyRequested)="onApplyRequested()"
+  (cancelRequested)="onCancelRequested()">
+</tb-industrial-keys-panel>
+
+<ng-template #rowHeaderTpl let-row let-index="index">
+  <div class="tb-flex">
+    <div class="title-container tb-flex">{{ (isRpc ? 'gateway.method' : 'gateway.gw-key') | translate }}:
+      <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('key')?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.profinet-place' | translate }}:
+      <span class="key-label">{{ row.get('slot')?.value }}/{{ row.get('subslot')?.value }} @{{ row.get('offset')?.value }}</span>
+    </div>
+    <div class="title-container">{{ 'gateway.profinet-type' | translate }}:
+      <span class="key-label">{{ row.get('type')?.value }}<ng-container *ngIf="isBool(row) && row.get('bit')?.value !== null">.{{ row.get('bit')?.value }}</ng-container></span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #rowBodyTpl let-row let-index="index">
+  <ng-container [formGroup]="row">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-hint tb-primary-fill tb-flex align-center">
+        {{ (isUpdate || (isRpc && !isRead(row)) ? 'gateway.hints.profinet.writes' : 'gateway.hints.profinet.reads') | translate }}
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.platform-side' | translate }}</div>
+        <div class="tb-form-row column-xs" *ngIf="!isRpc">
+          <div class="fixed-title-width tb-required">{{ 'gateway.key' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="key" [placeholder]="isUpdate ? 'valveSetpoint' : 'temperature'">
+          </mat-form-field>
+        </div>
+        <ng-container *ngIf="isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width tb-required">{{ 'gateway.method' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="method" placeholder="setValve">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'gateway.profinet-method-reserved' | translate"
+                        *ngIf="row.get('method').hasError('reservedMethod')"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.operation' | translate }}">{{ 'gateway.profinet-operation' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="operation">
+                <mat-option value="write">{{ 'gateway.profinet-operation-write' | translate }}</mat-option>
+                <mat-option value="read">{{ 'gateway.profinet-operation-read' | translate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </ng-container>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'gateway.connector-side' | translate }}</div>
+        <div class="tb-form-row column-xs" *ngIf="isRead(row)">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.area' | translate }}">{{ 'gateway.profinet-area' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="area">
+              <mat-option *ngFor="let area of areas" [value]="area">{{ 'gateway.profinet-area-' + area | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs" *ngIf="placesFor(row).length">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.submodule' | translate }}">{{ 'gateway.profinet-submodule' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select [value]="row.get('slot').value + ':' + row.get('subslot').value"
+                        (selectionChange)="row.patchValue({ slot: +$event.value.split(':')[0], subslot: +$event.value.split(':')[1] }); row.markAsDirty()">
+              <mat-option *ngFor="let place of placesFor(row)" [value]="placeKey(place)">{{ place.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required">{{ 'gateway.profinet-slot' | translate }} / {{ 'gateway.profinet-subslot' | translate }}</div>
+          <div class="tb-flex">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="slot" placeholder="1">
+            </mat-form-field>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="subslot" placeholder="1">
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.offset' | translate }}">{{ 'gateway.profinet-offset' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="offset" placeholder="0">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.type' | translate }}">{{ 'gateway.profinet-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let type of valueTypes" [value]="type">{{ type }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs" *ngIf="isBool(row)">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.bit' | translate }}">{{ 'gateway.profinet-bit' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="bit" placeholder="0–7">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs" *ngIf="hasLength(row)">
+          <div class="fixed-title-width tb-required">{{ 'gateway.profinet-length' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="length" placeholder="8">
+          </mat-form-field>
+        </div>
+        <div *ngIf="row.hasError('placeUnknown')" class="tb-form-hint tb-error tb-flex align-center">
+          {{ 'gateway.profinet-place-unknown' | translate }}
+        </div>
+        <div *ngIf="row.hasError('placeTooLong')" class="tb-form-hint tb-error tb-flex align-center">
+          {{ 'gateway.profinet-place-too-long' | translate: { available: row.getError('placeTooLong').available } }}
+        </div>
+        <div *ngIf="row.hasError('lengthRequired')" class="tb-form-hint tb-error tb-flex align-center">
+          {{ 'gateway.profinet-length-required' | translate }}
+        </div>
+
+        <ng-container *ngIf="!isUpdate && !isRpc">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.quality' | translate }}">{{ 'gateway.profinet-quality' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="quality">
+                <mat-option *ngFor="let mode of qualityModes" [value]="mode">{{ 'gateway.profinet-quality-' + mode | translate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="goodOnly">
+              <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.profinet.good-only' | translate }}">{{ 'gateway.profinet-good-only' | translate }}</mat-label>
+            </mat-slide-toggle>
+          </div>
+          <tb-calibration-block formControlName="calibration" [canCalibrate]="canCalibrate(row)"/>
+          <tb-report-strategy
+            class="stroked tb-form-panel"
+            [defaultValue]="ReportStrategyDefaultValue.Key"
+            formControlName="reportStrategy"
+            [isExpansionMode]="true"
+          />
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
