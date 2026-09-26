@@ -16,6 +16,7 @@
 
 import {
   ProfinetArea,
+  ProfinetDeviceConfig,
   ProfinetKey,
   ProfinetModuleConfig,
   ProfinetSubmoduleConfig,
@@ -111,6 +112,19 @@ export interface GsdmlDap {
   reductionRatios: number[];
 }
 
+/** What the device calls an error type (ChannelDiagList). */
+export interface GsdmlChannelDiag {
+  errorType: number;
+  name: string;
+  help?: string;
+}
+
+/** A manufacturer's diagnosis's name, by its USI (UnitDiagTypeList). */
+export interface GsdmlUnitDiag {
+  usi: number;
+  name: string;
+}
+
 export interface GsdmlDocument {
   vendorId: number;
   deviceId: number;
@@ -118,6 +132,8 @@ export interface GsdmlDocument {
   info: string;
   daps: GsdmlDap[];
   modules: GsdmlModule[];
+  channelDiagnosis: GsdmlChannelDiag[];
+  unitDiagnosis: GsdmlUnitDiag[];
 }
 
 /** Octets of the GSDML's fixed data types. */
@@ -470,6 +486,28 @@ export function parseGsdml(xml: string, parser: DOMParser = new DOMParser()): Gs
   if (!daps.length) {
     throw new Error('no DeviceAccessPointItem');
   }
+  const channelDiagnosis: GsdmlChannelDiag[] = [];
+  const channelList = child(process, 'ChannelDiagList');
+  for (const item of channelList ? Array.from(channelList.children) : []) {
+    const errorType = numberAttr(item, 'ErrorType');
+    if (errorType === undefined) {
+      continue;
+    }
+    const help = child(item, 'Help');
+    channelDiagnosis.push({
+      errorType: errorType & 0xffff,
+      name: text(child(item, 'Name')),
+      ...(help ? { help: text(help) } : {}),
+    });
+  }
+  const unitDiagnosis: GsdmlUnitDiag[] = [];
+  const unitList = child(process, 'UnitDiagTypeList');
+  for (const item of unitList ? Array.from(unitList.children) : []) {
+    const usi = numberAttr(item, 'UserStructureIdentifier');
+    if (usi !== undefined) {
+      unitDiagnosis.push({ usi: usi & 0xffff, name: text(child(item, 'Name')) });
+    }
+  }
   return {
     vendorId: requiredNumber(identity, 'VendorID'),
     deviceId: requiredNumber(identity, 'DeviceID'),
@@ -477,6 +515,21 @@ export function parseGsdml(xml: string, parser: DOMParser = new DOMParser()): Gs
     info: text(child(identity, 'InfoText')),
     daps,
     modules,
+    channelDiagnosis,
+    unitDiagnosis,
+  };
+}
+
+/** The device's diagnosis texts as the gateway's configuration takes them;
+ * an entry the GSDML leaves unnamed (Siemens' UnitDiagTypeItems) says
+ * nothing and is left out. */
+export function diagnosisConfig(doc: GsdmlDocument): Pick<ProfinetDeviceConfig, 'channelDiagnosis' | 'unitDiagnosis'> {
+  const hex = (n: number) => `0x${n.toString(16).toUpperCase().padStart(4, '0')}`;
+  return {
+    channelDiagnosis: doc.channelDiagnosis
+      .filter(c => c.name)
+      .map(c => ({ errorType: hex(c.errorType), name: c.name, ...(c.help ? { help: c.help } : {}) })),
+    unitDiagnosis: doc.unitDiagnosis.filter(u => u.name).map(u => ({ usi: hex(u.usi), name: u.name })),
   };
 }
 

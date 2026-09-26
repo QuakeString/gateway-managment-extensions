@@ -172,6 +172,10 @@ export interface ProfinetDeviceConfig {
   outputs?: { enabled: boolean };
   recordWrites?: { enabled: boolean };
   readIm0?: boolean;
+  /** The GSDML's names of the device's error types (ChannelDiagList). */
+  channelDiagnosis?: { errorType: number | string; name: string; help?: string }[];
+  /** The GSDML's names of the device's own diagnoses, by USI (UnitDiagTypeList). */
+  unitDiagnosis?: { usi: number | string; name: string }[];
   /** Where the modules came from, for the form only. */
   gsdml?: { file?: string; dap?: string };
 }

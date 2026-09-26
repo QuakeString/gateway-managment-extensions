@@ -57,6 +57,7 @@ import {
   GsdmlModule,
   dapConfig,
   decodeGsdml,
+  diagnosisConfig,
   gsdmlNumber,
   keysFor,
   moduleConfig,
@@ -153,6 +154,8 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
 
   private popoverComponent: TbPopoverComponent<ProfinetDataKeysPanelComponent>;
   private gsdmlMeta: { file?: string; dap?: string } | undefined;
+  /** The device's diagnosis texts, from its GSDML: kept as they came. */
+  private diagnosisTexts: Pick<ProfinetDeviceConfig, 'channelDiagnosis' | 'unitDiagnosis'> = {};
 
   constructor(
     protected store: Store<AppState>,
@@ -192,6 +195,7 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
         rpc: device.rpc ?? [],
       }, { emitEvent: false });
       this.gsdmlMeta = device.gsdml;
+      this.diagnosisTexts = { channelDiagnosis: device.channelDiagnosis, unitDiagnosis: device.unitDiagnosis };
     }
   }
 
@@ -283,6 +287,12 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
     }
     if (this.gsdmlMeta) {
       result.gsdml = this.gsdmlMeta;
+    }
+    if (this.diagnosisTexts.channelDiagnosis?.length) {
+      result.channelDiagnosis = this.diagnosisTexts.channelDiagnosis;
+    }
+    if (this.diagnosisTexts.unitDiagnosis?.length) {
+      result.unitDiagnosis = this.diagnosisTexts.unitDiagnosis;
     }
     // Anything the gateway reads that this form does not show is kept.
     const kept = this.data.device as any;
@@ -403,6 +413,7 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
     this.deviceForm.patchValue(patch);
     this.deviceForm.markAsDirty();
     this.gsdmlMeta = { file: imp.file, dap: dap.id };
+    this.diagnosisTexts = diagnosisConfig(imp.doc);
     this.gsdmlImport = null;
     this.cdr.markForCheck();
   }
