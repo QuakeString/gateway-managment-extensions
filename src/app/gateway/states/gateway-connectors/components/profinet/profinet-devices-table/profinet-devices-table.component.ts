@@ -65,7 +65,7 @@ export class ProfinetDevicesTableComponent implements ControlValueAccessor, Vali
 
   @Input() gatewayDeviceId: string;
   @Input() connectorName: string;
-  readonly displayedColumns = ['deviceName', 'nameOfStation', 'cycle', 'modules', 'keys', 'outputs', 'actions'];
+  readonly displayedColumns = ['deviceName', 'nameOfStation', 'cycle', 'modules', 'outputs', 'actions'];
 
   devices: ProfinetDeviceConfig[] = [];
   filteredDevices: ProfinetDeviceConfig[] = [];

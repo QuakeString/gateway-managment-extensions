@@ -1728,7 +1728,7 @@
     "profinet-devices-title": "PROFINET devices",
     "profinet-no-devices": "No devices yet. Add one, then import its GSDML to fill in its modules and keys.",
     "profinet-controller": "IO controller",
-    "profinet-run-contract": "The gateway is the PROFINET IO controller on this interface. It needs Linux, the CAP_NET_RAW and CAP_NET_ADMIN capabilities and, in Docker, network_mode: host. A NIC dedicated to the PROFINET segment is best.",
+    "profinet-run-contract": "The gateway is the PROFINET IO controller on this interface. It needs Linux and the CAP_NET_RAW capability and, in Docker, network_mode: host. A NIC dedicated to the PROFINET segment is best.",
     "profinet-interface": "Interface",
     "profinet-interface-required": "The network interface facing the devices is required",
     "profinet-controller-name": "Controller name of station",

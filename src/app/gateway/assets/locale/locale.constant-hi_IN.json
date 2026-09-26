@@ -1712,7 +1712,7 @@
     "profinet-devices-title": "PROFINET डिवाइस",
     "profinet-no-devices": "अभी कोई डिवाइस नहीं। एक जोड़ें, फिर उसके मॉड्यूल और कुंजियाँ भरने के लिए उसका GSDML आयात करें।",
     "profinet-controller": "IO नियंत्रक",
-    "profinet-run-contract": "इस इंटरफ़ेस पर गेटवे PROFINET IO नियंत्रक है। इसे Linux, CAP_NET_RAW और CAP_NET_ADMIN क्षमताएँ और Docker में network_mode: host चाहिए। PROFINET खंड के लिए अलग NIC सबसे अच्छा है।",
+    "profinet-run-contract": "इस इंटरफ़ेस पर गेटवे PROFINET IO नियंत्रक है। इसे Linux, CAP_NET_RAW क्षमता और Docker में network_mode: host चाहिए। PROFINET खंड के लिए अलग NIC सबसे अच्छा है।",
     "profinet-interface": "इंटरफ़ेस",
     "profinet-interface-required": "डिवाइसों की ओर का नेटवर्क इंटरफ़ेस आवश्यक है",
     "profinet-controller-name": "नियंत्रक का स्टेशन नाम",
