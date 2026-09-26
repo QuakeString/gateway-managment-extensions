@@ -342,6 +342,10 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
       const patch: any = {};
       if (station.nameOfStation) {
         patch.nameOfStation = station.nameOfStation;
+        // A device not yet named on the platform takes the station's name.
+        if (!(this.deviceForm.get('deviceName').value ?? '').trim()) {
+          patch.deviceName = station.nameOfStation;
+        }
       }
       if (station.ipSet !== false && station.ip) {
         patch.ip = station.ip;

@@ -67,6 +67,12 @@
   flex-wrap: wrap;
 }
 
+// The platform stacks a dialog's forms (`.tb-dialog .mat-mdc-dialog-container
+// form`, specificity 0,3,1); the station's rows are rows.
+.station-actions form.tb-form-row {
+  flex-direction: row;
+}
+
 .ip-row mat-form-field {
   width: 160px;
 }
