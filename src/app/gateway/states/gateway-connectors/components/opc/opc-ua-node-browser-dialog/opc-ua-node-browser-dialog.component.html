@@ -7,7 +7,7 @@
 
       http://www.apache.org/licenses/LICENSE-2.0
 -->
-<div class="node-browser-dialog">
+<div class="node-browser-dialog" [class.fullscreen]="fullscreen">
   <mat-toolbar color="primary">
     <h2>Browse OPC-UA server —
       <ng-container [ngSwitch]="data.targetSection">
@@ -18,22 +18,28 @@
       </ng-container>
     </h2>
     <span class="flex-1"></span>
+    <button mat-icon-button (click)="toggleFullscreen()" type="button"
+            [matTooltip]="fullscreen ? 'Exit full screen' : 'Full screen'" matTooltipPosition="below">
+      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
     <button mat-icon-button (click)="cancel()" type="button">
       <mat-icon>close</mat-icon>
     </button>
   </mat-toolbar>
 
   <div mat-dialog-content class="dialog-content">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>{{ 'action.search' | translate }}</mat-label>
-      <input matInput [formControl]="textSearch" placeholder="Filter by name or NodeId…">
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
+    <div class="rounded-search">
+      <mat-icon class="rounded-search-icon">search</mat-icon>
+      <input class="rounded-search-input" type="text" [formControl]="textSearch" placeholder="Filter by name or NodeId…">
+      <button *ngIf="textSearch.value" type="button" class="rounded-search-clear" (click)="textSearch.setValue('')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
 
     <div class="point-count">
       {{ displayNodes.length }} <ng-container *ngIf="totalMatches > displayNodes.length">of {{ totalMatches }}</ng-container> visible ·
       {{ selectableVisibleCount }}
-      {{ data.targetSection === 'devices' ? 'object'
+      {{ data.targetSection === 'devices' ? 'node'
          : (data.targetSection === 'rpc_methods' ? 'node' : 'variable') }}{{ selectableVisibleCount === 1 ? '' : 's' }}
       selectable · {{ selection.selected.length }} selected
     </div>
@@ -138,7 +144,7 @@
         <!-- NodeId column -->
         <ng-container matColumnDef="nodeId">
           <th mat-header-cell *matHeaderCellDef>NodeId</th>
-          <td mat-cell *matCellDef="let node" class="nodeid-col">{{ node.raw.nodeId }}</td>
+          <td mat-cell *matCellDef="let node" class="nodeid-col" [title]="node.raw.nodeId">{{ node.raw.nodeId }}</td>
         </ng-container>
 
         <!-- Variable-as (Read / Write / Both) column, RPC mode only.
@@ -231,7 +237,8 @@
     <button mat-button color="primary" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
     <button mat-raised-button color="primary"
             (click)="apply()"
-            [disabled]="selection.isEmpty()">
+            [disabled]="selection.isEmpty() || collecting">
+      <mat-spinner *ngIf="collecting" diameter="16" class="collect-spinner"></mat-spinner>
       {{ 'action.add' | translate }}
       {{ selection.selected.length > 0 ? '(' + selection.selected.length + ')' : '' }}
     </button>

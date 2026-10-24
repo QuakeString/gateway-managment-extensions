@@ -7,7 +7,7 @@
 
       http://www.apache.org/licenses/LICENSE-2.0
 -->
-<div class="scan-dialog">
+<div class="scan-dialog" [class.scan-dialog--fullscreen]="fullscreen">
   <mat-toolbar color="primary">
     <h2>Discover OPC-UA server</h2>
     <span class="flex-1"></span>
@@ -20,6 +20,10 @@
          tb-help-popup-placement="bottom"
          [tb-help-popup-style]="{maxWidth: '720px'}">
     </div>
+    <button mat-icon-button (click)="toggleFullscreen()" type="button"
+            [matTooltip]="fullscreen ? 'Exit full screen' : 'Full screen'" matTooltipPosition="below">
+      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
     <button mat-icon-button (click)="cancel()" type="button">
       <mat-icon>close</mat-icon>
     </button>

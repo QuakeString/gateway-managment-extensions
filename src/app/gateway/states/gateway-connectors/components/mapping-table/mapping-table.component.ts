@@ -348,9 +348,9 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       return;
     }
 
-    // Compute already-mapped device-node paths so the dialog can dim them.
+    // Already-mapped devices and keys, so the dialog can mark them.
     const existingDeviceNodes = (this.mappingFormGroup.value as any[])
-      .map(m => m?.deviceNodePattern || '')
+      .flatMap(m => [m?.deviceNodePattern || '', ...(m?.timeseries || []).map((t: any) => t?.value || '')])
       .filter(Boolean);
 
     this.dialog.open<
@@ -371,12 +371,26 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       autoFocus: false,
     }).afterClosed().pipe(take(1), takeUntil(this.destroy$)).subscribe(result => {
       if (!result || !result.devices?.length) return;
-      const newMappings: any[] = result.devices.map(d => ({
-        // Path form (Root\.Objects\.<Name>) is easier to read than the
-        // numeric NodeId and survives server namespace renumbering — the
-        // connector splits this on `\.` to resolve nodes at runtime.
-        deviceNodeSource: 'path',
-        deviceNodePattern: `Root\\.Objects\\.${d.displayName}`,
+      // A device already mapped gets the new keys added to its row; only
+      // devices not mapped yet become new rows.
+      const fresh = result.devices.filter(d => {
+        const ctrl = this.mappingFormGroup.controls
+          .find(c => (c.value as any)?.deviceNodePattern === d.nodeId);
+        if (!ctrl) return true;
+        const mapping: any = ctrl.value;
+        const known = new Set((mapping.timeseries || []).map((t: any) => t.value));
+        const added = (d.tags || []).filter(t => !known.has(t.value));
+        if (added.length) {
+          ctrl.patchValue({ ...mapping, timeseries: [...(mapping.timeseries || []), ...added] });
+        }
+        return false;
+      });
+      const newMappings: any[] = fresh.map(d => ({
+        // The node's own NodeId: a device can be any folder in the address
+        // space (a PLC program under DeviceSet, say), where a
+        // Root\.Objects\.<Name> path would resolve to nothing.
+        deviceNodeSource: 'identifier',
+        deviceNodePattern: d.nodeId,
         deviceInfo: {
           deviceNameExpressionSource: 'constant',
           deviceNameExpression: d.displayName,
@@ -384,7 +398,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           deviceProfileExpression: 'default',
         },
         attributes: [],
-        timeseries: [],
+        timeseries: d.tags || [],
         rpc_methods: [],
         attributes_updates: [],
       }));

@@ -22,22 +22,112 @@
 
 .flex-1 { flex: 1; }
 
+/* A compact header: the rows get the height. */
+.node-browser-dialog > .mat-toolbar {
+  min-height: 48px;
+  height: 48px;
+  h2 { font-size: 18px; }
+}
+
+/* The content shrinks with the dialog and only the table scrolls: with a
+   fixed max-height on the table, Material's own max-height on
+   mat-dialog-content clipped the last rows out of reach. */
 .dialog-content {
-  padding: 16px 24px;
+  padding: 10px 16px 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
-.search-field {
+/* The extension's pill search (industrial-keys-panel, spreadsheet-keys). */
+.rounded-search {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 0 14px;
+  height: 32px;
+  margin-bottom: 6px;
+  border: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
+  border-radius: 999px;
+  background: transparent;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+
+  &:hover { border-color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54)); }
+  &:focus-within {
+    border-color: var(--tb-primary, #26a69a);
+    border-width: 2px;
+    padding: 0 13px;
+  }
+
+  .rounded-search-icon {
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    flex-shrink: 0;
+  }
+
+  .rounded-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
+    font-size: 14px;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .rounded-search-clear {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+    &:hover { background: rgba(0, 0, 0, 0.08); }
+
+    mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  }
+}
+
+.collect-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Full screen: the dialog takes the window and the table the height left. */
+.node-browser-dialog.fullscreen {
   width: 100%;
-  margin-bottom: 4px;
+  max-width: none;
+  height: 100vh;
+  max-height: 100vh;
+
+}
+::ng-deep .cdk-overlay-pane.st-opc-browser-fullscreen {
+  max-width: 100vw !important;
+  max-height: 100vh !important;
 }
 
 .point-count {
   font-size: 12px;
   opacity: 0.7;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .loading-message {
@@ -65,12 +155,21 @@
   opacity: 0.6;
 }
 
+/* The global styles give .table-container flex-shrink: 0; it has to
+   shrink here for the rows to scroll inside the dialog. */
+.dialog-content > .table-container {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
 .table-container {
-  flex: 1;
   /* Both axes scroll — vertical when there are many rows, horizontal
      when the dialog is narrower than the table's min-width. */
   overflow: auto;
-  max-height: 55vh;
+  min-height: 0;
+
+  .mat-mdc-header-row { height: 40px; }
+  .mat-mdc-row { height: 40px; }
 
   .mat-mdc-table {
     /* `min-width` guarantees the table claims enough space for all
@@ -303,7 +402,6 @@
     width: 95vw;
     max-height: 90vh;
   }
-  .table-container { max-height: calc(90vh - 230px); }
 }
 
 /* ------------------------ mobile (xs) --------------------------------
@@ -317,5 +415,4 @@
     max-height: 100vh;
     height: 100vh;
   }
-  .table-container { max-height: calc(100vh - 250px); }
 }

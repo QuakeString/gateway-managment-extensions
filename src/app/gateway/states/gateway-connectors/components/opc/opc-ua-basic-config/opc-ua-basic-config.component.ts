@@ -111,13 +111,10 @@ export class OpcUaBasicConfigComponent extends GatewayConnectorBasicConfigDirect
   }>): void {
     if (!devices?.length) return;
     const newMappings = devices.map(d => ({
-      // Path form is easier to read than a numeric NodeId (`ns=2;i=1`)
-      // and survives if the server renumbers its namespace. The scan
-      // dialog only lists top-level Object nodes under /Objects, so the
-      // path is always `Root\.Objects\.<DisplayName>` — the connector
-      // splits that string on `\.` (see opcua_connector.find_nodes).
-      deviceNodeSource: 'path',
-      deviceNodePattern: `Root\\.Objects\\.${d.displayName}`,
+      // The node's own NodeId: a path built from the display name breaks
+      // when the browse name differs from it or carries a namespace.
+      deviceNodeSource: 'identifier',
+      deviceNodePattern: d.nodeId,
       deviceInfo: {
         deviceNameExpressionSource: 'constant',
         deviceNameExpression: d.displayName,

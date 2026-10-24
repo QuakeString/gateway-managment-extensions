@@ -139,6 +139,21 @@ export class OpcUaScanDialogComponent implements OnDestroy {
   private probeSub?: Subscription;
   private scanSub?: Subscription;
 
+  fullscreen = false;
+
+  /** The header button: the whole window, or back to the dialog size. */
+  toggleFullscreen(): void {
+    this.fullscreen = !this.fullscreen;
+    if (this.fullscreen) {
+      this.dialogRef.addPanelClass('st-opc-scan-fullscreen');
+      this.dialogRef.updateSize('100vw', '100vh');
+    } else {
+      this.dialogRef.removePanelClass('st-opc-scan-fullscreen');
+      this.dialogRef.updateSize('900px', 'auto');
+    }
+    this.cd.markForCheck();
+  }
+
   constructor(
     private dialogRef: MatDialogRef<OpcUaScanDialogComponent, OpcUaScanDialogResult | null>,
     @Inject(MAT_DIALOG_DATA) public data: OpcUaScanDialogData,

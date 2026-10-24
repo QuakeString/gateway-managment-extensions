@@ -72,6 +72,9 @@ export interface OpcUaNodeBrowserDialogData {
 export interface OpcUaDeviceSelection {
   nodeId: string;
   displayName: string;
+  /** Time series for the device: the Variables ticked under it, or every
+   *  Variable beneath it when only the folder was ticked. */
+  tags: Array<{ key: string; value: string; type: string }>;
 }
 
 export interface OpcUaRpcMethodSelection {
@@ -115,6 +118,9 @@ export class OpcUaNodeBrowserDialogComponent {
   textSearch = new FormControl('');
   loading = true;
   refreshing = false;
+  /** Devices mode: Add is reading the ticked folders' Variables. */
+  collecting = false;
+  fullscreen = false;
   loadError: string | null = null;
 
   /** Visible-row cap — rendering 2000 mat-rows at once freezes the
@@ -209,6 +215,19 @@ export class OpcUaNodeBrowserDialogComponent {
     this.textSearch.valueChanges.subscribe(() => this.rebuildDisplay());
   }
 
+  /** The header button: the whole window, or back to the dialog size. */
+  toggleFullscreen(): void {
+    this.fullscreen = !this.fullscreen;
+    if (this.fullscreen) {
+      this.dialogRef.addPanelClass('st-opc-browser-fullscreen');
+      this.dialogRef.updateSize('100vw', '100vh');
+    } else {
+      this.dialogRef.removePanelClass('st-opc-browser-fullscreen');
+      this.dialogRef.updateSize('', '');
+    }
+    this.cd.markForCheck();
+  }
+
   refresh(): void {
     this.refreshing = true;
     this.loading = true;
@@ -260,13 +279,15 @@ export class OpcUaNodeBrowserDialogComponent {
 
   /** Selectable node classes depend on the target:
    *   - Tag modes      → Variable nodes (they hold values).
-   *   - Device mode    → Object nodes (subtree anchors).
+   *   - Device mode    → Object nodes (the device) and Variable nodes
+   *                      (its time series, grouped under the nearest
+   *                      Object above them).
    *   - RPC-methods    → Method nodes (OPC-UA Call) AND Variable
    *                      nodes (each becomes a `get`/`set` whitelist
    *                      entry for read/write RPC). */
   isSelectable(node: TreeNode): boolean {
     if (this.data.targetSection === 'devices') {
-      return node.raw.nodeClass === 'Object';
+      return node.raw.nodeClass === 'Object' || node.raw.nodeClass === 'Variable';
     }
     if (this.data.targetSection === 'rpc_methods') {
       return node.raw.nodeClass === 'Method' || node.raw.nodeClass === 'Variable';
@@ -360,13 +381,15 @@ export class OpcUaNodeBrowserDialogComponent {
 
   apply(): void {
     if (this.data.targetSection === 'devices') {
-      const devices: OpcUaDeviceSelection[] = this.selection.selected
-        .filter(n => this.isSelectable(n))
-        .map(n => ({
-          nodeId: n.raw.nodeId,
-          displayName: n.raw.displayName || n.raw.browseName,
-        }));
-      this.dialogRef.close({ devices, targetSection: 'devices' });
+      this.collecting = true;
+      this.cd.markForCheck();
+      this.collectDevices().then(devices => {
+        this.dialogRef.close({ devices, targetSection: 'devices' });
+      }).catch(err => {
+        this.collecting = false;
+        this.loadError = err?.message || 'Failed to read the variables of the selected devices.';
+        this.cd.markForCheck();
+      });
       return;
     }
     if (this.data.targetSection === 'rpc_methods') {
@@ -434,6 +457,116 @@ export class OpcUaNodeBrowserDialogComponent {
 
   cancel(): void {
     this.dialogRef.close(null);
+  }
+
+  /** Devices mode. Each ticked Object is a device addressed by its NodeId
+   *  (a folder deep in the address space, such as a PLC program, has no
+   *  short path under /Objects). A ticked Variable goes to the nearest
+   *  Object above it, which becomes a device too. A device with no ticked
+   *  Variable gets every Variable beneath it. */
+  private async collectDevices(): Promise<OpcUaDeviceSelection[]> {
+    const picked = this.selection.selected.filter(n => this.isSelectable(n));
+    const devices = new Map<TreeNode, TreeNode[]>();
+    for (const n of picked) {
+      if (n.raw.nodeClass === 'Object' && !devices.has(n)) {
+        devices.set(n, []);
+      }
+    }
+    for (const n of picked) {
+      if (n.raw.nodeClass !== 'Variable') continue;
+      const device = this.owningDevice(n);
+      if (!devices.has(device)) devices.set(device, []);
+      devices.get(device).push(n);
+    }
+    const out: OpcUaDeviceSelection[] = [];
+    for (const [device, variables] of devices) {
+      const leaves: BrowsedNode[] = [];
+      if (variables.length) {
+        for (const v of variables) {
+          leaves.push(...await this.valueNodes(v.raw, 0));
+        }
+      } else {
+        leaves.push(...await this.variablesUnder(device.raw, 0));
+      }
+      out.push({
+        nodeId: device.raw.nodeId,
+        displayName: device.raw.displayName || device.raw.browseName,
+        tags: this.toTags(leaves),
+      });
+    }
+    return out;
+  }
+
+  /** The nearest Object above a Variable; the Variable's parent when the
+   *  tree has none (a browse rooted below every Object). */
+  private owningDevice(node: TreeNode): TreeNode {
+    let p = node.parent;
+    while (p) {
+      if (p.raw.nodeClass === 'Object') return p;
+      p = p.parent;
+    }
+    return node.parent ?? node;
+  }
+
+  private static readonly COLLECT_MAX_DEPTH = 8;
+  private static readonly COLLECT_MAX_TAGS = 2000;
+
+  /** Every Variable beneath an Object, through sub-folders. */
+  private async variablesUnder(node: BrowsedNode, depth: number): Promise<BrowsedNode[]> {
+    if (depth > OpcUaNodeBrowserDialogComponent.COLLECT_MAX_DEPTH || !node.hasChildren) return [];
+    const out: BrowsedNode[] = [];
+    for (const child of await this.loadChildren(node.nodeId)) {
+      if (out.length >= OpcUaNodeBrowserDialogComponent.COLLECT_MAX_TAGS) break;
+      if (child.nodeClass === 'Variable') {
+        out.push(...await this.valueNodes(child, depth + 1));
+      } else if (child.nodeClass === 'Object') {
+        out.push(...await this.variablesUnder(child, depth + 1));
+      }
+    }
+    return out.slice(0, OpcUaNodeBrowserDialogComponent.COLLECT_MAX_TAGS);
+  }
+
+  /** The nodes that carry a Variable's values: its elements when it is an
+   *  array exposed element by element (`Arr[1]`, `Arr[2]` …, read one
+   *  value each), otherwise the Variable itself. Other children of a
+   *  Variable are properties (EURange …), not values. */
+  private async valueNodes(node: BrowsedNode, depth: number): Promise<BrowsedNode[]> {
+    if (!node.hasChildren || depth > OpcUaNodeBrowserDialogComponent.COLLECT_MAX_DEPTH) return [node];
+    const elements = (await this.loadChildren(node.nodeId))
+      .filter(c => c.nodeClass === 'Variable' && /\]$/.test(c.displayName || c.browseName || ''));
+    if (!elements.length) return [node];
+    const out: BrowsedNode[] = [];
+    for (const e of elements) {
+      out.push(...await this.valueNodes(e, depth + 1));
+    }
+    return out;
+  }
+
+  /** Time-series keys: the display name, prefixed with the array's name
+   *  when an element is only `[n]`, made unique within the device. */
+  private toTags(nodes: BrowsedNode[]): Array<{ key: string; value: string; type: string }> {
+    const seen = new Set<string>();
+    const used = new Set<string>();
+    const tags: Array<{ key: string; value: string; type: string }> = [];
+    for (const n of nodes) {
+      if (seen.has(n.nodeId)) continue;
+      seen.add(n.nodeId);
+      let key = n.displayName || n.browseName || n.nodeId;
+      if (key.startsWith('[')) {
+        key = this.arrayName(n.nodeId) + key;
+      }
+      let unique = key;
+      for (let i = 2; used.has(unique); i++) unique = `${key}_${i}`;
+      used.add(unique);
+      tags.push({ key: unique, value: n.nodeId, type: this.mapSourceType(n.dataType) });
+    }
+    return tags;
+  }
+
+  /** `Arr` from a string NodeId ending in `.Arr[3]`; empty otherwise. */
+  private arrayName(nodeId: string): string {
+    const m = /([A-Za-z0-9_]+)\[[^\]]*\]$/.exec(nodeId);
+    return m ? m[1] : '';
   }
 
   trackByNodeId(_: number, node: TreeNode): string {

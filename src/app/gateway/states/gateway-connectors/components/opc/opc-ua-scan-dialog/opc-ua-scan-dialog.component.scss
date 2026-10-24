@@ -55,6 +55,32 @@
   max-height: 85vh;
 }
 
+/* Full screen (the header button): the window, with the two panels
+   taking the height left. */
+.cdk-overlay-pane.st-opc-scan-fullscreen {
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+}
+.scan-dialog.scan-dialog--fullscreen {
+  height: 100vh;
+  max-height: 100vh;
+
+  .dialog-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+  .split {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+  .left-panel,
+  .right-panel {
+    max-height: none;
+  }
+}
+
 .flex-1 { flex: 1; }
 .mono { font-family: "Roboto Mono", monospace; font-size: 11px; }
 .truncate {
