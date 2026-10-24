@@ -24,6 +24,8 @@
   <div class="tb-flex">
     <div class="title-container tb-flex">{{ (isRpc ? 'gateway.method' : 'gateway.gw-key') | translate }}:
       <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('key')?.value }}</span>
+      <tb-copy-button class="st-key-copy" [copyText]="isRpc ? row.get('method')?.value : row.get('key')?.value" icon="content_copy" miniButton
+                      tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
     </div>
     <div class="title-container">{{ 'gateway.dnp3-point-type' | translate }}:
       <span class="key-label">{{ 'gateway.dnp3-point-type-' + row.get('pointType')?.value | translate }}</span>

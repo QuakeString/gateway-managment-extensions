@@ -28,6 +28,8 @@
     <div class="tb-flex">
       <div class="title-container tb-flex">Method:
         <span class="key-label" tbTruncateWithTooltip>{{ row.get('method')?.value }}</span>
+        <tb-copy-button class="st-key-copy" [copyText]="row.get('method')?.value" icon="content_copy" miniButton
+                        tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
       </div>
       <div *ngIf="row.get('operation')?.value" class="title-container">Operation:
         <span class="key-label">{{ row.get('operation')?.value }}</span>
@@ -38,6 +40,8 @@
     <div class="tb-flex">
       <div class="title-container tb-flex">Key:
         <span class="key-label" tbTruncateWithTooltip>{{ row.get('key')?.value }}</span>
+        <tb-copy-button class="st-key-copy" [copyText]="row.get('key')?.value" icon="content_copy" miniButton
+                        tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
       </div>
       <div *ngIf="!isCustom && row.get('type')?.value" class="title-container">Source:
         <span class="key-label">{{ row.get('type')?.value }}</span>

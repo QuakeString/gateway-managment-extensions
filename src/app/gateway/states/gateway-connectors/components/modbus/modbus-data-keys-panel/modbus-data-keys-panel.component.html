@@ -26,6 +26,8 @@
   <div class="tb-flex">
     <div class="title-container tb-flex">Key:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get('tag')?.value }}</span>
+      <tb-copy-button class="st-key-copy" [copyText]="row.get('tag')?.value" icon="content_copy" miniButton
+                      tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
     </div>
     <div class="title-container">Address:
       <span class="key-label">{{ row.get('address')?.value }}</span>

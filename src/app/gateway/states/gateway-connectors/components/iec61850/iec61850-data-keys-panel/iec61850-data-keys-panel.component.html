@@ -25,6 +25,8 @@
   <div class="tb-flex">
     <div class="title-container tb-flex">{{ isRpc ? 'Method' : 'Key' }}:
       <span class="key-label" tbTruncateWithTooltip>{{ isRpc ? row.get('method')?.value : row.get('tag')?.value }}</span>
+      <tb-copy-button class="st-key-copy" [copyText]="isRpc ? row.get('method')?.value : row.get('tag')?.value" icon="content_copy" miniButton
+                      tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
     </div>
     <div class="title-container">Reference:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get('reference')?.value }}</span>

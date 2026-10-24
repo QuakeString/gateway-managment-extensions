@@ -37,6 +37,8 @@
   <div class="tb-flex" *ngIf="isNotification; else pollHeader">
     <div class="title-container tb-flex">{{ 'gateway.gw-key' | translate }}:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get('key')?.value }}</span>
+      <tb-copy-button class="st-key-copy" [copyText]="row.get('key')?.value" icon="content_copy" miniButton
+                      tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
     </div>
     <div class="title-container">{{ 'gateway.snmp-trap-oid' | translate }}:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get('trapOid')?.value || ('gateway.snmp-any-trap' | translate) }}</span>
@@ -49,6 +51,8 @@
   <div class="tb-flex">
     <div class="title-container tb-flex">{{ nameLabel | translate }}:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get(nameField)?.value }}</span>
+      <tb-copy-button class="st-key-copy" [copyText]="row.get(nameField)?.value" icon="content_copy" miniButton
+                      tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
     </div>
     <div class="title-container">{{ 'gateway.method' | translate }}:
       <span class="key-label">{{ SnmpMethodTranslationsMap.get(row.get('method')?.value) | translate }}</span>
