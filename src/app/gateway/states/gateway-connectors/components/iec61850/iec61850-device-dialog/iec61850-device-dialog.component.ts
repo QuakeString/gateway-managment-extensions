@@ -24,8 +24,11 @@ import {
   Inject,
   Renderer2,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { createKeysWriteHandler } from '../../../../../shared/components/add-to-write/add-to-write.handler';
+import { iec61850Adapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormArray, FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -123,6 +126,8 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
   }
 
   private popoverComponent: TbPopoverComponent<IEC61850DataKeysPanelComponent>;
+
+  private readonly writeDialog = inject(MatDialog);
 
   constructor(
     protected store: Store<AppState>,
@@ -460,6 +465,17 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
       keys: keysControl.value,
       keyType: keysType,
     };
+    if (keysType === IEC61850ValueKey.TIMESERIES || keysType === IEC61850ValueKey.ATTRIBUTES) {
+      (ctx as any).writeHandler = createKeysWriteHandler({
+        dialog: this.writeDialog,
+        adapter: iec61850Adapter(),
+        controls: {
+          rpc: this.deviceForm.get(IEC61850ValueKey.RPC),
+          attributeUpdates: this.deviceForm.get(IEC61850ValueKey.ATTRIBUTES_UPDATES),
+        },
+        changed: () => this.cdr.markForCheck(),
+      });
+    }
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(
       trigger,

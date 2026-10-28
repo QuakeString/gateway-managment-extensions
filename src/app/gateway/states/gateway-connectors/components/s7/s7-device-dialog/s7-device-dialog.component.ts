@@ -22,8 +22,11 @@ import {
   Inject,
   Renderer2,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { createKeysWriteHandler } from '../../../../../shared/components/add-to-write/add-to-write.handler';
+import { s7Adapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -100,6 +103,8 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
   });
 
   private popoverComponent: TbPopoverComponent<S7DataKeysPanelComponent>;
+
+  private readonly writeDialog = inject(MatDialog);
 
   constructor(
     protected store: Store<AppState>,
@@ -229,6 +234,17 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       deleteKeyTitle: 'gateway.gw-delete-key',
       noKeysText: 'gateway.gw-no-keys-configured-hint',
     };
+    if (keysType === S7ValueKey.TIMESERIES || keysType === S7ValueKey.ATTRIBUTES) {
+      (ctx as any).writeHandler = createKeysWriteHandler({
+        dialog: this.writeDialog,
+        adapter: s7Adapter(),
+        controls: {
+          rpc: this.deviceForm.get(S7ValueKey.RPC),
+          attributeUpdates: this.deviceForm.get(S7ValueKey.ATTRIBUTES_UPDATES),
+        },
+        changed: () => this.cdr.markForCheck(),
+      });
+    }
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(
       trigger,

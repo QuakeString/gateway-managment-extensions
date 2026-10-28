@@ -78,6 +78,8 @@ import { MappingDataKeysPanelComponent } from '../mapping-data-keys-panel/mappin
 import { ErrorTooltipIconComponent } from '../../../../shared/components/error-icon/error-icon.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ReportStrategyComponent } from '../../../../shared/components/report-strategy/report-strategy.component';
+import { createKeysWriteHandler } from '../../../../shared/components/add-to-write/add-to-write.handler';
+import { opcUaAdapter } from '../../../../shared/components/add-to-write/write-adapters';
 
 @Component({
   selector: 'tb-mapping-dialog',
@@ -340,6 +342,16 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
         ctx.valueTypeEnum = OPCUaSourceType;
         ctx.valueTypes = SourceTypeTranslationsMap;
         ctx.sourceType = this.mappingForm.get('deviceNodeSource').value;
+        if (keysType === MappingKeysType.TIMESERIES || keysType === MappingKeysType.ATTRIBUTES) {
+          ctx.writeHandler = createKeysWriteHandler({
+            dialog: this.matDialog,
+            adapter: opcUaAdapter(),
+            controls: {
+              rpc: this.mappingForm.get(MappingKeysType.RPC_METHODS),
+              attributeUpdates: this.mappingForm.get(MappingKeysType.ATTRIBUTES_UPDATES),
+            },
+          });
+        }
       }
       this.keysPopupClosed = false;
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,

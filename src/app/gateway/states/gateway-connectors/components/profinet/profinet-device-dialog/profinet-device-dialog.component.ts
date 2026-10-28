@@ -22,8 +22,11 @@ import {
   Inject,
   Renderer2,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { createKeysWriteHandler } from '../../../../../shared/components/add-to-write/add-to-write.handler';
+import { profinetAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -161,6 +164,8 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
   private gsdmlMeta: { file?: string; dap?: string } | undefined;
   /** The device's diagnosis texts, from its GSDML: kept as they came. */
   private diagnosisTexts: Pick<ProfinetDeviceConfig, 'channelDiagnosis' | 'unitDiagnosis'> = {};
+
+  private readonly writeDialog = inject(MatDialog);
 
   constructor(
     protected store: Store<AppState>,
@@ -506,6 +511,17 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
       noKeysText: 'gateway.gw-no-keys-configured-hint',
       submodules: this.submodulePlaces,
     };
+    if (keysType === ProfinetValueKey.TIMESERIES || keysType === ProfinetValueKey.ATTRIBUTES) {
+      (ctx as any).writeHandler = createKeysWriteHandler({
+        dialog: this.writeDialog,
+        adapter: profinetAdapter(),
+        controls: {
+          rpc: this.deviceForm.get(ProfinetValueKey.RPC),
+          attributeUpdates: this.deviceForm.get(ProfinetValueKey.ATTRIBUTES_UPDATES),
+        },
+        changed: () => this.cdr.markForCheck(),
+      });
+    }
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(
       trigger,

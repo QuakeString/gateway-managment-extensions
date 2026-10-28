@@ -54,6 +54,7 @@ import { takeUntil } from 'rxjs/operators';
 import { SpreadsheetKeysComponent } from '../spreadsheet-keys/spreadsheet-keys.component';
 import { SpreadsheetColumnConfig } from '../spreadsheet-keys/spreadsheet-keys.models';
 import { IndustrialKeysSortFieldOption } from './industrial-keys-panel.models';
+import { KeysWriteHandler, WriteTarget } from '../add-to-write/add-to-write.models';
 
 @Component({
   selector: 'tb-industrial-keys-panel',
@@ -110,6 +111,15 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
    *  `keysFormArray.invalid || !keysFormArray.dirty`. */
   @Input() applyDisabled = false;
 
+  /** Set by a device dialog on its time-series / attribute panels: rows
+   *  get a tick box, and ticked keys can be added to RPC write or
+   *  attribute updates. Needs `persistedKeys`. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+
+  /** The keys in the shape the host emits on Apply, in form-array
+   *  order; the ticked ones are handed to `writeHandler`. */
+  @Input() persistedKeys: (() => any[]) | null = null;
+
   @Output() addKeyRequested = new EventEmitter<void>();
   @Output() deleteKeyRequested = new EventEmitter<number>();
   @Output() applyRequested = new EventEmitter<void>();
@@ -129,6 +139,9 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
   sortDirection: 'asc' | 'desc' = 'asc';
 
   private pendingReveal = false;
+
+  /** Ticked rows, by form group so sorting and filtering keep them. */
+  readonly selected = new Set<FormGroup>();
 
   private destroy$ = new Subject<void>();
   private cd = inject(ChangeDetectorRef);
@@ -172,6 +185,7 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
   /** Host calls this after mutating the form array (add/delete key)
    *  so the filtered/displayed lists pick up the change under OnPush. */
   refresh(): void {
+    this.pruneSelection();
     this.updateFilteredControls();
     this.spreadsheetKeys?.refreshDisplay();
     if (this.pendingReveal) {
@@ -297,6 +311,73 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
     this.filteredControls = next;
     this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
     this.cd.markForCheck();
+  }
+
+  get canWrite(): boolean {
+    return !!this.writeHandler?.targets.length && !!this.persistedKeys;
+  }
+
+  hasWriteTarget(target: WriteTarget): boolean {
+    return !!this.writeHandler?.targets.includes(target);
+  }
+
+  isWritten(row: FormGroup): boolean {
+    return !!this.writeHandler && this.writeHandler.isWritten(row.getRawValue());
+  }
+
+  toggleRow(row: FormGroup): void {
+    if (this.selected.has(row)) {
+      this.selected.delete(row);
+    } else {
+      this.selected.add(row);
+    }
+    this.cd.markForCheck();
+  }
+
+  /** The tick box in the bar: ticks every row the search shows, or
+   *  clears them all when they are already ticked. */
+  get allShownSelected(): boolean {
+    return this.filteredControls.length > 0 && this.filteredControls.every(item => this.selected.has(item.control));
+  }
+
+  toggleAllShown(): void {
+    if (this.allShownSelected) {
+      this.selected.clear();
+    } else {
+      this.filteredControls.forEach(item => this.selected.add(item.control));
+    }
+    this.cd.markForCheck();
+  }
+
+  clearSelection(): void {
+    this.selected.clear();
+    this.cd.markForCheck();
+  }
+
+  addSelectedToWrite(target: WriteTarget): void {
+    if (!this.writeHandler || !this.persistedKeys) {
+      return;
+    }
+    const keys = this.persistedKeys();
+    const picked = this.keysFormArray.controls
+      .map((c, i) => this.selected.has(c as FormGroup) ? keys[i] : undefined)
+      .filter(k => k !== undefined);
+    this.writeHandler.add(target, picked, added => {
+      // The ticked keys are written now: clear the ticks and show the marks.
+      if (added) {
+        this.selected.clear();
+      }
+      this.cd.markForCheck();
+    });
+  }
+
+  private pruneSelection(): void {
+    const present = new Set(this.keysFormArray.controls);
+    for (const row of [...this.selected]) {
+      if (!present.has(row)) {
+        this.selected.delete(row);
+      }
+    }
   }
 
   onKeyPanelScroll(event: Event): void {

@@ -35,6 +35,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -132,6 +133,10 @@ export class McProtocolDataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Array<McDataKey | McRpcConfig> = [];
   @Input() keysType: McValueKey = McValueKey.TIMESERIES;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
 
   @Output() keysDataApplied = new EventEmitter<Array<McDataKey | McRpcConfig>>();
   @Output() cancelled = new EventEmitter<void>();

@@ -41,6 +41,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -175,6 +176,10 @@ export class EtherCatDataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Array<EtherCatDataKey | EtherCatRpcConfig> = [];
   @Input() keysType: EtherCatValueKey = EtherCatValueKey.TIMESERIES;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
 
   @Output() keysDataApplied = new EventEmitter<Array<EtherCatDataKey | EtherCatRpcConfig>>();
   @Output() cancelled = new EventEmitter<void>();

@@ -33,6 +33,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -96,6 +97,10 @@ export class Dnp3DataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Dnp3Key[] = [];
   @Input() keysType: Dnp3ValueKey = Dnp3ValueKey.TIMESERIES;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
   /** Offer security statistics (gateway 4.5.0). */
   @Input() securityStatistics = true;
 

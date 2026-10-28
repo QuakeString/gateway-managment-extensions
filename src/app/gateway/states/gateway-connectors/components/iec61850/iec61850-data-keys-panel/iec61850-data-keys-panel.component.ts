@@ -31,6 +31,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -73,6 +74,10 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
 
   @Input() keys: (IEC61850DataKey | IEC61850RpcConfig)[] = [];
   @Input() keyType: IEC61850ValueKey = IEC61850ValueKey.TIMESERIES;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
 
   @Output() keysDataApplied = new EventEmitter<(IEC61850DataKey | IEC61850RpcConfig)[]>();
   @Output() cancelled = new EventEmitter<void>();
