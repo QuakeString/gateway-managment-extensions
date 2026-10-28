@@ -25,6 +25,10 @@
     .header-action-btn {
       flex-shrink: 0;
     }
+    .st-write-btn {
+      flex-shrink: 0;
+      .mat-icon { margin-inline-end: 6px; }
+    }
   }
 
   .rounded-search {

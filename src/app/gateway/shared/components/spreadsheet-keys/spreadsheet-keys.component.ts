@@ -40,6 +40,7 @@ import { SharedModule } from '@shared/public-api';
 import { TranslateService } from '@ngx-translate/core';
 import * as XLSX from 'xlsx';
 import { SelectOption, SortDirection, SortFieldOption, SpreadsheetColumnConfig } from './spreadsheet-keys.models';
+import { WriteTarget } from '../add-to-write/add-to-write.models';
 
 interface ActiveCell {
   control: FormGroup;
@@ -75,6 +76,10 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
   /** Bulk row creation (import): the host appends `count` default rows synchronously. */
   @Output() addRowsRequested = new EventEmitter<number>();
   @Output() deleteRowsRequested = new EventEmitter<FormGroup[]>();
+  /** Write lists the selected rows can be copied to ("Add to RPC write",
+   *  "Add to attribute updates"); empty hides the buttons. */
+  @Input() writeTargets: WriteTarget[] = [];
+  @Output() writeRequested = new EventEmitter<{ target: WriteTarget; rows: FormGroup[] }>();
 
   @ViewChild('spreadsheetRoot', { static: true }) spreadsheetRoot!: ElementRef<HTMLElement>;
   @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
@@ -328,6 +333,15 @@ body.tb-dark ${hostSel} input[type="number"] {
       this.sortDirection = 'asc';
     }
     this.updateFilteredControls();
+  }
+
+  requestWrite(target: WriteTarget): void {
+    // Rows in the list's order, not the order they were clicked in.
+    const rows = (this.keysFormArray?.controls ?? [])
+      .filter(c => this.selectedRowControls.has(c as FormGroup)) as FormGroup[];
+    if (rows.length) {
+      this.writeRequested.emit({ target, rows });
+    }
   }
 
   // ---- Row selection --------------------------------------------------------

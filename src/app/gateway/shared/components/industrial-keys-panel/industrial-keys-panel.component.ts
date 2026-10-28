@@ -355,12 +355,26 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
   }
 
   addSelectedToWrite(target: WriteTarget): void {
+    this.addRowsToWrite(target, this.selected);
+  }
+
+  /** The spreadsheet's selected rows, from its own Add to RPC write /
+   *  Add to attribute updates buttons. */
+  onSpreadsheetWriteRequested(event: { target: WriteTarget; rows: FormGroup[] }): void {
+    this.addRowsToWrite(event.target, new Set(event.rows));
+  }
+
+  get spreadsheetWriteTargets(): WriteTarget[] {
+    return this.canWrite ? this.writeHandler.targets : [];
+  }
+
+  private addRowsToWrite(target: WriteTarget, rows: Set<FormGroup>): void {
     if (!this.writeHandler || !this.persistedKeys) {
       return;
     }
     const keys = this.persistedKeys();
     const picked = this.keysFormArray.controls
-      .map((c, i) => this.selected.has(c as FormGroup) ? keys[i] : undefined)
+      .map((c, i) => rows.has(c as FormGroup) ? keys[i] : undefined)
       .filter(k => k !== undefined);
     this.writeHandler.add(target, picked, added => {
       // The ticked keys are written now: clear the ticks and show the marks.

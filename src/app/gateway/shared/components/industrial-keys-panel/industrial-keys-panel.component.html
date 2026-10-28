@@ -88,8 +88,10 @@
                   <mat-expansion-panel-header class="flex-wrap">
                     <mat-panel-title>
                       <ng-container *ngTemplateOutlet="rowHeaderTpl; context: { $implicit: item.control, index: item.index }"/>
-                      <mat-icon *ngIf="canWrite && isWritten(item.control)" class="st-written-icon"
-                                [matTooltip]="'gateway.key-has-write' | translate" matTooltipPosition="above">edit_note</mat-icon>
+                      <!-- Kept in place on every row (hidden when not written) so the columns line up. -->
+                      <mat-icon *ngIf="canWrite" class="st-written-icon" [class.st-not-written]="!isWritten(item.control)"
+                                [matTooltip]="'gateway.key-has-write' | translate" matTooltipPosition="above"
+                                [matTooltipDisabled]="!isWritten(item.control)">edit_note</mat-icon>
                     </mat-panel-title>
                   </mat-expansion-panel-header>
                   <ng-template matExpansionPanelContent>
@@ -127,6 +129,8 @@
           (fullscreenToggled)="onFullscreenToggled($event)"
           (addRowRequested)="onAddClicked()"
           (addRowsRequested)="onAddRowsRequested($event)"
+          [writeTargets]="spreadsheetWriteTargets"
+          (writeRequested)="onSpreadsheetWriteRequested($event)"
           (deleteRowsRequested)="onSpreadsheetDeleteRowsRequested($event)">
         </tb-spreadsheet-keys>
       </ng-template>
