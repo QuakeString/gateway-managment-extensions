@@ -160,7 +160,8 @@
     }
   }
 
-  .st-row-check { flex: none; }
+  // Level with the delete button (56px, top-aligned) whether the card is collapsed or expanded.
+  .st-row-check { flex: none; align-self: flex-start; margin-top: 8px; }
   .st-row-selected { border-color: var(--tb-primary, #187074); }
 
   .st-written-icon {
