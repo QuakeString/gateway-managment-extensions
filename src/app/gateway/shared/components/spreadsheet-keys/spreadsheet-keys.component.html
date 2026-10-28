@@ -22,6 +22,18 @@
         <mat-icon>close</mat-icon>
       </button>
     </div>
+    <ng-container *ngIf="writeTargets.length">
+      <button *ngIf="writeTargets.includes('rpc')" type="button" mat-stroked-button color="primary" class="st-write-btn"
+              [disabled]="!selectedRowControls.size" (click)="requestWrite('rpc')"
+              [matTooltip]="(selectedRowControls.size ? '' : 'gateway.keys-select-rows-first') | translate" matTooltipPosition="above">
+        <mat-icon>edit_note</mat-icon>{{ 'gateway.add-to-rpc-write' | translate }}
+      </button>
+      <button *ngIf="writeTargets.includes('attributeUpdates')" type="button" mat-button color="primary" class="st-write-btn"
+              [disabled]="!selectedRowControls.size" (click)="requestWrite('attributeUpdates')"
+              [matTooltip]="(selectedRowControls.size ? '' : 'gateway.keys-select-rows-first') | translate" matTooltipPosition="above">
+        <mat-icon>sync</mat-icon>{{ 'gateway.add-to-attribute-updates' | translate }}
+      </button>
+    </ng-container>
     <button type="button"
             mat-icon-button
             class="header-action-btn"

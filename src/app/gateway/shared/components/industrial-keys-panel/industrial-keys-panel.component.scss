@@ -9,7 +9,7 @@
 :host {
   .industrial-keys-panel {
     width: 77vw;
-    max-width: 700px;
+    max-width: 800px;
 
     .title-container {
       width: 180px;
@@ -20,16 +20,25 @@
     }
 
     // Copy button after a row's key name (declared in each connector's
-    // header template); shown while the row's header is hovered.
+    // header template). It always takes its place, so the row never
+    // shifts, and shows while the row's header is hovered. The button is
+    // no taller than the row line, so its hover circle is never clipped.
     ::ng-deep .st-key-copy {
-      display: none;
+      display: inline-flex;
+      align-items: center;
       flex: 0 0 auto;
-      margin: -6px 0 -6px 2px;
+      margin-inline-start: 2px;
+      visibility: hidden;
       .mat-mdc-icon-button.mini-button {
-        width: 28px;
-        height: 28px;
+        width: 24px;
+        height: 24px;
         padding: 4px;
-        --mdc-icon-button-state-layer-size: 28px;
+        line-height: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        --mdc-icon-button-state-layer-size: 24px;
+        .mat-mdc-button-touch-target { width: 24px; height: 24px; }
       }
       .mat-icon, tb-icon {
         font-size: 16px;
@@ -41,7 +50,7 @@
     }
     ::ng-deep .mat-expansion-panel-header:hover .st-key-copy,
     ::ng-deep .mat-expansion-panel-header:focus-within .st-key-copy {
-      display: inline-flex;
+      visibility: visible;
     }
 
     .rounded-search {
@@ -161,15 +170,32 @@
     width: 18px;
     height: 18px;
     color: var(--tb-primary, #187074);
+    &.st-not-written { visibility: hidden; }
   }
-  // The row header fills the title; let it shrink so the mark stays inside.
-  ::ng-deep .mat-content:has(.st-written-icon),
-  ::ng-deep .mat-expansion-panel-header-title:has(> .st-written-icon) {
+  // One line per key: the header row shrinks to the card (long names
+  // truncate) so the expand chevron stays beside it instead of wrapping
+  // onto a second line.
+  ::ng-deep .mat-expansion-panel-header .mat-content,
+  ::ng-deep .mat-expansion-panel-header .mat-expansion-panel-header-title {
     min-width: 0;
   }
-  ::ng-deep .mat-expansion-panel-header-title:has(> .st-written-icon) > .tb-flex {
+  ::ng-deep .mat-expansion-panel-header-title > .tb-flex {
     min-width: 0;
     overflow: hidden;
+    // The key takes what the other columns leave; they keep one width
+    // so they line up from row to row.
+    > .title-container:first-child {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+    }
+    > .title-container:not(:first-child) {
+      flex: 0 0 190px;
+      margin-inline-start: 12px;
+    }
+    > .title-container:last-child:not(:first-child) {
+      flex-basis: 110px;
+    }
   }
 
   .header-actions {
