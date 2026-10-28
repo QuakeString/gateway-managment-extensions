@@ -33,6 +33,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -111,6 +112,10 @@ export class ProfinetDataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: ProfinetAnyKey[] = [];
   @Input() keysType: ProfinetValueKey = ProfinetValueKey.TIMESERIES;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
   /** The device's submodules, to pick a place from and check it against. */
   @Input() submodules: ProfinetSubmodulePlace[] = [];
 

@@ -39,6 +39,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -179,6 +180,10 @@ export class SnmpDataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: SnmpKeyEntry[] = [];
   @Input() keysType: SnmpValueKey = SnmpValueKey.TELEMETRY;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
   /** The device's SNMP version: decides whether GETBULK methods are allowed. */
   @Input() version: SnmpVersion | string = SnmpVersion.V2C;
 

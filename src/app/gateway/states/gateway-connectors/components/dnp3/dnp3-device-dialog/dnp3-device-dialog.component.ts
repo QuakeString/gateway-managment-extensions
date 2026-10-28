@@ -22,8 +22,11 @@ import {
   Inject,
   Renderer2,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
+import { createKeysWriteHandler } from '../../../../../shared/components/add-to-write/add-to-write.handler';
+import { dnp3Adapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -144,6 +147,8 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
   }, { validators: [(group: AbstractControl) => this.addressesValid(group)] });
 
   private popoverComponent: TbPopoverComponent<Dnp3DataKeysPanelComponent>;
+
+  private readonly writeDialog = inject(MatDialog);
 
   constructor(
     protected store: Store<AppState>,
@@ -399,6 +404,17 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
       noKeysText: 'gateway.gw-no-keys-configured-hint',
       securityStatistics: this.data.secureAuthSupported !== false,
     };
+    if (keysType === Dnp3ValueKey.TIMESERIES || keysType === Dnp3ValueKey.ATTRIBUTES) {
+      (ctx as any).writeHandler = createKeysWriteHandler({
+        dialog: this.writeDialog,
+        adapter: dnp3Adapter(),
+        controls: {
+          rpc: this.deviceForm.get(Dnp3ValueKey.RPC),
+          attributeUpdates: this.deviceForm.get(Dnp3ValueKey.ATTRIBUTES_UPDATES),
+        },
+        changed: () => this.cdr.markForCheck(),
+      });
+    }
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(
       trigger,

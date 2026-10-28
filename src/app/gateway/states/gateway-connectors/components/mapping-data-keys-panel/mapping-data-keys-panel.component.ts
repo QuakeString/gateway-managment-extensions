@@ -60,6 +60,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -101,6 +102,10 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   @Input() noKeysText: string;
   @Input() keys: Array<MappingDataKey> | {[key: string]: any};
   @Input() keysType: MappingKeysType;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
   @Input() connectorType: ConnectorType;
   @Input() convertorType: MqttConverterType;
   @Input() sourceType: SourceType;
@@ -215,7 +220,11 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       this.keysDataApplied.emit(dict);
       return;
     }
-    const out = this.keysListFormArray.controls.map((ctrl) => {
+    this.keysDataApplied.emit(this.getFormValue());
+  }
+
+  private getFormValue(): any[] {
+    return this.keysListFormArray.controls.map((ctrl) => {
       const group = ctrl as UntypedFormGroup;
       const raw = group.getRawValue();
       const { reportStrategy, _id,
@@ -225,7 +234,6 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       if (this.calibrationEnabled && calibration) Object.assign(result, calibration);
       return result;
     });
-    this.keysDataApplied.emit(out);
   }
 
   onCancelRequested(): void {

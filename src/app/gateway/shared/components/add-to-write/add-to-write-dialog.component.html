@@ -1,0 +1,77 @@
+<!--
+  Copyright © 2016-2025 The SENTIENT Authors
+  Licensed under the Apache License, Version 2.0
+-->
+<mat-toolbar color="primary">
+  <h2>{{ (isRpc ? 'gateway.add-to-rpc-write' : 'gateway.add-to-attribute-updates') | translate }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button (click)="cancel()" type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="tb-form-panel no-border st-add-to-write">
+  <div class="tb-form-hint tb-primary-fill st-add-to-write-hint">
+    <mat-icon>info_outline</mat-icon>
+    <span [innerHTML]="(isRpc ? 'gateway.add-to-rpc-write-hint' : 'gateway.add-to-attribute-updates-hint') | translate"></span>
+  </div>
+
+  <div class="tb-form-row space-between">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ (isRpc ? 'gateway.write-method-name-hint' : 'gateway.write-attribute-name-hint') | translate }}">
+      {{ (isRpc ? 'gateway.write-method-name' : 'gateway.write-attribute-name') | translate }}
+    </div>
+    <tb-toggle-select [formControl]="pattern" appearance="fill">
+      <tb-toggle-option value="key">{{ 'gateway.write-name-same-as-key' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="set">{{ 'gateway.write-name-set-prefix' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+
+  <div class="tb-form-table no-padding no-gap">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell st-col-key" translate>gateway.gw-key</div>
+      <div class="tb-form-table-header-cell st-col-name">{{ (isRpc ? 'gateway.method' : 'gateway.write-attribute') | translate }}</div>
+      <div class="tb-form-table-header-cell st-col-type" translate>gateway.write-data-type</div>
+      <div class="tb-form-table-header-cell st-col-with" translate>gateway.write-writes-with</div>
+      <div class="tb-form-table-header-cell st-col-address" translate>gateway.address</div>
+    </div>
+    <div class="tb-form-table-body no-gap st-add-to-write-body">
+      <div *ngFor="let row of rows" class="tb-form-table-row st-add-to-write-row" [class.st-skipped]="!row.name">
+        <div class="st-col-key" tbTruncateWithTooltip>{{ row.key }}</div>
+        <ng-container *ngIf="row.name; else skipped">
+          <div class="st-col-name">
+            <mat-form-field class="tb-inline-field tb-flex no-gap !w-full" appearance="outline" subscriptSizing="dynamic"
+                            [class.st-name-renamed]="row.clashAddress && !nameError(row)">
+              <input matInput [formControl]="row.name"/>
+              <mat-icon matSuffix *ngIf="nameError(row) as error" class="tb-error"
+                        matTooltipPosition="above" matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="error | translate">warning</mat-icon>
+            </mat-form-field>
+            <div *ngIf="row.clashAddress && !nameError(row)" class="st-renamed-note">
+              {{ 'gateway.write-name-renamed' | translate: { address: row.clashAddress } }}
+            </div>
+          </div>
+          <div class="st-col-type">{{ row.dataType ? (row.dataType | translate) : "—" }}</div>
+          <div class="st-col-with">{{ row.writesWith || '—' }}</div>
+        </ng-container>
+        <ng-template #skipped>
+          <div class="st-col-skip">
+            <span class="st-skip-chip" [class.st-blocked]="row.skip !== 'gateway.write-already-written-by'">
+              <mat-icon *ngIf="row.skip !== 'gateway.write-already-written-by'">block</mat-icon>
+              {{ row.skip | translate: row.skipArgs }}
+            </span>
+          </div>
+        </ng-template>
+        <div class="st-col-address" tbTruncateWithTooltip>{{ row.address || '—' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div mat-dialog-actions class="tb-dialog-actions">
+  <span class="st-add-to-write-summary">{{ 'gateway.write-summary' | translate: { added: added.length, total: rows.length } }}</span>
+  <span class="flex-1"></span>
+  <button mat-button color="primary" type="button" (click)="cancel()">{{ 'gateway.gw-cancel' | translate }}</button>
+  <button mat-raised-button color="primary" type="button" [disabled]="!valid" (click)="add()">
+    {{ (isRpc ? 'gateway.write-add-methods' : 'gateway.write-add-attributes') | translate: { count: added.length } }}
+  </button>
+</div>

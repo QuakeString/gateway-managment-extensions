@@ -35,6 +35,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -119,6 +120,10 @@ export class AdsDataKeysPanelComponent implements OnInit {
   @Input() noKeysText = 'gateway.keys-no-data-configured';
   @Input() keys: Array<AdsDataKey | AdsRpcConfig> = [];
   @Input() keysType: AdsValueKey = AdsValueKey.TIMESERIES;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
 
   @Output() keysDataApplied = new EventEmitter<Array<AdsDataKey | AdsRpcConfig>>();
   @Output() cancelled = new EventEmitter<void>();

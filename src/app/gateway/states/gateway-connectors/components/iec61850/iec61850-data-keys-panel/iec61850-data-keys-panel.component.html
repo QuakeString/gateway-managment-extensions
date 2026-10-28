@@ -4,6 +4,8 @@
 -->
 <tb-industrial-keys-panel
   [keysFormArray]="keysFormArray"
+  [writeHandler]="writeHandler"
+  [persistedKeys]="persistedKeys"
   [title]="title"
   [addKeyLabel]="isRpc ? 'Add method' : 'Add key'"
   [emptyText]="'No keys configured. Add a key to get started.'"

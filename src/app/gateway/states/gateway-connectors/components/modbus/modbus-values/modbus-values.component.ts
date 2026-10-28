@@ -23,8 +23,12 @@ import {
   Input,
   OnInit,
   Renderer2,
-  ViewContainerRef
+  ViewContainerRef,
+  inject,
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { createKeysWriteHandler } from '../../../../../shared/components/add-to-write/add-to-write.handler';
+import { modbusAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -101,6 +105,8 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
 
   private popoverComponent: TbPopoverComponent<ModbusDataKeysPanelComponent>;
 
+  private readonly writeDialog = inject(MatDialog);
+
   constructor(private fb: FormBuilder,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
@@ -175,6 +181,17 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
       deleteKeyTitle: ModbusKeysDeleteKeyTranslationsMap.get(keysType),
       noKeysText: ModbusKeysNoKeysTextTranslationsMap.get(keysType),
       hideNewFields: this.hideNewFields,
+      writeHandler: this.singleMode && (keysType === ModbusValueKey.TIMESERIES || keysType === ModbusValueKey.ATTRIBUTES)
+        ? createKeysWriteHandler({
+          dialog: this.writeDialog,
+          adapter: modbusAdapter(),
+          controls: {
+            rpc: this.getValueGroup(ModbusValueKey.RPC_REQUESTS, register),
+            attributeUpdates: this.getValueGroup(ModbusValueKey.ATTRIBUTES_UPDATES, register),
+          },
+          changed: () => this.cdr.markForCheck(),
+        })
+        : null,
     };
     this.popoverComponent = this.popoverService.displayPopover(
       trigger,

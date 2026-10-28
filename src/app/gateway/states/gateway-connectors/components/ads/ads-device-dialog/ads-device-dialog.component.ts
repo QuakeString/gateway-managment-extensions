@@ -22,8 +22,11 @@ import {
   Inject,
   Renderer2,
   ViewContainerRef,
+  inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { createKeysWriteHandler } from '../../../../../shared/components/add-to-write/add-to-write.handler';
+import { tagAddressAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DialogComponent, SharedModule } from '@shared/public-api';
@@ -87,6 +90,8 @@ export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogCom
   });
 
   private popoverComponent: TbPopoverComponent<AdsDataKeysPanelComponent>;
+
+  private readonly writeDialog = inject(MatDialog);
 
   constructor(
     protected store: Store<AppState>,
@@ -191,6 +196,17 @@ export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogCom
       deleteKeyTitle: 'gateway.gw-delete-key',
       noKeysText: 'gateway.gw-no-keys-configured-hint',
     };
+    if (keysType === AdsValueKey.TIMESERIES || keysType === AdsValueKey.ATTRIBUTES) {
+      (ctx as any).writeHandler = createKeysWriteHandler({
+        dialog: this.writeDialog,
+        adapter: tagAddressAdapter(),
+        controls: {
+          rpc: this.deviceForm.get(AdsValueKey.RPC),
+          attributeUpdates: this.deviceForm.get(AdsValueKey.ATTRIBUTES_UPDATES),
+        },
+        changed: () => this.cdr.markForCheck(),
+      });
+    }
     this.keysPopupClosed = false;
     this.popoverComponent = this.popoverService.displayPopover(
       trigger,

@@ -11,7 +11,27 @@
       <!-- Toolbar: pill search, sort menu, fullscreen toggle. Hidden
            in fullscreen — the spreadsheet has its own identical
            toolbar and we don't want two stacked. -->
-      <div class="header-actions" *ngIf="!isFullscreen">
+      <!-- Ticked keys: add them to RPC write / attribute updates. -->
+      <div class="st-selection-bar" *ngIf="!isFullscreen && canWrite && selected.size > 0">
+        <mat-checkbox class="st-select-all" color="primary"
+                      [checked]="allShownSelected"
+                      [indeterminate]="!allShownSelected"
+                      (change)="toggleAllShown()"
+                      [matTooltip]="'gateway.keys-select-all' | translate" matTooltipPosition="above"></mat-checkbox>
+        <span class="st-selected-count">{{ 'gateway.keys-selected' | translate: { count: selected.size } }}</span>
+        <span class="flex-1"></span>
+        <button *ngIf="hasWriteTarget('rpc')" type="button" mat-stroked-button color="primary" (click)="addSelectedToWrite('rpc')">
+          <mat-icon>edit_note</mat-icon>{{ 'gateway.add-to-rpc-write' | translate }}
+        </button>
+        <button *ngIf="hasWriteTarget('attributeUpdates')" type="button" mat-button color="primary" (click)="addSelectedToWrite('attributeUpdates')">
+          <mat-icon>sync</mat-icon>{{ 'gateway.add-to-attribute-updates' | translate }}
+        </button>
+        <button type="button" mat-icon-button class="st-clear-selection" (click)="clearSelection()"
+                [matTooltip]="'gateway.keys-clear-selection' | translate" matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="header-actions" *ngIf="!isFullscreen && !(canWrite && selected.size > 0)">
         <div class="rounded-search">
           <mat-icon class="rounded-search-icon">search</mat-icon>
           <input class="rounded-search-input" type="text" [formControl]="searchControl" [placeholder]="'gateway.keys-search' | translate"/>
@@ -59,12 +79,17 @@
           <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
                *ngFor="let item of displayedControls; trackBy: trackByFilteredItem"
                [attr.data-key-id]="item.control.getRawValue().id">
-            <div class="tb-form-panel stroked tb-flex">
+            <mat-checkbox *ngIf="canWrite" class="st-row-check" color="primary"
+                          [checked]="selected.has(item.control)"
+                          (change)="toggleRow(item.control)"></mat-checkbox>
+            <div class="tb-form-panel stroked tb-flex" [class.st-row-selected]="selected.has(item.control)">
               <ng-container [formGroup]="item.control">
                 <mat-expansion-panel class="tb-settings" [expanded]="item.control.getRawValue().id === lastAddedId">
                   <mat-expansion-panel-header class="flex-wrap">
                     <mat-panel-title>
                       <ng-container *ngTemplateOutlet="rowHeaderTpl; context: { $implicit: item.control, index: item.index }"/>
+                      <mat-icon *ngIf="canWrite && isWritten(item.control)" class="st-written-icon"
+                                [matTooltip]="'gateway.key-has-write' | translate" matTooltipPosition="above">edit_note</mat-icon>
                     </mat-panel-title>
                   </mat-expansion-panel-header>
                   <ng-template matExpansionPanelContent>

@@ -52,6 +52,7 @@ import {
   CalibrationBlockComponent,
   CalibrationConfig,
   IndustrialKeysPanelComponent,
+  KeysWriteHandler,
   IndustrialKeysSortFieldOption,
   ReportStrategyComponent,
   calibrationColumns,
@@ -96,6 +97,10 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   @Input() deleteKeyTitle = 'Delete key';
   @Input() noKeysText = 'No data keys configured';
   @Input() keysType: ModbusValueKey;
+  /** Set on time-series / attribute panels: tick keys and add them to
+   *  RPC write or attribute updates. */
+  @Input() writeHandler: KeysWriteHandler | null = null;
+  readonly persistedKeys = (): any[] => this.getFormValue();
   @Input() values: ModbusValue[] = [];
 
   @Output() keysDataApplied = new EventEmitter<Array<ModbusValue>>();
