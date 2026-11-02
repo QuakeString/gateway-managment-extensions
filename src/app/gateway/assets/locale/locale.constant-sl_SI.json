@@ -55,10 +55,10 @@
       "file-storage": "Shramba datotek",
       "memory-storage": "Spomin pomnilnika"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "Gostitelj ThingsBoard",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "Gostitelj SENTIENT",
     "thingsboard-host-required": "Potreben je gostitelj.",
-    "thingsboard-port": "Vrata ThingsBoard",
+    "thingsboard-port": "Vrata SENTIENT",
     "thingsboard-port-max": "Največja številka vrat je 65535.",
     "thingsboard-port-min": "Najmanjša številka vrat je 1.",
     "thingsboard-port-pattern": "Vrata niso veljavna.",

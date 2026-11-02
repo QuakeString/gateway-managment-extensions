@@ -55,10 +55,10 @@
       "file-storage": "文件存儲",
       "memory-storage": "記憶體存儲"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "ThingsBoard主機",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "SENTIENT主機",
     "thingsboard-host-required": "需要主機。",
-    "thingsboard-port": "ThingsBoard連接埠",
+    "thingsboard-port": "SENTIENT連接埠",
     "thingsboard-port-max": "最大埠號為 65535。",
     "thingsboard-port-min": "最小埠號為1。",
     "thingsboard-port-pattern": "連接埠無效。",

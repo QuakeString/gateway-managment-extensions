@@ -55,10 +55,10 @@
       "file-storage": "Dosya depolama",
       "memory-storage": "Bellek depolama"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "ThingsBoard host",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "SENTIENT host",
     "thingsboard-host-required": "Host gerekli.",
-    "thingsboard-port": "ThingsBoard port",
+    "thingsboard-port": "SENTIENT port",
     "thingsboard-port-max": "Maksimum port numarası 65535.",
     "thingsboard-port-min": "Minimum port numarası 1'dir.",
     "thingsboard-port-pattern": "Port geçerli değil.",
