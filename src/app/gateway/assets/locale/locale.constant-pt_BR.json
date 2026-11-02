@@ -55,10 +55,10 @@
       "file-storage": "Armazenamento de arquivo",
       "memory-storage": "Armazenamento de memória"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "Host ThingsBoard",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "Host SENTIENT",
     "thingsboard-host-required": "O host é obrigatório.",
-    "thingsboard-port": "Porta ThingsBoard",
+    "thingsboard-port": "Porta SENTIENT",
     "thingsboard-port-max": "O número máximo de portas é 65535.",
     "thingsboard-port-min": "O número mínimo de portas é 1.",
     "thingsboard-port-pattern": "A porta não é válida.",

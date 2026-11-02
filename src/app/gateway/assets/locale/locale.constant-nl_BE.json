@@ -56,9 +56,9 @@
       "memory-storage": "Geheugen opslag"
     },
     "thingsboard": "Dingen Bord",
-    "thingsboard-host": "ThingsBoard-gastheer",
+    "thingsboard-host": "SENTIENT-gastheer",
     "thingsboard-host-required": "Server host is vereist.",
-    "thingsboard-port": "ThingsBoard-poort",
+    "thingsboard-port": "SENTIENT-poort",
     "thingsboard-port-max": "Het maximale poortnummer is 65535.",
     "thingsboard-port-min": "Het minimale poortnummer is 1.",
     "thingsboard-port-pattern": "Poort is niet geldig.",

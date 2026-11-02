@@ -55,10 +55,10 @@
       "file-storage": "Lagring af filter",
       "memory-storage": "Lagring af hukommelse"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "ThingsBoard-vært",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "SENTIENT-vært",
     "thingsboard-host-required": "Vært er påkrævet.",
-    "thingsboard-port": "ThingsBoard-port",
+    "thingsboard-port": "SENTIENT-port",
     "thingsboard-port-max": "Maks. portnummer er 65535.",
     "thingsboard-port-min": "Min. portnummer er 1.",
     "thingsboard-port-pattern": "Port er ikke gyldig.",

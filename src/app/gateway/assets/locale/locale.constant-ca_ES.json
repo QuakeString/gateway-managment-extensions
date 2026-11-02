@@ -55,10 +55,10 @@
       "file-storage": "Magatzem fitxer",
       "memory-storage": "Magatzem en memoria"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "Host ThingsBoard",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "Host SENTIENT",
     "thingsboard-host-required": "Cal Host.",
-    "thingsboard-port": "Port ThingsBoard",
+    "thingsboard-port": "Port SENTIENT",
     "thingsboard-port-max": "El port màxim és 65535.",
     "thingsboard-port-min": "El port mínim és 1.",
     "thingsboard-port-pattern": "Port no vàlid.",

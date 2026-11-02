@@ -55,10 +55,10 @@
       "file-storage": "Soubor",
       "memory-storage": "Paměť"
     },
-    "thingsboard": "ThingsBoard",
-    "thingsboard-host": "Host ThingsBoard",
+    "thingsboard": "SENTIENT",
+    "thingsboard-host": "Host SENTIENT",
     "thingsboard-host-required": "Host je povinný.",
-    "thingsboard-port": "Port ThingsBoard",
+    "thingsboard-port": "Port SENTIENT",
     "thingsboard-port-max": "Maximální číslo portu je 65535.",
     "thingsboard-port-min": "Minimální číslo portu je 1.",
     "thingsboard-port-pattern": "Port není platný.",
