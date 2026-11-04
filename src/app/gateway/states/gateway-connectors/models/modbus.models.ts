@@ -237,6 +237,9 @@ export interface ModbusSlaveInfo<Slave = SlaveConfig> {
   value: Slave;
   buttonTitle: string;
   hideNewFields: boolean;
+  /** Present when the connector is saved: lets the dialog ask the gateway. */
+  gatewayDeviceId?: string;
+  connectorName?: string;
 }
 
 export const ModbusParityLabelsMap = new Map<ModbusParity, string>(

@@ -86,6 +86,9 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
   @coerceBoolean()
   @Input() isLegacy = false;
 
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
+
   textSearchMode = false;
   dataSource: SlavesDatasource & any;
   masterFormGroup: UntypedFormGroup;
@@ -206,6 +209,8 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
         value: value as SlaveConfig,
         buttonTitle,
         hideNewFields: false,
+        gatewayDeviceId: this.gatewayDeviceId,
+        connectorName: this.connectorName,
       }
     });
   }

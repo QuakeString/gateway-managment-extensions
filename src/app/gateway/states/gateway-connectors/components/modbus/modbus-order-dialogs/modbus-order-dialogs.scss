@@ -1,0 +1,106 @@
+/*
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:host {
+  .order-dialog {
+    width: 80vw;
+    max-width: 860px;
+  }
+
+  .order-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--tb-form-panel-stroked-border-color, rgba(128, 128, 128, 0.25));
+      vertical-align: middle;
+    }
+
+    th {
+      font-weight: 500;
+      opacity: 0.7;
+    }
+
+    tr.suggested td {
+      background: color-mix(in srgb, var(--tb-primary, #26a69a) 14%, transparent);
+    }
+
+    tr.implausible td {
+      opacity: 0.55;
+    }
+
+    td.action {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    td.value {
+      font-family: ui-monospace, Consolas, monospace;
+    }
+  }
+
+  .order-name {
+    font-family: ui-monospace, Consolas, monospace;
+    font-weight: 500;
+    color: var(--tb-primary, #26a69a);
+  }
+
+  .muted {
+    opacity: 0.7;
+    font-size: 13px;
+  }
+
+  .nowrap {
+    white-space: nowrap;
+  }
+
+  .current, .badge {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--tb-primary, #26a69a);
+    color: var(--tb-primary, #26a69a);
+    white-space: nowrap;
+  }
+
+  .tips {
+    margin: 0;
+    padding-left: 20px;
+
+    li {
+      margin-bottom: 6px;
+    }
+  }
+
+  .registers {
+    font-family: ui-monospace, Consolas, monospace;
+  }
+
+  .error {
+    color: var(--mdc-theme-error, #f44336);
+  }
+}
+
+@media (max-width: 599px) {
+  :host {
+    .order-dialog {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+}

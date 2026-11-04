@@ -211,6 +211,22 @@
                     </mat-select>
                   </mat-form-field>
               </div>
+              <div class="tb-form-row column-xs">
+                <div class="fixed-title-width"></div>
+                <div class="tb-flex row align-center">
+                  <span [matTooltip]="detectOrderHint | translate">
+                    <button mat-stroked-button color="primary" type="button"
+                            [disabled]="!canDetectOrder" (click)="openOrderDetection()">
+                      <mat-icon class="material-icons">travel_explore</mat-icon>
+                      {{ 'gateway.modbus-order.detect' | translate }}
+                    </button>
+                  </span>
+                  <button mat-button color="primary" type="button" (click)="openOrderHelp()">
+                    <mat-icon class="material-icons">help_outline</mat-icon>
+                    {{ 'gateway.modbus-order.which' | translate }}
+                  </button>
+                </div>
+              </div>
               <div *ngIf="protocolType !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
                 <mat-expansion-panel class="tb-settings" [expanded]="showSecurityControl.value">
                   <mat-expansion-panel-header class="flex-wrap">

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
 import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { EllipsisChipListDirective } from '../../../../../shared/directives/public-api';
 import {
@@ -59,6 +59,10 @@ import {
 export class ModbusBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig_v3_5_2, ModbusBasicConfig_v3_5_2> {
 
   isLegacy = false;
+
+  /** For the slave dialog's order detection, which asks the gateway. */
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
 
   protected override mapConfigToFormValue({ master, slave }: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
     return {
