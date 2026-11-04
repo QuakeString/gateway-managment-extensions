@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Directive, Inject, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Directive, inject, Inject, OnDestroy } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -45,7 +45,14 @@ import { DialogComponent, helpBaseUrl } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState, isEqual, isNumber } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  ModbusOrderChoice,
+  ModbusOrderDetectData,
+  ModbusOrderHelpData,
+} from '../modbus-order-dialogs/modbus-order.models';
+import { ModbusOrderDetectDialogComponent } from '../modbus-order-dialogs/modbus-order-detect-dialog.component';
+import { ModbusOrderHelpDialogComponent } from '../modbus-order-dialogs/modbus-order-help-dialog.component';
 import { takeUntil } from 'rxjs/operators';
 
 @Directive()
@@ -74,6 +81,8 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
   private readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host'];
 
   private destroy$ = new Subject<void>();
+  private matDialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(
     protected fb: FormBuilder,
@@ -131,7 +140,8 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
       deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       timeout: [35],
       byteOrder: [ModbusOrderType.BIG],
-      wordOrder: [ModbusOrderType.BIG],
+      // CDAB: the usual PLC layout. A saved slave keeps whatever it has.
+      wordOrder: [ModbusOrderType.LITTLE],
       retries: [ModbusDefaultRetries],
       retryOnEmpty: [true],
       retryOnInvalid: [true],
@@ -220,6 +230,73 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
       this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
     } else {
       this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
+    }
+  }
+
+  /** Detection asks the gateway, so it needs a saved connector and an address to reach. */
+  get canDetectOrder(): boolean {
+    const form = this.slaveConfigFormGroup;
+    const reachable = this.protocolType === ModbusProtocolType.Serial
+      ? form.get('serialPort').valid
+      : form.get('host').valid && form.get('port').valid;
+    return !!(this.data.gatewayDeviceId && this.data.connectorName) && reachable && form.get('unitId').valid;
+  }
+
+  get detectOrderHint(): string {
+    if (!this.data.gatewayDeviceId || !this.data.connectorName) {
+      return 'gateway.modbus-order.save-connector-first';
+    }
+    return this.canDetectOrder ? 'gateway.modbus-order.detect-hint' : 'gateway.modbus-order.fill-connection-first';
+  }
+
+  openOrderDetection(): void {
+    if (!this.canDetectOrder) {
+      return;
+    }
+    const { values, serialPort, security, ...rest } = this.slaveConfigFormGroup.value;
+    const slave: Record<string, unknown> = { ...rest };
+    for (const key of ['deviceName', 'deviceType', 'reportStrategy', 'redundancy', 'pollPeriod',
+      'byteOrder', 'wordOrder', 'timeout', 'retries']) {
+      delete slave[key];
+    }
+    if (this.protocolType === ModbusProtocolType.Serial) {
+      slave.port = serialPort;
+    } else if (security && this.showSecurityControl.value) {
+      slave.security = security;
+    }
+    this.matDialog.open<ModbusOrderDetectDialogComponent, ModbusOrderDetectData, ModbusOrderChoice>(
+      ModbusOrderDetectDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          gatewayDeviceId: this.data.gatewayDeviceId,
+          connectorName: this.data.connectorName,
+          slave,
+          current: this.currentOrder(),
+        },
+      }).afterClosed().subscribe(choice => this.applyOrder(choice));
+  }
+
+  openOrderHelp(): void {
+    this.matDialog.open<ModbusOrderHelpDialogComponent, ModbusOrderHelpData, ModbusOrderChoice>(
+      ModbusOrderHelpDialogComponent, {
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: { selectable: true, current: this.currentOrder() },
+      }).afterClosed().subscribe(choice => this.applyOrder(choice));
+  }
+
+  private currentOrder(): ModbusOrderChoice {
+    return {
+      byteOrder: this.slaveConfigFormGroup.get('byteOrder').value,
+      wordOrder: this.slaveConfigFormGroup.get('wordOrder').value,
+    };
+  }
+
+  private applyOrder(choice?: ModbusOrderChoice): void {
+    if (choice) {
+      this.slaveConfigFormGroup.patchValue({ byteOrder: choice.byteOrder, wordOrder: choice.wordOrder });
+      this.slaveConfigFormGroup.markAsDirty();
+      this.cdr.markForCheck();
     }
   }
 

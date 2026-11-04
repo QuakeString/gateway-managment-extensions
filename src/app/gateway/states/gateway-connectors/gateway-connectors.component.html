@@ -250,6 +250,8 @@
               *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig : ConnectorType.MODBUS else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              [gatewayDeviceId]="device?.id"
+              [connectorName]="connectorForm.get('name')?.value"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>

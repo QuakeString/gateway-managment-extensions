@@ -1,0 +1,84 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="order-dialog">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.modbus-order.help-title' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button (click)="close()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="tb-form-panel no-border">
+    <div class="tb-form-hint tb-primary-fill">{{ 'gateway.modbus-order.help-intro' | translate }}</div>
+
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title">{{ 'gateway.modbus-order.help-orders' | translate }}</div>
+      <table class="order-table">
+        <tr>
+          <th>{{ 'gateway.byte-order' | translate }}</th>
+          <th>{{ 'gateway.word-order' | translate }}</th>
+          <th>{{ 'gateway.modbus-order.name' | translate }}</th>
+          <th></th>
+        </tr>
+        <tr *ngFor="let order of orders">
+          <td>{{ order.byteOrder }}</td>
+          <td>{{ order.wordOrder }}</td>
+          <td><span class="order-name">{{ order.name }}</span> <span class="muted">{{ order.description }}</span></td>
+          <td class="action">
+            <span *ngIf="isCurrent(order)" class="current">{{ 'gateway.modbus-order.current' | translate }}</span>
+            <button *ngIf="data.selectable && !isCurrent(order)" mat-stroked-button color="primary" type="button"
+                    (click)="use(order)">{{ 'gateway.modbus-order.use' | translate }}</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title">{{ 'gateway.modbus-order.help-devices' | translate }}</div>
+      <table class="order-table">
+        <tr>
+          <th>{{ 'gateway.modbus-order.devices' | translate }}</th>
+          <th>{{ 'gateway.modbus-order.usual-order' | translate }}</th>
+          <th></th>
+        </tr>
+        <tr *ngFor="let row of conventions">
+          <td>{{ row.devices }}<div *ngIf="row.note" class="muted">{{ row.note }}</div></td>
+          <td class="nowrap">{{ row.byteOrder }} / {{ row.wordOrder }}
+            <span class="order-name">{{ orderName(row.byteOrder, row.wordOrder) }}</span></td>
+          <td class="action">
+            <span *ngIf="isCurrent(row)" class="current">{{ 'gateway.modbus-order.current' | translate }}</span>
+            <button *ngIf="data.selectable && !isCurrent(row)" mat-stroked-button color="primary" type="button"
+                    (click)="use(row)">{{ 'gateway.modbus-order.use' | translate }}</button>
+          </td>
+        </tr>
+      </table>
+      <div class="muted">{{ 'gateway.modbus-order.help-rule' | translate }}</div>
+    </div>
+
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title">{{ 'gateway.modbus-order.help-check-title' | translate }}</div>
+      <ul class="tips">
+        <li>{{ 'gateway.modbus-order.help-check-known' | translate }}</li>
+        <li>{{ 'gateway.modbus-order.help-check-none' | translate }}</li>
+        <li>{{ 'gateway.modbus-order.help-check-16bit' | translate }}</li>
+        <li>{{ 'gateway.modbus-order.help-check-detect' | translate }}</li>
+      </ul>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" type="button" (click)="close()">{{ 'action.close' | translate }}</button>
+  </div>
+</div>

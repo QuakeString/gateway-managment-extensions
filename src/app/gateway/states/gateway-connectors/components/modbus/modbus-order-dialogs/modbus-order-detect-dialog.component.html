@@ -1,0 +1,111 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="order-dialog">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.modbus-order.detect-title' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button type="button" (click)="openHelp()"
+            [matTooltip]="'gateway.modbus-order.help-title' | translate">
+      <mat-icon class="material-icons">help_outline</mat-icon>
+    </button>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="tb-form-panel no-border">
+    <div class="tb-form-hint tb-primary-fill">{{ 'gateway.modbus-order.detect-intro' | translate }}</div>
+
+    <div class="tb-form-panel stroked" [formGroup]="readForm">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">{{ 'gateway.modbus-order.register-address' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" max="65535" formControlName="address"
+                 [placeholder]="'gateway.set' | translate"/>
+          <mat-icon matSuffix class="material-icons-outlined"
+                    [matTooltip]="'gateway.modbus-order.address-hint' | translate">info</mat-icon>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ 'gateway.modbus-order.function-code' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="functionCode">
+            <mat-option [value]="3">03 – {{ 'gateway.modbus-order.holding-registers' | translate }}</mat-option>
+            <mat-option [value]="4">04 – {{ 'gateway.modbus-order.input-registers' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ 'gateway.type' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="valueType">
+            <mat-option *ngFor="let type of valueTypes" [value]="type">{{ type }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="tb-flex row align-center">
+        <button mat-raised-button color="primary" type="button" (click)="read()"
+                [disabled]="readForm.invalid || reading">
+          {{ (result || error ? 'gateway.modbus-order.read-again' : 'gateway.modbus-order.read') | translate }}
+        </button>
+        <mat-spinner *ngIf="reading" diameter="22"></mat-spinner>
+        <span *ngIf="reading" class="muted">{{ 'gateway.modbus-order.reading' | translate }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="tb-form-panel stroked">
+      <div class="error">{{ error }}</div>
+    </div>
+
+    <div *ngIf="result" class="tb-form-panel stroked">
+      <div class="tb-flex row space-between align-center">
+        <div class="tb-form-panel-title">{{ 'gateway.modbus-order.result' | translate }}</div>
+        <div class="muted">{{ 'gateway.modbus-order.raw-registers' | translate }}:
+          <span class="registers">{{ result.registersHex?.join(' ') }}</span></div>
+      </div>
+      <table class="order-table">
+        <tr>
+          <th>{{ 'gateway.byte-order' | translate }}</th>
+          <th>{{ 'gateway.word-order' | translate }}</th>
+          <th>{{ 'gateway.modbus-order.name' | translate }}</th>
+          <th>{{ 'gateway.value' | translate }}</th>
+          <th></th>
+        </tr>
+        <tr *ngFor="let candidate of result.candidates"
+            [class.suggested]="candidate.suggested"
+            [class.implausible]="!candidate.plausible">
+          <td>{{ candidate.byteOrder }}</td>
+          <td>{{ candidate.wordOrder }}</td>
+          <td><span class="order-name">{{ candidate.name }}</span></td>
+          <td class="value">{{ shown(candidate.value) }}</td>
+          <td class="action">
+            <span *ngIf="candidate.suggested" class="badge">{{ 'gateway.modbus-order.suggested' | translate }}</span>
+            <span *ngIf="isCurrent(candidate)" class="current">{{ 'gateway.modbus-order.current' | translate }}</span>
+            <button *ngIf="!isCurrent(candidate)" mat-stroked-button color="primary" type="button"
+                    (click)="use(candidate)">{{ 'gateway.modbus-order.use' | translate }}</button>
+          </td>
+        </tr>
+      </table>
+      <div [class.muted]="result.confidence !== 'high'">
+        <b *ngIf="result.confidence === 'high'">{{ 'gateway.modbus-order.confidence-high' | translate }}</b>
+        <b *ngIf="result.confidence === 'low'">{{ 'gateway.modbus-order.confidence-low' | translate }}</b>
+        {{ result.reason }}
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+  </div>
+</div>
