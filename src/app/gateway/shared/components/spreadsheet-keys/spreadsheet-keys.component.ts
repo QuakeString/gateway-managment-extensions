@@ -112,8 +112,11 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
   // Where focusLastRow() should land after a row added from the keyboard.
   private pendingFocus: { key: string; edit: boolean } | null = null;
 
-  // Per-column widths chosen with the keyboard, remembered per host.
+  // Per-column widths chosen with the mouse or keyboard, remembered per host.
   columnWidths: Record<string, number> = {};
+  // Column whose edge is being dragged (highlights its resize handle).
+  resizingColumnKey: string | null = null;
+  private stopColumnResize: (() => void) | null = null;
 
   importStatus: { key: string; params?: Record<string, any>; error?: boolean } | null = null;
 
@@ -151,6 +154,7 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopColumnResize?.();
     if (this.isFullscreen) {
       this.removeFullscreenClass();
     }
@@ -287,8 +291,24 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
 .cdk-overlay-pane.spreadsheet-fullscreen-pane .tb-popover-arrow {
   display: none !important;
 }
+/* Edge to edge: no rounded corners, frame or shadow while the sheet fills
+   the viewport, so nothing shows through at the corners. */
+.cdk-overlay-pane.spreadsheet-fullscreen-pane .tb-popover-inner,
+.cdk-overlay-pane.spreadsheet-fullscreen-pane .mat-mdc-dialog-container,
+.cdk-overlay-pane.spreadsheet-fullscreen-pane .mat-mdc-dialog-surface {
+  border-radius: 0 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  --mdc-dialog-container-shape: 0;
+}
 .cdk-overlay-pane.spreadsheet-fullscreen-pane {
   z-index: 999 !important;
+}
+body.st-col-resizing,
+body.st-col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 .cdk-global-overlay-wrapper {
   z-index: 1000 !important;
@@ -838,6 +858,63 @@ body.tb-dark ${hostSel} input[type="number"] {
       current = header ? Math.round(header.getBoundingClientRect().width) : 120;
     }
     this.columnWidths = { ...this.columnWidths, [key]: Math.max(COLUMN_MIN_WIDTH, current + delta) };
+    this.saveColumnWidths();
+    this.cd.markForCheck();
+  }
+
+  /** Spreadsheet-style resize: drag a header's right edge. On the first drag
+   *  every column is pinned to its rendered width, so only the dragged column
+   *  changes and the others stay put (the grid scrolls sideways if needed). */
+  onColumnResizeStart(event: MouseEvent, col: SpreadsheetColumnConfig): void {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.stopColumnResize?.();
+    const headers = this.spreadsheetRoot?.nativeElement
+      .querySelectorAll<HTMLElement>('.spreadsheet-table > .header-cell');
+    if (!headers) return;
+    const pinned: Record<string, number> = {};
+    this.columns.forEach((c, i) => {
+      const header = headers[i + 1];
+      pinned[c.key] = this.columnWidths[c.key]
+        ?? (header ? Math.round(header.getBoundingClientRect().width) : 120);
+    });
+    const rtl = getComputedStyle(this.spreadsheetRoot.nativeElement).direction === 'rtl';
+    const startX = event.clientX;
+    const startWidth = pinned[col.key];
+    this.columnWidths = pinned;
+    this.resizingColumnKey = col.key;
+    document.body.classList.add('st-col-resizing');
+    this.cd.markForCheck();
+
+    const onMove = (e: MouseEvent) => {
+      const delta = (e.clientX - startX) * (rtl ? -1 : 1);
+      const width = Math.max(COLUMN_MIN_WIDTH, Math.round(startWidth + delta));
+      if (width !== this.columnWidths[col.key]) {
+        this.columnWidths = { ...this.columnWidths, [col.key]: width };
+        this.cd.markForCheck();
+      }
+    };
+    const stop = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', stop);
+      document.body.classList.remove('st-col-resizing');
+      this.stopColumnResize = null;
+      this.resizingColumnKey = null;
+      this.saveColumnWidths();
+      this.cd.markForCheck();
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', stop);
+    this.stopColumnResize = stop;
+  }
+
+  /** Double-click on a column edge: back to the column's default width. */
+  resetColumnWidth(key: string, event?: MouseEvent): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const { [key]: _removed, ...rest } = this.columnWidths;
+    this.columnWidths = rest;
     this.saveColumnWidths();
     this.cd.markForCheck();
   }

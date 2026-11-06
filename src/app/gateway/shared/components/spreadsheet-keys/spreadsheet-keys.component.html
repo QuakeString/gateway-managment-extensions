@@ -87,6 +87,12 @@
           <mat-icon *ngIf="col.sortable && sortField === col.key" class="sort-icon">
             {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
           </mat-icon>
+          <!-- Drag the column's right edge to resize it; double-click resets. -->
+          <span class="st-col-resize-handle"
+                [class.resizing]="resizingColumnKey === col.key"
+                (mousedown)="onColumnResizeStart($event, col)"
+                (click)="$event.stopPropagation()"
+                (dblclick)="resetColumnWidth(col.key, $event)"></span>
         </div>
       </ng-container>
 
