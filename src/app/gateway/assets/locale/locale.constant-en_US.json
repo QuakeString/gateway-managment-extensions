@@ -1409,7 +1409,7 @@
     "keys-import-no-columns": "No column in the file matches this table (the first row must hold the column names)",
     "keys-import-empty": "The file has no data rows",
     "keys-import-failed": "The file could not be read",
-    "keys-resize-hint": "Select a cell, then Ctrl+Shift+←/→ resizes the column, Ctrl+Shift+0 resets it",
+    "keys-resize-hint": "Drag a column edge to resize it, double-click the edge to reset. With a cell selected, Ctrl+Shift+←/→ also resizes and Ctrl+Shift+0 resets",
     "gw-invalid-count": "{{count}} invalid",
     "gw-ts-attr-count": "({{ts}} timeseries, {{attr}} attributes)",
     "gw-valid-count": "{{count}} valid",

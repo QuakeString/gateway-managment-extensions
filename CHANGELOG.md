@@ -17,6 +17,12 @@ Sentient Gateway new enough to support them (named in the entry).
   it in all four byte/word orders with the one that makes sense (needs Sentient
   Gateway 4.14.0), plus help on what common devices use. A new slave defaults
   to BIG / LITTLE.
+- Keys spreadsheet (Timeseries, Attributes, Attribute updates, RPC write):
+  drag a column's edge to resize it, double-click the edge to reset.
+
+### Changed
+- Keys spreadsheet in full screen fills the window edge to edge, with square
+  corners and no frame or shadow.
 
 ## [4.3.0.56] - 2026-11-02
 

@@ -213,6 +213,34 @@
         width: 14px;
         height: 14px;
       }
+
+      // Grab zone on the column's right edge (over its border line). A
+      // thin primary bar shows on hover and while dragging.
+      .st-col-resize-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        inset-inline-end: 0;
+        width: 6px;
+        z-index: 3;
+        cursor: col-resize;
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 4px;
+          bottom: 4px;
+          inset-inline-end: 0;
+          width: 2px;
+          border-radius: 1px;
+          background: transparent;
+        }
+
+        &:hover::after,
+        &.resizing::after {
+          background: var(--tb-primary, #26a69a);
+        }
+      }
     }
 
     .spreadsheet-row {
