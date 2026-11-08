@@ -95,6 +95,25 @@ export interface TimeSyncConfig {
   targetReference?: string;   // IEC 61850 only
 }
 
+/** S7CommPlus (S7-1200/1500 over TLS, by tag name) or classic S7comm (PUT/GET). */
+export enum S7Protocol {
+  S7COMM = 's7comm',
+  S7COMMPLUS = 's7commplus',
+}
+
+export const S7_PLUS_CAPABLE_MODELS: Set<S7PlcModel> = new Set([
+  S7PlcModel.S7_1200,
+  S7PlcModel.S7_1500,
+]);
+
+export interface S7TlsConfig {
+  enabled: boolean;
+  /** PEM of the CA (or the PLC's own certificate). */
+  caCertificate?: string;
+  /** SHA-256 of the PLC's certificate. */
+  certificateFingerprint?: string;
+}
+
 export interface S7DeviceConfig {
   deviceName: string;
   deviceType: string;
@@ -113,6 +132,10 @@ export interface S7DeviceConfig {
   attributes: S7DataKey[];
   attributeUpdates: S7DataKey[];
   rpc: S7RpcConfig[];
+  protocol?: S7Protocol;
+  tls?: S7TlsConfig;
+  password?: string;
+  username?: string;
 }
 
 export interface S7BasicConfig {

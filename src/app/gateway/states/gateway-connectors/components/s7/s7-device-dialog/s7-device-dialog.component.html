@@ -96,7 +96,53 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row column-xs">
+      <div class="tb-form-row column-xs" *ngIf="plusCapable">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.protocol-hint' | translate }}">{{ 'gateway.s7plus.protocol' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="protocol">
+              <mat-option [value]="S7Protocol.S7COMM">{{ 'gateway.s7plus.protocol-s7comm' | translate }}</mat-option>
+              <mat-option [value]="S7Protocol.S7COMMPLUS">{{ 'gateway.s7plus.protocol-s7commplus' | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked" *ngIf="isPlus">
+        <div class="tb-form-hint tb-primary-fill">{{ 'gateway.s7plus.intro' | translate }}</div>
+        <ng-container formGroupName="tls">
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width">{{ 'gateway.s7plus.tls' | translate }}</div>
+            <mat-slide-toggle formControlName="enabled"></mat-slide-toggle>
+          </div>
+          <div class="tb-form-row column-xs" *ngIf="deviceForm.get('tls.enabled').value">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.fingerprint-hint' | translate }}">{{ 'gateway.s7plus.fingerprint' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="certificateFingerprint" placeholder="AB:CD:…"/>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row column-xs" *ngIf="deviceForm.get('tls.enabled').value">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.ca-hint' | translate }}">{{ 'gateway.s7plus.ca' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <textarea matInput rows="3" formControlName="caCertificate" placeholder="-----BEGIN CERTIFICATE-----"></textarea>
+            </mat-form-field>
+          </div>
+        </ng-container>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.password-hint' | translate }}">{{ 'gateway.s7plus.password' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="password" autocomplete="new-password" formControlName="password"/>
+          </mat-form-field>
+        </div>
+        <div class="tb-flex row align-center">
+          <span [matTooltip]="browseHint | translate">
+            <button mat-stroked-button color="primary" type="button" [disabled]="!canBrowse" (click)="openBrowse()">
+              <mat-icon class="material-icons">travel_explore</mat-icon>
+              {{ 'gateway.s7plus.browse' | translate }}
+            </button>
+          </span>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="!isPlus">
         <div class="fixed-title-width tb-required">{{ 'gateway.gw-rack' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -104,7 +150,7 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row column-xs">
+      <div class="tb-form-row column-xs" *ngIf="!isPlus">
         <div class="fixed-title-width tb-required">{{ 'gateway.gw-slot' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -112,7 +158,7 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-panel stroked" *ngIf="supportsRedundancy" formGroupName="redundancy">
+      <div class="tb-form-panel stroked" *ngIf="supportsRedundancy && !isPlus" formGroupName="redundancy">
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -216,7 +262,7 @@
           </div>
         </mat-expansion-panel>
       </div>
-      <div class="tb-form-panel stroked time-sync-panel" formGroupName="timeSync">
+      <div class="tb-form-panel stroked time-sync-panel" *ngIf="!isPlus" formGroupName="timeSync">
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
             <mat-panel-title>

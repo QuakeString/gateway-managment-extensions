@@ -38,7 +38,8 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
-import { S7DataKey, S7DeviceConfig, S7PlcModel, S7RedundancyConfig, S7RpcConfig, S7ValueKey, S7_REDUNDANCY_CAPABLE_MODELS } from '../../../models/public-api';
+import { S7DataKey, S7DeviceConfig, S7PlcModel, S7Protocol, S7RedundancyConfig, S7RpcConfig, S7ValueKey, S7_PLUS_CAPABLE_MODELS, S7_REDUNDANCY_CAPABLE_MODELS } from '../../../models/public-api';
+import { S7BrowseDialogComponent, S7BrowseDialogData, S7BrowseResult } from '../s7-browse-dialog/s7-browse-dialog.component';
 import { S7DataKeysPanelComponent } from '../s7-data-keys-panel/s7-data-keys-panel.component';
 import { TimeSyncDialogComponent } from '../../../../../shared/components/time-sync-dialog/time-sync-dialog.component';
 
@@ -66,6 +67,7 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
 
   readonly plcModels = Object.values(S7PlcModel);
   readonly S7ValueKey = S7ValueKey;
+  readonly S7Protocol = S7Protocol;
   isEdit: boolean;
   keysPopupClosed = true;
   supportsRedundancy = false;
@@ -100,6 +102,14 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     attributes: [[] as S7DataKey[]],
     attributeUpdates: [[] as S7DataKey[]],
     rpc: [[] as S7RpcConfig[]],
+    protocol: [S7Protocol.S7COMM as S7Protocol],
+    tls: this.fb.group({
+      enabled: [true],
+      caCertificate: [''],
+      certificateFingerprint: [''],
+    }),
+    password: [''],
+    username: [''],
   });
 
   private popoverComponent: TbPopoverComponent<S7DataKeysPanelComponent>;
@@ -131,8 +141,14 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((model: S7PlcModel) => {
         this._updateRedundancySupport(model);
+        if (!S7_PLUS_CAPABLE_MODELS.has(model)) {
+          this.deviceForm.get('protocol').setValue(S7Protocol.S7COMM);
+        }
         this.cdr.markForCheck();
       });
+    this.deviceForm.get('protocol').valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cdr.markForCheck());
 
     // When redundancy is toggled off, clear standbyHost to avoid stale config
     this.deviceForm.get('redundancy.enabled').valueChanges
@@ -143,6 +159,66 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
         }
         this.cdr.markForCheck();
       });
+  }
+
+  /** The model can speak S7CommPlus (S7-1200, S7-1500). */
+  get plusCapable(): boolean {
+    return S7_PLUS_CAPABLE_MODELS.has(this.deviceForm.get('model').value as S7PlcModel);
+  }
+
+  /** This device is read over S7CommPlus. */
+  get isPlus(): boolean {
+    return this.plusCapable && this.deviceForm.get('protocol').value === S7Protocol.S7COMMPLUS;
+  }
+
+  get canBrowse(): boolean {
+    return !!(this.data.gatewayDeviceId && this.data.connectorName && this.deviceForm.get('host').value);
+  }
+
+  get browseHint(): string {
+    return this.data.gatewayDeviceId && this.data.connectorName
+      ? 'gateway.s7plus.browse-hint'
+      : 'gateway.s7plus.save-connector-first';
+  }
+
+  openBrowse(): void {
+    if (!this.canBrowse) {
+      return;
+    }
+    const v = this.deviceForm.value as any;
+    const existing = [...(v.timeseries || []), ...(v.attributes || [])].map((k: S7DataKey) => k.address);
+    this.matDialog.open<S7BrowseDialogComponent, S7BrowseDialogData, S7BrowseResult>(S7BrowseDialogComponent, {
+      disableClose: true,
+      autoFocus: false,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        gatewayDeviceId: this.data.gatewayDeviceId,
+        connectorName: this.data.connectorName,
+        connection: {
+          host: v.host,
+          port: v.port,
+          tls: v.tls,
+          password: v.password || undefined,
+          username: v.username || undefined,
+        },
+        existingAddresses: existing,
+      },
+    }).afterClosed().subscribe(result => {
+      if (!result) {
+        return;
+      }
+      if (result.keys?.length) {
+        const control = this.deviceForm.get(S7ValueKey.TIMESERIES);
+        const current: S7DataKey[] = control.value || [];
+        control.setValue([...current, ...result.keys.map(k => ({ tag: k.tag, address: k.address }) as S7DataKey)]);
+        control.markAsDirty();
+      }
+      if (result.pin) {
+        this.deviceForm.get('tls.certificateFingerprint').setValue(result.pin);
+        this.deviceForm.get('tls.certificateFingerprint').markAsDirty();
+      }
+      this.cdr.markForCheck();
+    });
   }
 
   private _updateRedundancySupport(model: S7PlcModel): void {
@@ -161,6 +237,29 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
   save(): void {
     if (this.deviceForm.valid) {
       const result = this.deviceForm.value as unknown as S7DeviceConfig;
+      // S7CommPlus settings only for an S7CommPlus device, empty ones left out.
+      if (this.isPlus) {
+        const tls: any = result.tls || {};
+        if (!tls.caCertificate) {
+          delete tls.caCertificate;
+        }
+        if (!tls.certificateFingerprint) {
+          delete tls.certificateFingerprint;
+        }
+        if (!result.password) {
+          delete result.password;
+        }
+        if (!result.username) {
+          delete result.username;
+        }
+        delete result.redundancy;
+        delete result.timeSync;
+      } else {
+        delete result.protocol;
+        delete result.tls;
+        delete result.password;
+        delete result.username;
+      }
       // Strip redundancy config if not enabled to keep JSON clean
       if (!result.redundancy?.enabled) {
         delete result.redundancy;
@@ -233,6 +332,7 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       addKeyTitle: keysType === S7ValueKey.RPC ? 'gateway.gw-add-method' : 'gateway.gw-add-key',
       deleteKeyTitle: 'gateway.gw-delete-key',
       noKeysText: 'gateway.gw-no-keys-configured-hint',
+      symbolic: this.isPlus,
     };
     if (keysType === S7ValueKey.TIMESERIES || keysType === S7ValueKey.ATTRIBUTES) {
       (ctx as any).writeHandler = createKeysWriteHandler({
