@@ -338,8 +338,8 @@
                     mat-icon-button
                     color="primary"
                     [disabled]="!canBrowse"
-                    (click)="openBrowse()">
-              <tb-icon matButtonIcon>travel_explore</tb-icon>
+                    (click)="openBrowse(S7ValueKey.TIMESERIES)">
+              <mat-icon>travel_explore</mat-icon>
             </button>
           </span>
         </div>
@@ -364,6 +364,15 @@
                   (click)="manageKeys($event, attributesButton, S7ValueKey.ATTRIBUTES)">
             <tb-icon matButtonIcon>edit</tb-icon>
           </button>
+          <span *ngIf="isPlus" [matTooltip]="browseHint | translate" matTooltipPosition="above">
+            <button type="button"
+                    mat-icon-button
+                    color="primary"
+                    [disabled]="!canBrowse"
+                    (click)="openBrowse(S7ValueKey.ATTRIBUTES)">
+              <mat-icon>travel_explore</mat-icon>
+            </button>
+          </span>
         </div>
       </div>
       <div class="tb-form-row space-between tb-flex">
