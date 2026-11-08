@@ -102,7 +102,8 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     attributes: [[] as S7DataKey[]],
     attributeUpdates: [[] as S7DataKey[]],
     rpc: [[] as S7RpcConfig[]],
-    protocol: [S7Protocol.S7COMM as S7Protocol],
+    // S7CommPlus for the S7-1200/1500 unless the device says otherwise.
+    protocol: [S7Protocol.S7COMMPLUS as S7Protocol],
     tls: this.fb.group({
       enabled: [true],
       caCertificate: [''],
@@ -136,6 +137,11 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     this.isEdit = data.isEdit;
     if (data.device) {
       this.deviceForm.patchValue(data.device as any, { emitEvent: false });
+      // A saved device without a protocol was made before S7CommPlus and
+      // reads over PUT/GET; it keeps doing so.
+      if (!data.device.protocol) {
+        this.deviceForm.get('protocol').setValue(S7Protocol.S7COMM, { emitEvent: false });
+      }
     }
 
     // Track whether current model supports redundancy
@@ -144,9 +150,11 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((model: S7PlcModel) => {
         this._updateRedundancySupport(model);
-        if (!S7_PLUS_CAPABLE_MODELS.has(model)) {
-          this.deviceForm.get('protocol').setValue(S7Protocol.S7COMM);
-        }
+        // The protocol follows the model: S7CommPlus for an S7-1200/1500,
+        // S7comm for everything older.
+        this.deviceForm
+          .get('protocol')
+          .setValue(S7_PLUS_CAPABLE_MODELS.has(model) ? S7Protocol.S7COMMPLUS : S7Protocol.S7COMM);
         this.cdr.markForCheck();
       });
     this.deviceForm.get('protocol').valueChanges

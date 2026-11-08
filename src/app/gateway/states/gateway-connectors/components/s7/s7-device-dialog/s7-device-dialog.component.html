@@ -139,14 +139,6 @@
             <input matInput type="number" min="10" max="60000" formControlName="subscriptionCycleMs"/>
           </mat-form-field>
         </div>
-        <div class="tb-flex row align-center">
-          <span [matTooltip]="browseHint | translate">
-            <button mat-stroked-button color="primary" type="button" [disabled]="!canBrowse" (click)="openBrowse()">
-              <mat-icon class="material-icons">travel_explore</mat-icon>
-              {{ 'gateway.s7plus.browse' | translate }}
-            </button>
-          </span>
-        </div>
       </div>
       <div class="tb-form-row column-xs" *ngIf="!isPlus">
         <div class="fixed-title-width tb-required">{{ 'gateway.gw-rack' | translate }}</div>
@@ -341,6 +333,15 @@
                   (click)="manageKeys($event, timeseriesButton, S7ValueKey.TIMESERIES)">
             <tb-icon matButtonIcon>edit</tb-icon>
           </button>
+          <span *ngIf="isPlus" [matTooltip]="browseHint | translate" matTooltipPosition="above">
+            <button type="button"
+                    mat-icon-button
+                    color="primary"
+                    [disabled]="!canBrowse"
+                    (click)="openBrowse()">
+              <tb-icon matButtonIcon>travel_explore</tb-icon>
+            </button>
+          </span>
         </div>
       </div>
       <div class="tb-form-row space-between tb-flex">
