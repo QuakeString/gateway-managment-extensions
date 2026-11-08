@@ -13,84 +13,118 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<div class="browse-dialog">
+<div class="tag-browser-dialog">
   <mat-toolbar color="primary">
-    <h2>{{ 'gateway.s7plus.browse-title' | translate }}</h2>
+    <h2>{{ 'gateway.s7plus.browse-add' | translate }} {{ (targetCategory === 'attributes' ? 'gateway.attributes' : 'gateway.gw-timeseries') | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button type="button" (click)="browse()" [disabled]="loading"
             [matTooltip]="'gateway.s7plus.browse-again' | translate">
-      <mat-icon class="material-icons">refresh</mat-icon>
+      <mat-icon>refresh</mat-icon>
     </button>
     <button mat-icon-button type="button" (click)="cancel()">
-      <mat-icon class="material-icons">close</mat-icon>
+      <mat-icon>close</mat-icon>
     </button>
   </mat-toolbar>
-  <div mat-dialog-content class="tb-form-panel no-border">
-    <div *ngIf="loading" class="tb-flex row align-center">
-      <mat-spinner diameter="22"></mat-spinner>
-      <span class="muted">{{ 'gateway.s7plus.browsing' | translate }}</span>
+
+  <div mat-dialog-content class="dialog-content">
+    <!-- The PLC that answered, and its certificate to pin -->
+    <div class="plc-line" *ngIf="plc || fingerprint">
+      <span *ngIf="plc" class="mono">{{ plc }}</span>
+      <span *ngIf="tlsVersion" class="muted"> · {{ tlsVersion }}</span>
+      <span *ngIf="protectionLevel !== null" class="muted"> · {{ 'gateway.s7plus.protection-level' | translate }} {{ protectionLevel }}</span>
+      <span class="flex-1"></span>
+      <ng-container *ngIf="fingerprint">
+        <span class="mono fingerprint muted" [matTooltip]="fingerprint">{{ fingerprint | slice:0:23 }}…</span>
+        <button *ngIf="pin !== fingerprint" mat-stroked-button color="primary" type="button" (click)="pinCertificate()"
+                [matTooltip]="'gateway.s7plus.pin-hint' | translate">
+          {{ 'gateway.s7plus.pin' | translate }}
+        </button>
+        <span *ngIf="pin === fingerprint" class="tag-type-badge">{{ 'gateway.s7plus.pinned' | translate }}</span>
+      </ng-container>
     </div>
 
-    <div *ngIf="plc || fingerprint" class="tb-form-panel stroked">
-      <div class="tb-form-row column-xs" *ngIf="plc">
-        <div class="fixed-title-width">{{ 'gateway.s7plus.plc' | translate }}</div>
-        <div class="mono">{{ plc }}</div>
-      </div>
-      <div class="tb-form-row column-xs" *ngIf="tlsVersion">
-        <div class="fixed-title-width">TLS</div>
-        <div>{{ tlsVersion }}<span *ngIf="protectionLevel !== null" class="muted"> · {{ 'gateway.s7plus.protection-level' | translate }} {{ protectionLevel }}</span></div>
-      </div>
-      <div class="tb-form-row column-xs" *ngIf="fingerprint">
-        <div class="fixed-title-width">{{ 'gateway.s7plus.certificate' | translate }}</div>
-        <div class="tb-flex row align-center">
-          <span class="mono fingerprint">{{ fingerprint }}</span>
-          <button *ngIf="pin !== fingerprint" mat-stroked-button color="primary" type="button" (click)="pinCertificate()"
-                  [matTooltip]="'gateway.s7plus.pin-hint' | translate">
-            {{ 'gateway.s7plus.pin' | translate }}
-          </button>
-          <span *ngIf="pin === fingerprint" class="badge">{{ 'gateway.s7plus.pinned' | translate }}</span>
-        </div>
-      </div>
+    <!-- Search bar -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>{{ 'gateway.s7plus.search' | translate }}</mat-label>
+      <input matInput [formControl]="textSearch" [placeholder]="'gateway.s7plus.search-placeholder' | translate">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <div class="tag-count" *ngIf="!loading && !error">
+      {{ 'gateway.s7plus.found' | translate:{ found: matchingCount, selected: selected.size } }}
+      <span *ngIf="matchingCount > maxShown"> · {{ 'gateway.s7plus.first-shown' | translate:{ shown: maxShown } }}</span>
+      <span *ngIf="truncated"> · {{ 'gateway.s7plus.truncated' | translate }}</span>
     </div>
 
-    <div *ngIf="error" class="tb-form-panel stroked">
-      <div class="error">{{ error }}</div>
+    <!-- Loading state -->
+    <div *ngIf="loading" class="loading-message">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'gateway.s7plus.browsing' | translate }}</span>
     </div>
 
-    <ng-container *ngIf="!loading && !error">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
-        <mat-label>{{ 'gateway.s7plus.search' | translate }}</mat-label>
-        <input matInput [formControl]="textSearch">
-        <mat-icon matSuffix>search</mat-icon>
-      </mat-form-field>
-      <div class="muted">
-        {{ 'gateway.s7plus.found' | translate: { found: matchingCount, selected: selected.size } }}
-        <span *ngIf="matchingCount > maxShown"> · {{ 'gateway.s7plus.first-shown' | translate: { shown: maxShown } }}</span>
-        <span *ngIf="truncated"> · {{ 'gateway.s7plus.truncated' | translate }}</span>
-      </div>
-      <div class="table-container">
-        <table class="tags">
-          <tr>
-            <th class="check"><mat-checkbox [checked]="allShownSelected" (change)="toggleShown()"></mat-checkbox></th>
-            <th>{{ 'gateway.s7plus.name' | translate }}</th>
-            <th>{{ 'gateway.type' | translate }}</th>
-          </tr>
-          <tr *ngFor="let tag of shown; trackBy: trackByName" [class.existing]="isExisting(tag)">
-            <td class="check">
-              <mat-checkbox [disabled]="isExisting(tag)" [checked]="selected.has(tag.name) || isExisting(tag)"
-                            (change)="toggle(tag)"></mat-checkbox>
-            </td>
-            <td class="mono">{{ tag.name }}</td>
-            <td>{{ tag.type }}</td>
-          </tr>
-        </table>
-      </div>
-    </ng-container>
+    <!-- Error state -->
+    <div *ngIf="error && !loading" class="error-message">
+      <mat-icon>error</mat-icon>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Tags table -->
+    <div class="table-container" *ngIf="!error && !loading">
+      <table mat-table [dataSource]="shown" [trackBy]="trackByName" class="mat-elevation-z0">
+        <!-- Checkbox Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox (change)="toggleShown()"
+                          [checked]="allShownSelected"
+                          [indeterminate]="selected.size > 0 && !allShownSelected">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let tag">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="toggle(tag)"
+                          [checked]="selected.has(tag.name) || isExisting(tag)"
+                          [disabled]="isExisting(tag)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Tag Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.s7plus.name' | translate }}</th>
+          <td mat-cell *matCellDef="let tag">
+            <span class="mono" [class.existing-tag]="isExisting(tag)">{{ tag.name }}</span>
+            <mat-icon *ngIf="isExisting(tag)" class="existing-icon"
+                      [matTooltip]="'gateway.gw-already-configured' | translate">check_circle</mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- Data Type Column -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.gw-data-type' | translate }}</th>
+          <td mat-cell *matCellDef="let tag">
+            <span class="tag-type-badge">{{ tag.type }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Block Column -->
+        <ng-container matColumnDef="block">
+          <th mat-header-cell *matHeaderCellDef>{{ 'gateway.s7plus.block' | translate }}</th>
+          <td mat-cell *matCellDef="let tag">{{ blockOf(tag) }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            (click)="!isExisting(row) && toggle(row)"
+            [class.existing-row]="isExisting(row)"
+            class="cursor-pointer"></tr>
+      </table>
+    </div>
   </div>
+
   <div mat-dialog-actions class="justify-end">
-    <button mat-button color="primary" type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-button color="primary" type="button" (click)="cancel()">{{ 'gateway.gw-cancel' | translate }}</button>
     <button mat-raised-button color="primary" type="button" [disabled]="selected.size === 0 && !pin" (click)="add()">
-      {{ selected.size ? ('gateway.s7plus.add' | translate: { count: selected.size }) : ('gateway.s7plus.apply-pin' | translate) }}
+      {{ selected.size ? ('gateway.s7plus.add-n-tags' | translate:{ count: selected.size }) : ('gateway.s7plus.apply-pin' | translate) }}
     </button>
   </div>
 </div>

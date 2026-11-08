@@ -192,7 +192,8 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       : 'gateway.s7plus.save-connector-first';
   }
 
-  openBrowse(): void {
+  /** Browse the PLC and add the chosen tags to `target`, as the ADS dialog does. */
+  openBrowse(target: S7ValueKey = S7ValueKey.TIMESERIES): void {
     if (!this.canBrowse) {
       return;
     }
@@ -213,14 +214,15 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
           username: v.username || undefined,
         },
         existingAddresses: existing,
+        targetCategory: target === S7ValueKey.ATTRIBUTES ? 'attributes' : 'timeseries',
       },
     }).afterClosed().subscribe(result => {
       if (!result) {
         return;
       }
       if (result.keys?.length) {
-        const control = this.deviceForm.get(S7ValueKey.TIMESERIES);
-        const current: S7DataKey[] = control.value || [];
+        const control = this.deviceForm.get(target);
+        const current = (control.value || []) as S7DataKey[];
         control.setValue([...current, ...result.keys.map(k => ({ tag: k.tag, address: k.address }) as S7DataKey)]);
         control.markAsDirty();
       }

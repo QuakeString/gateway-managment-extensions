@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2025 The SENTIENT Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,81 +13,109 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.tag-browser-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 85vh;
+}
 
-:host {
-  .browse-dialog {
-    width: 80vw;
-    max-width: 900px;
-  }
+.flex-1 {
+  flex: 1;
+}
 
-  .search {
-    width: 100%;
-  }
+.dialog-content {
+  padding: 16px 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-  .table-container {
-    max-height: 50vh;
-    overflow: auto;
-  }
+.search-field {
+  width: 100%;
+  margin-bottom: 4px;
+}
 
-  .tags {
-    width: 100%;
-    border-collapse: collapse;
+.tag-count {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.54);
+  margin-bottom: 8px;
+}
 
-    th, td {
-      text-align: left;
-      padding: 4px 8px;
-      border-bottom: 1px solid var(--tb-form-panel-stroked-border-color, rgba(128, 128, 128, 0.25));
-    }
+.loading-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+}
 
-    th {
-      font-weight: 500;
-      opacity: 0.7;
-      position: sticky;
-      top: 0;
-      background: var(--tb-dialog-background, inherit);
-    }
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: #f44336;
+  background: #fce4ec;
+  border-radius: 4px;
 
-    td.check, th.check {
-      width: 40px;
-    }
-
-    tr.existing td {
-      opacity: 0.55;
-    }
-  }
-
-  .mono {
-    font-family: ui-monospace, Consolas, monospace;
-  }
-
-  .fingerprint {
-    word-break: break-all;
-    font-size: 12px;
-  }
-
-  .muted {
-    opacity: 0.7;
-    font-size: 13px;
-  }
-
-  .badge {
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 1px solid var(--tb-primary, #26a69a);
-    color: var(--tb-primary, #26a69a);
-  }
-
-  .error {
-    color: var(--mdc-theme-error, #f44336);
+  mat-icon {
+    color: #f44336;
   }
 }
 
-@media (max-width: 599px) {
-  :host {
-    .browse-dialog {
-      width: 100%;
-      max-width: 100%;
-    }
-  }
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 50vh;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.existing-tag {
+  color: rgba(0, 0, 0, 0.38);
+}
+
+.existing-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #4caf50;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.existing-row {
+  opacity: 0.6;
+}
+
+.tag-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.plc-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.fingerprint {
+  font-size: 12px;
 }

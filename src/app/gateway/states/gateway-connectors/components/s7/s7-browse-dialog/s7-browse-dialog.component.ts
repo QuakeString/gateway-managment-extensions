@@ -37,6 +37,8 @@ export interface S7BrowseDialogData {
   connection: S7BrowseConnection;
   /** Addresses already configured, shown as added. */
   existingAddresses: string[];
+  /** Which keys the chosen tags are added to. */
+  targetCategory?: 'timeseries' | 'attributes';
 }
 
 export interface S7BrowseTag {
@@ -87,6 +89,8 @@ export class S7BrowseDialogComponent implements OnDestroy {
   tags: S7BrowseTag[] = [];
   shown: S7BrowseTag[] = [];
   readonly maxShown = 500;
+  readonly displayedColumns = ['select', 'name', 'type', 'block'];
+  targetCategory: 'timeseries' | 'attributes';
   selected = new Set<string>();
   pin: string = null;
   textSearch = new FormControl('');
@@ -102,6 +106,7 @@ export class S7BrowseDialogComponent implements OnDestroy {
     private cd: ChangeDetectorRef,
   ) {
     this.existing = new Set((data.existingAddresses || []).map(a => a.replace(/"/g, '')));
+    this.targetCategory = data.targetCategory || 'timeseries';
     this.textSearch.valueChanges.subscribe(() => this.filter());
     this.browse();
   }
@@ -188,6 +193,12 @@ export class S7BrowseDialogComponent implements OnDestroy {
 
   trackByName(_index: number, tag: S7BrowseTag): string {
     return tag.name;
+  }
+
+  /** The data block or area a tag belongs to: the name before the first dot. */
+  blockOf(tag: S7BrowseTag): string {
+    const end = tag.name.search(/[.[]/);
+    return end < 0 ? tag.name : tag.name.slice(0, end);
   }
 
   pinCertificate(): void {
