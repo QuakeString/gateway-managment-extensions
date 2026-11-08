@@ -136,6 +136,12 @@ export interface S7DeviceConfig {
   tls?: S7TlsConfig;
   password?: string;
   username?: string;
+  /** S7CommPlus: how often the PLC samples subscribed tags, ms (gateway default 100). */
+  subscriptionCycleMs?: number;
+  /** S7CommPlus: how often the gateway checks for a program change, ms (gateway default 30000). */
+  programCheckMs?: number;
+  /** S7CommPlus: open the session the way TIA Portal does rather than as an HMI. */
+  engineeringSession?: boolean;
 }
 
 export interface S7BasicConfig {
