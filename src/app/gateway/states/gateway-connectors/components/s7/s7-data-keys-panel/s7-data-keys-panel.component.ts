@@ -89,6 +89,8 @@ export class S7DataKeysPanelComponent implements OnInit {
   /** Set on time-series / attribute panels: tick keys and add them to
    *  RPC write or attribute updates. */
   @Input() writeHandler: KeysWriteHandler | null = null;
+  /** S7CommPlus device: an address may be a TIA tag name, so only presence is checked. */
+  @Input() symbolic = false;
   readonly persistedKeys = (): any[] => this.getFormValue();
 
   @Output() keysDataApplied = new EventEmitter<Array<S7DataKey | S7RpcConfig>>();
@@ -232,7 +234,9 @@ export class S7DataKeysPanelComponent implements OnInit {
     return this.fb.group({
       id: [{ value: id, disabled: true }],
       tag: [dataKey.tag || '', [Validators.required]],
-      address: [dataKey.address || '', [Validators.required, Validators.pattern(S7_ADDRESS_REGEX)]],
+      address: [dataKey.address || '', this.symbolic
+        ? [Validators.required]
+        : [Validators.required, Validators.pattern(S7_ADDRESS_REGEX)]],
       valueType: [dataKey.valueType || ''],
       calibration: [calibration],
       reportStrategy: [dataKey.reportStrategy || null],

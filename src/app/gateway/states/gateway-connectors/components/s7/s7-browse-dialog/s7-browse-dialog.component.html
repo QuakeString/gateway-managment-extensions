@@ -1,0 +1,96 @@
+<!--
+  Copyright © 2016-2025 The Thingsboard Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div class="browse-dialog">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.s7plus.browse-title' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button type="button" (click)="browse()" [disabled]="loading"
+            [matTooltip]="'gateway.s7plus.browse-again' | translate">
+      <mat-icon class="material-icons">refresh</mat-icon>
+    </button>
+    <button mat-icon-button type="button" (click)="cancel()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="tb-form-panel no-border">
+    <div *ngIf="loading" class="tb-flex row align-center">
+      <mat-spinner diameter="22"></mat-spinner>
+      <span class="muted">{{ 'gateway.s7plus.browsing' | translate }}</span>
+    </div>
+
+    <div *ngIf="plc || fingerprint" class="tb-form-panel stroked">
+      <div class="tb-form-row column-xs" *ngIf="plc">
+        <div class="fixed-title-width">{{ 'gateway.s7plus.plc' | translate }}</div>
+        <div class="mono">{{ plc }}</div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="tlsVersion">
+        <div class="fixed-title-width">TLS</div>
+        <div>{{ tlsVersion }}<span *ngIf="protectionLevel !== null" class="muted"> · {{ 'gateway.s7plus.protection-level' | translate }} {{ protectionLevel }}</span></div>
+      </div>
+      <div class="tb-form-row column-xs" *ngIf="fingerprint">
+        <div class="fixed-title-width">{{ 'gateway.s7plus.certificate' | translate }}</div>
+        <div class="tb-flex row align-center">
+          <span class="mono fingerprint">{{ fingerprint }}</span>
+          <button *ngIf="pin !== fingerprint" mat-stroked-button color="primary" type="button" (click)="pinCertificate()"
+                  [matTooltip]="'gateway.s7plus.pin-hint' | translate">
+            {{ 'gateway.s7plus.pin' | translate }}
+          </button>
+          <span *ngIf="pin === fingerprint" class="badge">{{ 'gateway.s7plus.pinned' | translate }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="tb-form-panel stroked">
+      <div class="error">{{ error }}</div>
+    </div>
+
+    <ng-container *ngIf="!loading && !error">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
+        <mat-label>{{ 'gateway.s7plus.search' | translate }}</mat-label>
+        <input matInput [formControl]="textSearch">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <div class="muted">
+        {{ 'gateway.s7plus.found' | translate: { found: matchingCount, selected: selected.size } }}
+        <span *ngIf="matchingCount > maxShown"> · {{ 'gateway.s7plus.first-shown' | translate: { shown: maxShown } }}</span>
+        <span *ngIf="truncated"> · {{ 'gateway.s7plus.truncated' | translate }}</span>
+      </div>
+      <div class="table-container">
+        <table class="tags">
+          <tr>
+            <th class="check"><mat-checkbox [checked]="allShownSelected" (change)="toggleShown()"></mat-checkbox></th>
+            <th>{{ 'gateway.s7plus.name' | translate }}</th>
+            <th>{{ 'gateway.type' | translate }}</th>
+          </tr>
+          <tr *ngFor="let tag of shown; trackBy: trackByName" [class.existing]="isExisting(tag)">
+            <td class="check">
+              <mat-checkbox [disabled]="isExisting(tag)" [checked]="selected.has(tag.name) || isExisting(tag)"
+                            (change)="toggle(tag)"></mat-checkbox>
+            </td>
+            <td class="mono">{{ tag.name }}</td>
+            <td>{{ tag.type }}</td>
+          </tr>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary" type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button color="primary" type="button" [disabled]="selected.size === 0 && !pin" (click)="add()">
+      {{ selected.size ? ('gateway.s7plus.add' | translate: { count: selected.size }) : ('gateway.s7plus.apply-pin' | translate) }}
+    </button>
+  </div>
+</div>
