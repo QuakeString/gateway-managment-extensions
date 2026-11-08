@@ -110,6 +110,9 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     }),
     password: [''],
     username: [''],
+    subscriptionCycleMs: [100, [Validators.min(10), Validators.max(60000)]],
+    programCheckMs: [30000, [Validators.min(1000)]],
+    engineeringSession: [false],
   });
 
   private popoverComponent: TbPopoverComponent<S7DataKeysPanelComponent>;
@@ -252,6 +255,16 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
         if (!result.username) {
           delete result.username;
         }
+        // The gateway's defaults are not written out.
+        if (!result.subscriptionCycleMs || result.subscriptionCycleMs === 100) {
+          delete result.subscriptionCycleMs;
+        }
+        if (!result.programCheckMs || result.programCheckMs === 30000) {
+          delete result.programCheckMs;
+        }
+        if (!result.engineeringSession) {
+          delete result.engineeringSession;
+        }
         delete result.redundancy;
         delete result.timeSync;
       } else {
@@ -259,6 +272,9 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
         delete result.tls;
         delete result.password;
         delete result.username;
+        delete result.subscriptionCycleMs;
+        delete result.programCheckMs;
+        delete result.engineeringSession;
       }
       // Strip redundancy config if not enabled to keep JSON clean
       if (!result.redundancy?.enabled) {

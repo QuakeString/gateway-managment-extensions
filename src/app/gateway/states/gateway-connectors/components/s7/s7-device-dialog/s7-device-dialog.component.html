@@ -133,6 +133,12 @@
             <input matInput type="password" autocomplete="new-password" formControlName="password"/>
           </mat-form-field>
         </div>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.cycle-hint' | translate }}">{{ 'gateway.s7plus.cycle' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" min="10" max="60000" formControlName="subscriptionCycleMs"/>
+          </mat-form-field>
+        </div>
         <div class="tb-flex row align-center">
           <span [matTooltip]="browseHint | translate">
             <button mat-stroked-button color="primary" type="button" [disabled]="!canBrowse" (click)="openBrowse()">
@@ -258,6 +264,16 @@
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="waitAfterFailedAttemptsMs"/>
               </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs" *ngIf="isPlus">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.program-check-hint' | translate }}">{{ 'gateway.s7plus.program-check' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" min="1000" step="1000" formControlName="programCheckMs"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs" *ngIf="isPlus">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.s7plus.engineering-hint' | translate }}">{{ 'gateway.s7plus.engineering' | translate }}</div>
+              <mat-slide-toggle formControlName="engineeringSession"></mat-slide-toggle>
             </div>
           </div>
         </mat-expansion-panel>
