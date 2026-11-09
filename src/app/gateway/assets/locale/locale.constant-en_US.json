@@ -1950,6 +1950,10 @@
     "keys-selected-count": "{{count}} selected",
     "device-view-connection": "Connection",
     "device-view-mapping": "Data Mapping",
-    "gw-edit-hint": "Edit (right-click: spreadsheet)"
+    "gw-edit-hint": "Edit (right-click: spreadsheet)",
+    "gw-warning": "Warning",
+    "gw-import": "Import",
+    "gw-skip": "Skip",
+    "gw-duplicates-count": "{{count}} duplicate addresses ({{imported}} imported)"
   }
 }

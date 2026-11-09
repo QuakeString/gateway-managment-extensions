@@ -93,6 +93,10 @@ interface ParsedTag {
   operation: 'read' | 'write';
   valid: boolean;
   error: string;
+  /** Set when the address is already on the device or earlier in the file:
+   *  a warning, not an error. The operator imports or skips each one. */
+  duplicate: string | null;
+  importDuplicate: boolean;
 }
 
 @Component({
@@ -109,12 +113,15 @@ export class S7TagImportDialogComponent {
   parsedTags: ParsedTag[] = [];
   validTags: ParsedTag[] = [];
   invalidTags: ParsedTag[] = [];
+  /** Tags whose address repeats one on the device or in the file. */
+  duplicateTags: ParsedTag[] = [];
   fileLoaded = false;
   showInvalid = false;
+  showDuplicates = false;
 
-  /** Duplicate addresses are skipped by default; the operator can opt to
-   *  import them anyway (some projects intentionally map one PLC address
-   *  to several platform keys). */
+  /** Duplicate addresses are skipped by default; the operator can import
+   *  them all, or pick per row (some projects intentionally map one PLC
+   *  address to several platform keys). */
   allowDuplicates = false;
 
   pageIndex = 0;
@@ -171,6 +178,7 @@ export class S7TagImportDialogComponent {
         this.parsedTags = [];
         this.validTags = [];
         this.invalidTags = [];
+        this.duplicateTags = [];
       }
       this.fileLoaded = true;
       this.cd.markForCheck();
@@ -243,9 +251,33 @@ export class S7TagImportDialogComponent {
     return this.validTags.filter(t => t.category === 'rpc').length;
   }
 
+  /** The header toggle: import every duplicate, or skip them all. */
   onAllowDuplicatesChange(): void {
-    this.processRows();
+    this.duplicateTags.forEach(t => t.importDuplicate = this.allowDuplicates);
+    this.updateImportable();
     this.cd.markForCheck();
+  }
+
+  /** One duplicate's import / skip choice. */
+  onDuplicateChoice(tag: ParsedTag, importIt: boolean): void {
+    tag.importDuplicate = importIt;
+    this.allowDuplicates = this.duplicateTags.length > 0 && this.duplicateTags.every(t => t.importDuplicate);
+    this.updateImportable();
+    this.cd.markForCheck();
+  }
+
+  toggleDuplicates(): void {
+    this.showDuplicates = !this.showDuplicates;
+  }
+
+  get importedDuplicateCount(): number {
+    return this.duplicateTags.filter(t => t.importDuplicate).length;
+  }
+
+  /** What Import takes: the error-free tags, a duplicate only if chosen. */
+  private updateImportable(): void {
+    this.validTags = this.parsedTags.filter(t => t.valid && (!t.duplicate || t.importDuplicate));
+    this.pageIndex = Math.min(this.pageIndex, Math.max(0, Math.ceil(this.validTags.length / this.pageSize) - 1));
   }
 
   toggleInvalid(): void {
@@ -396,6 +428,7 @@ export class S7TagImportDialogComponent {
       this.parsedTags = [];
       this.validTags = [];
       this.invalidTags = [];
+      this.duplicateTags = [];
       return;
     }
 
@@ -449,6 +482,8 @@ export class S7TagImportDialogComponent {
         operation: this.normalizeOperation(rawOp),
         valid: true,
         error: '',
+        duplicate: null,
+        importDuplicate: this.allowDuplicates,
       };
 
       // Validate
@@ -462,10 +497,9 @@ export class S7TagImportDialogComponent {
         errors.push(this.translate.instant('gateway.s7-invalid-address-prefix', { address: rawAddress }));
       }
       if (rawAddress && this.existingAddresses.has(rawAddress.toLowerCase())) {
-        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-address-device')); }
-      }
-      if (rawAddress && seenAddresses.has(rawAddress.toLowerCase())) {
-        if (!this.allowDuplicates) { errors.push(this.translate.instant('gateway.gw-dup-address-file')); }
+        tag.duplicate = this.translate.instant('gateway.gw-dup-address-device');
+      } else if (rawAddress && seenAddresses.has(rawAddress.toLowerCase())) {
+        tag.duplicate = this.translate.instant('gateway.gw-dup-address-file');
       }
 
       if (errors.length > 0) {
@@ -478,9 +512,10 @@ export class S7TagImportDialogComponent {
       this.parsedTags.push(tag);
     }
 
-    this.validTags = this.parsedTags.filter(t => t.valid);
     this.invalidTags = this.parsedTags.filter(t => !t.valid);
+    this.duplicateTags = this.parsedTags.filter(t => t.valid && !!t.duplicate);
     this.pageIndex = 0;
+    this.updateImportable();
   }
 
   // WinCC-notation addresses embed the data type (DB1,REAL8 → float32),
