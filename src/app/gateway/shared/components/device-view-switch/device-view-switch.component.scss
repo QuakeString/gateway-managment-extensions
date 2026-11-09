@@ -18,30 +18,33 @@
   margin-right: 8px;
 }
 
-// It sits on the primary toolbar, the same colour in both themes: a
-// translucent track and pill and white labels, so it reads on that bar in
-// the light and the dark theme alike (a theme colour for the label went
-// white-on-white in the dark one).
+// It sits on the primary toolbar, which is the same teal in both themes, so
+// its colours are fixed rather than theme tokens: a translucent white track,
+// white labels, and a white pill whose label takes the toolbar's teal. The
+// selectors are long on purpose: the dark theme recolours toggle labels
+// with !important, and these have to win over it.
 .st-device-view-switch {
   display: block;
   width: 340px;
 
-  ::ng-deep {
-    .mat-button-toggle-group.tb-toggle-header.tb-sliding-pill {
-      background: rgba(255, 255, 255, .12);
+  ::ng-deep .mat-button-toggle-group.tb-toggle-header.tb-fill.tb-sliding-pill {
+    background: rgba(255, 255, 255, .16) !important;
 
-      &.tb-pill-active::before {
-        background: rgba(255, 255, 255, .32);
+    &.tb-pill-active::before {
+      background: #fff !important;
+    }
+
+    .mat-button-toggle.mat-button-toggle-appearance-standard {
+      background-color: transparent !important;
+
+      .mat-button-toggle-label-content {
+        color: rgba(255, 255, 255, .9) !important;
       }
-    }
 
-    .mat-button-toggle .mat-button-toggle-label-content {
-      color: rgba(255, 255, 255, .72);
-    }
-
-    .mat-button-toggle-checked .mat-button-toggle-label-content {
-      color: #fff;
-      font-weight: 500;
+      &.mat-button-toggle-checked .mat-button-toggle-label-content {
+        color: #187074 !important;
+        font-weight: 500;
+      }
     }
   }
 }
