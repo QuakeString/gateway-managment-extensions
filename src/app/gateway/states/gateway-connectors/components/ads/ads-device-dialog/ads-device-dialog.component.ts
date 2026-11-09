@@ -18,10 +18,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -29,15 +26,12 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { tagAddressAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import { AdsDataKey, AdsDeviceConfig, AdsRpcConfig, AdsValueKey } from '../../../models/public-api';
 import { AdsDataKeysPanelComponent } from '../ads-data-keys-panel/ads-data-keys-panel.component';
 import {
@@ -53,6 +47,7 @@ export interface AdsDeviceDialogData {
   connectorName?: string;
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-ads-device-dialog',
   templateUrl: './ads-device-dialog.component.html',
@@ -60,13 +55,17 @@ export interface AdsDeviceDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogComponent, AdsDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly AdsValueKey = AdsValueKey;
   isEdit: boolean;
@@ -89,7 +88,6 @@ export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogCom
     rpc: [[] as AdsRpcConfig[]],
   });
 
-  private popoverComponent: TbPopoverComponent<AdsDataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -99,10 +97,6 @@ export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogCom
     @Inject(MAT_DIALOG_DATA) public data: AdsDeviceDialogData,
     public dialogRef: MatDialogRef<AdsDeviceDialogComponent, AdsDeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private matDialog: MatDialog,
   ) {
@@ -169,17 +163,21 @@ export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogCom
     });
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: AdsValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: AdsValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.tag, actions: [{ icon: 'travel_explore', tooltip: 'gateway.ads-browse-symbols', run: () => this.openTagBrowser('timeseries'), disabled: () => !this.canBrowseSymbols }] },
+    { key: AdsValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.tag, actions: [{ icon: 'travel_explore', tooltip: 'gateway.ads-browse-symbols', run: () => this.openTagBrowser('attributes'), disabled: () => !this.canBrowseSymbols }] },
+    { key: AdsValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.tag },
+    { key: AdsValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: AdsDataKeysPanelComponent,
+    context: row => this.keysContext(row.key as AdsValueKey),
+  };
+
+  private keysContext(keysType: AdsValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [AdsValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -207,38 +205,7 @@ export class AdsDeviceDialogComponent extends DialogComponent<AdsDeviceDialogCom
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      AdsDataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Array<AdsDataKey | AdsRpcConfig>) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 }

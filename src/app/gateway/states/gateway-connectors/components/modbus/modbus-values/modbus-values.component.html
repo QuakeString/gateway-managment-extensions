@@ -46,10 +46,11 @@
               mat-icon-button
               color="primary"
               [disabled]="disabled"
-              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltip="{{ 'gateway.gw-edit-hint' | translate }}"
               matTooltipPosition="above"
               #attributesButton
-              (click)="manageKeys($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)">
+              (click)="manageKeys($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)"
+              (contextmenu)="manageKeysAsSpreadsheet($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
       </button>
     </div>
@@ -69,10 +70,11 @@
               mat-icon-button
               color="primary"
               [disabled]="disabled"
-              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltip="{{ 'gateway.gw-edit-hint' | translate }}"
               matTooltipPosition="above"
               #telemetryButton
-              (click)="manageKeys($event, telemetryButton, ModbusValueKey.TIMESERIES, register)">
+              (click)="manageKeys($event, telemetryButton, ModbusValueKey.TIMESERIES, register)"
+              (contextmenu)="manageKeysAsSpreadsheet($event, telemetryButton, ModbusValueKey.TIMESERIES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
       </button>
     </div>
@@ -92,10 +94,11 @@
               mat-icon-button
               [disabled]="disabled"
               color="primary"
-              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltip="{{ 'gateway.gw-edit-hint' | translate }}"
               matTooltipPosition="above"
               #attributesUpdatesButton
-              (click)="manageKeys($event, attributesUpdatesButton, ModbusValueKey.ATTRIBUTES_UPDATES, register)">
+              (click)="manageKeys($event, attributesUpdatesButton, ModbusValueKey.ATTRIBUTES_UPDATES, register)"
+              (contextmenu)="manageKeysAsSpreadsheet($event, attributesUpdatesButton, ModbusValueKey.ATTRIBUTES_UPDATES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
       </button>
     </div>
@@ -115,10 +118,11 @@
               mat-icon-button
               color="primary"
               [disabled]="disabled"
-              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltip="{{ 'gateway.gw-edit-hint' | translate }}"
               matTooltipPosition="above"
               #rpcRequestsButton
-              (click)="manageKeys($event, rpcRequestsButton, ModbusValueKey.RPC_REQUESTS, register)">
+              (click)="manageKeys($event, rpcRequestsButton, ModbusValueKey.RPC_REQUESTS, register)"
+              (contextmenu)="manageKeysAsSpreadsheet($event, rpcRequestsButton, ModbusValueKey.RPC_REQUESTS, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
       </button>
     </div>

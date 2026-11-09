@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -43,6 +43,10 @@ import { EtherCatDevicesTableComponent } from '../ethercat-devices-table/etherca
   styleUrls: ['../ethercat-basic-config/ethercat-basic-config.component.scss'],
 })
 export class EtherCatLegacyBasicConfigComponent extends GatewayConnectorBasicConfigDirective<EtherCatBasicConfig, EtherCatBasicConfig> {
+  /** Bound by the shared template (it asks the gateway, e.g. to browse); unused here. */
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
+
 
   isLegacy = true;
 

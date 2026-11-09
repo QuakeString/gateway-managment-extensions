@@ -12,7 +12,7 @@
            in fullscreen — the spreadsheet has its own identical
            toolbar and we don't want two stacked. -->
       <!-- Ticked keys: add them to RPC write / attribute updates. -->
-      <div class="st-selection-bar" *ngIf="!isFullscreen && canWrite && selected.size > 0">
+      <div class="st-selection-bar" *ngIf="!isFullscreen && selected.size > 0">
         <mat-checkbox class="st-select-all" color="primary"
                       [checked]="allShownSelected"
                       [indeterminate]="!allShownSelected"
@@ -26,12 +26,15 @@
         <button *ngIf="hasWriteTarget('attributeUpdates')" type="button" mat-button color="primary" (click)="addSelectedToWrite('attributeUpdates')">
           <mat-icon>sync</mat-icon>{{ 'gateway.add-to-attribute-updates' | translate }}
         </button>
+        <button type="button" mat-button color="warn" (click)="deleteSelected()">
+          <mat-icon>delete</mat-icon>{{ 'gateway.keys-delete-selected' | translate }}
+        </button>
         <button type="button" mat-icon-button class="st-clear-selection" (click)="clearSelection()"
                 [matTooltip]="'gateway.keys-clear-selection' | translate" matTooltipPosition="above">
           <mat-icon>close</mat-icon>
         </button>
       </div>
-      <div class="header-actions" *ngIf="!isFullscreen && !(canWrite && selected.size > 0)">
+      <div class="header-actions" *ngIf="!isFullscreen && !(selected.size > 0)">
         <div class="rounded-search">
           <mat-icon class="rounded-search-icon">search</mat-icon>
           <input class="rounded-search-input" type="text" [formControl]="searchControl" [placeholder]="'gateway.keys-search' | translate"/>
@@ -79,7 +82,7 @@
           <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
                *ngFor="let item of displayedControls; trackBy: trackByFilteredItem"
                [attr.data-key-id]="item.control.getRawValue().id">
-            <mat-checkbox *ngIf="canWrite" class="st-row-check" color="primary"
+            <mat-checkbox class="st-row-check" color="primary"
                           [checked]="selected.has(item.control)"
                           (change)="toggleRow(item.control)"></mat-checkbox>
             <div class="tb-form-panel stroked tb-flex" [class.st-row-selected]="selected.has(item.control)">

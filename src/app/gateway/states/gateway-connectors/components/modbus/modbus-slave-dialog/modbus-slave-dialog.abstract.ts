@@ -54,11 +54,14 @@ import {
 import { ModbusOrderDetectDialogComponent } from '../modbus-order-dialogs/modbus-order-detect-dialog.component';
 import { ModbusOrderHelpDialogComponent } from '../modbus-order-dialogs/modbus-order-help-dialog.component';
 import { takeUntil } from 'rxjs/operators';
+import { DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 
 @Directive()
 export abstract class ModbusSlaveDialogAbstract<Component, Config> extends DialogComponent<Component, Config> implements OnDestroy {
 
   slaveConfigFormGroup: UntypedFormGroup;
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView;
   showSecurityControl: FormControl<boolean>;
   portLimits = PortLimits;
 
@@ -93,6 +96,7 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
   ) {
     super(store, router, dialogRef);
 
+    this.view = initialDeviceDialogView(this.data?.buttonTitle === 'action.apply');
     this.showSecurityControl = this.fb.control(false);
     this.initializeSlaveFormGroup();
     this.updateSlaveFormGroup();

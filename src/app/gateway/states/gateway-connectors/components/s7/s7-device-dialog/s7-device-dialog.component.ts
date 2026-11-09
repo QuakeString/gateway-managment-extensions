@@ -20,8 +20,6 @@ import {
   Component,
   DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -33,13 +31,15 @@ import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import {
+  DeviceDialogView,
+  DeviceProfileNameAutocompleteComponent,
+  DeviceViewSwitchComponent,
+  initialDeviceDialogView,
+} from '../../../../../shared/public-api';
 import { S7DataKey, S7DeviceConfig, S7PlcModel, S7Protocol, S7RedundancyConfig, S7RpcConfig, S7ValueKey, S7_PLUS_CAPABLE_MODELS, S7_REDUNDANCY_CAPABLE_MODELS } from '../../../models/public-api';
-import { S7BrowseDialogComponent, S7BrowseDialogData, S7BrowseResult } from '../s7-browse-dialog/s7-browse-dialog.component';
+import { S7_BROWSE_DIALOG_SIZE, S7BrowseDialogComponent, S7BrowseDialogData, S7BrowseResult } from '../s7-browse-dialog/s7-browse-dialog.component';
 import { S7DataKeysPanelComponent } from '../s7-data-keys-panel/s7-data-keys-panel.component';
 import { TimeSyncDialogComponent } from '../../../../../shared/components/time-sync-dialog/time-sync-dialog.component';
 
@@ -50,6 +50,7 @@ export interface S7DeviceDialogData {
   connectorName?: string;
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-s7-device-dialog',
   templateUrl: './s7-device-dialog.component.html',
@@ -57,9 +58,10 @@ export interface S7DeviceDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
@@ -116,7 +118,9 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     engineeringSession: [false],
   });
 
-  private popoverComponent: TbPopoverComponent<S7DataKeysPanelComponent>;
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = 'connection';
+
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -126,15 +130,13 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     @Inject(MAT_DIALOG_DATA) public data: S7DeviceDialogData,
     public dialogRef: MatDialogRef<S7DeviceDialogComponent, S7DeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private matDialog: MatDialog,
   ) {
     super(store, router, dialogRef);
     this.isEdit = data.isEdit;
+    this.view = initialDeviceDialogView(data.isEdit);
     if (data.device) {
       this.deviceForm.patchValue(data.device as any, { emitEvent: false });
       // A saved device without a protocol was made before S7CommPlus and
@@ -198,11 +200,16 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
       return;
     }
     const v = this.deviceForm.value as any;
-    const existing = [...(v.timeseries || []), ...(v.attributes || [])].map((k: S7DataKey) => k.address);
+    // Only the list being added to marks a tag as added: the same tag may
+    // be both a timeseries and an attribute.
+    const existing = (v[target] || []).map((k: S7DataKey | S7RpcConfig) => k.address);
     this.matDialog.open<S7BrowseDialogComponent, S7BrowseDialogData, S7BrowseResult>(S7BrowseDialogComponent, {
       disableClose: true,
       autoFocus: false,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      ...S7_BROWSE_DIALOG_SIZE,
+      maxWidth: '100vw',
+      maxHeight: '100vh',
       data: {
         gatewayDeviceId: this.data.gatewayDeviceId,
         connectorName: this.data.connectorName,
@@ -214,7 +221,7 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
           username: v.username || undefined,
         },
         existingAddresses: existing,
-        targetCategory: target === S7ValueKey.ATTRIBUTES ? 'attributes' : 'timeseries',
+        targetCategory: target,
       },
     }).afterClosed().subscribe(result => {
       if (!result) {
@@ -224,6 +231,11 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
         const control = this.deviceForm.get(target);
         const current = (control.value || []) as S7DataKey[];
         control.setValue([...current, ...result.keys.map(k => ({ tag: k.tag, address: k.address }) as S7DataKey)]);
+        control.markAsDirty();
+      }
+      if (result.rpc?.length) {
+        const control = this.deviceForm.get(S7ValueKey.RPC);
+        control.setValue([...((control.value || []) as S7RpcConfig[]), ...result.rpc]);
         control.markAsDirty();
       }
       if (result.pin) {
@@ -332,17 +344,21 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
     });
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: S7ValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: S7ValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.tag, actions: [{ icon: 'travel_explore', tooltip: () => this.browseHint, run: () => this.openBrowse(S7ValueKey.TIMESERIES), disabled: () => !this.canBrowse, visible: () => this.isPlus }] },
+    { key: S7ValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.tag, actions: [{ icon: 'travel_explore', tooltip: () => this.browseHint, run: () => this.openBrowse(S7ValueKey.ATTRIBUTES), disabled: () => !this.canBrowse, visible: () => this.isPlus }] },
+    { key: S7ValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.tag, actions: [{ icon: 'travel_explore', tooltip: () => this.browseHint, run: () => this.openBrowse(S7ValueKey.ATTRIBUTES_UPDATES), disabled: () => !this.canBrowse, visible: () => this.isPlus }] },
+    { key: S7ValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method, actions: [{ icon: 'travel_explore', tooltip: () => this.browseHint, run: () => this.openBrowse(S7ValueKey.RPC), disabled: () => !this.canBrowse, visible: () => this.isPlus }] },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: S7DataKeysPanelComponent,
+    context: row => this.keysContext(row.key as S7ValueKey),
+  };
+
+  private keysContext(keysType: S7ValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [S7ValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -371,38 +387,7 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      S7DataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Array<S7DataKey | S7RpcConfig>) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 }

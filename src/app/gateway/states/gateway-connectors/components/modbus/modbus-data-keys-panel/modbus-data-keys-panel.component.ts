@@ -165,10 +165,9 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       && (this.keysType === ModbusValueKey.ATTRIBUTES || this.keysType === ModbusValueKey.TIMESERIES)
       && !this.hideNewFields;
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
-    this.keysFormArray = this.fb.array<UntypedFormGroup>([]);
-    if (this.values?.length) {
-      this.values.forEach(v => this.keysFormArray.push(this.createKeyForm(v)));
-    }
+    // Built in one go: pushing one by one revalidates the whole array per
+    // push, which took seconds on a PLC with thousands of tags.
+    this.keysFormArray = this.fb.array<UntypedFormGroup>((this.values ?? []).map(entry => this.createKeyForm(entry)));
     this.buildColumnConfigs();
   }
 

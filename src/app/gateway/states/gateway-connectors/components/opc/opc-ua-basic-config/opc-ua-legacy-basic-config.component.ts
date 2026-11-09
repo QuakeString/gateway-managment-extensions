@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, ViewChild } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   DeviceConnectorMapping,
@@ -58,6 +58,8 @@ import { OpcVersionMappingUtil } from '../../../utils/public-api';
 })
 export class OpcUaLegacyBasicConfigComponent extends GatewayConnectorBasicConfigDirective<OPCBasicConfig_v3_5_2, OPCLegacyBasicConfig> {
 
+  @ViewChild(MappingTableComponent) mappingTable?: MappingTableComponent;
+
   @Input() @coerceBoolean() withReportStrategy = true;
   @Input() gatewayDeviceId: string;
   @Input() connectorName: string;
@@ -91,5 +93,38 @@ export class OpcUaLegacyBasicConfigComponent extends GatewayConnectorBasicConfig
     return {
       server: OpcVersionMappingUtil.mapServerToDowngradedVersion(value),
     };
+  }
+
+  /**
+   * Called when the discovery dialog returns a list of Object nodes to add
+   * as device mappings, each carrying the keys the operator ticked inside
+   * it. Each device becomes a new OPC-UA mapping row anchored to that
+   * NodeId, with ticked Variable children prefilled as timeseries tags.
+   * The operator can add/remove more tags later via the mapping row's
+   * 3-dot menu → Browse.
+   */
+  appendDiscoveredDevices(devices: Array<{
+    nodeId: string;
+    displayName: string;
+    tags: Array<{ key: string; value: string; type: string }>;
+  }>): void {
+    if (!devices?.length) return;
+    const newMappings = devices.map(d => ({
+      // The node's own NodeId: a path built from the display name breaks
+      // when the browse name differs from it or carries a namespace.
+      deviceNodeSource: 'identifier',
+      deviceNodePattern: d.nodeId,
+      deviceInfo: {
+        deviceNameExpressionSource: 'constant',
+        deviceNameExpression: d.displayName,
+        deviceProfileExpressionSource: 'constant',
+        deviceProfileExpression: 'default',
+      },
+      attributes: [],
+      timeseries: d.tags || [],
+      rpc_methods: [],
+      attributes_updates: [],
+    })) as any[];
+    this.mappingTable?.addMappings(newMappings);
   }
 }

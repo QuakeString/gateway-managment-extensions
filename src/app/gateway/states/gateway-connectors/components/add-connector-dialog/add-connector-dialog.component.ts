@@ -28,7 +28,9 @@ import {
   noLeadTrailSpacesRegex,
   getDefaultConfig,
   ReportStrategyVersionPipe,
-  ConnectorsTypesByVersion
+  ConnectorsTypesByVersion,
+  ReportStrategyType,
+  ReportStrategyDefaultValue,
 } from '../../../../shared/public-api';
 import {
   AddConnectorConfigData,
@@ -110,6 +112,11 @@ export class AddConnectorDialogComponent
   add(): void {
     this.submitted = true;
     const value = this.connectorForm.getRawValue();
+    // A new connector reports on change or every minute, unless changed later.
+    value.reportStrategy = value.reportStrategy ?? {
+      type: ReportStrategyType.OnChangeOrReportPeriod,
+      reportPeriod: ReportStrategyDefaultValue.Connector,
+    };
     if (value.useDefaults) {
       const defaultConfig = getDefaultConfig(value.type);
       const gatewayVersion = this.data.gatewayVersion;

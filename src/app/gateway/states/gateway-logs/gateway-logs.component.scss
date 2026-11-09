@@ -30,23 +30,24 @@
   }
 
   .status-debug {
-    color: green;
-    background: rgba(0, 128, 0, 0.1);
+    color: #43a047;
+    background: rgba(67, 160, 71, 0.14);
   }
 
   .status-warning {
-    color: orange;
-    background: rgba(255, 165, 0, 0.1);
+    color: #fb8c00;
+    background: rgba(251, 140, 0, 0.14);
   }
 
   .status-error {
-    color: red;
-    background: rgba(255, 0, 0, 0.1);
+    color: #e53935;
+    background: rgba(229, 57, 53, 0.14);
   }
 
   .status-info {
-    color: blue;
-    background: rgba(0, 0, 128, 0.1);
+    // Readable on the light and the dark theme alike.
+    color: #1e88e5;
+    background: rgba(30, 136, 229, 0.14);
   }
 
   .msg-status-exception {

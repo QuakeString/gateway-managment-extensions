@@ -1845,6 +1845,7 @@
     "write-summary": "{{added}} of {{total}} keys will be added.",
     "write-add-methods": "{ count, plural, =1 {Add # method} other {Add # methods} }",
     "write-add-attributes": "{ count, plural, =1 {Add # attribute update} other {Add # attribute updates} }",
+    "keys-delete-selected": "Delete selected",
     "keys-selected": "{{count}} selected",
     "keys-select-all": "Select all",
     "keys-select-rows-first": "Select rows by their number first",
@@ -1931,19 +1932,24 @@
       "browse-failed": "The browse failed.",
       "gateway-unreachable": "The gateway did not answer. Check that it is online and the connector is enabled.",
       "connector-not-running": "No S7 connector is running on the gateway. Save and enable this connector, then try again.",
-      "plc": "PLC",
-      "protection-level": "protection level",
-      "certificate": "Certificate SHA-256",
-      "pin": "Pin",
-      "pin-hint": "Only accept this certificate from now on",
-      "pinned": "Will be pinned",
+      "pin-hint": "Pin the PLC certificate. The gateway then connects only to the PLC presenting this exact certificate, which stops it reading or writing a wrong or impersonated PLC. Optional. SHA-256: {{fingerprint}}",
       "search": "Search tags",
       "found": "{{found}} tags, {{selected}} selected",
-      "first-shown": "the first {{shown}} shown, narrow the search",
       "truncated": "the PLC has more tags than one browse lists",
       "name": "Name",
       "add": "Add {{count}}",
-      "apply-pin": "Apply"
-    }
+      "apply-pin": "Apply",
+      "pinned-hint": "The certificate will be pinned when you add or apply. Click to undo. SHA-256: {{fingerprint}}",
+      "fullscreen": "Fullscreen",
+      "exit-fullscreen": "Exit fullscreen",
+      "select-all-matching": "Select all {{count}} matching tags",
+      "no-match": "No tag matches the search",
+      "read-only-input": "An input: the PLC rewrites it from the process image every scan, so it can only be read",
+      "rpc-mode-all": "Get adds a get_ method that reads the tag, Set a set_ method that writes it. Applies to every tag not set on its own row."
+    },
+    "keys-selected-count": "{{count}} selected",
+    "device-view-connection": "Connection",
+    "device-view-mapping": "Data Mapping",
+    "gw-edit-hint": "Edit (right-click: spreadsheet)"
   }
 }

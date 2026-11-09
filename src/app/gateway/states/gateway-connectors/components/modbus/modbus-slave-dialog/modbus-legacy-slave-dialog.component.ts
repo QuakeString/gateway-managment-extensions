@@ -39,12 +39,14 @@ import {
 } from './modbus-slave-dialog.abstract';
 import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
 
+import { DeviceViewSwitchComponent } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-modbus-legacy-slave-dialog',
   templateUrl: './modbus-slave-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
     ModbusValuesComponent,

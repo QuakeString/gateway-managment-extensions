@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
 import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { EllipsisChipListDirective } from '../../../../../shared/directives/public-api';
 import {
@@ -61,6 +61,10 @@ import { ModbusVersionMappingUtil } from '../../../utils/public-api';
   styleUrls: ['./modbus-basic-config.component.scss'],
 })
 export class ModbusLegacyBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig, ModbusLegacyBasicConfig> {
+  /** Bound by the shared template (it asks the gateway, e.g. to browse); unused here. */
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
+
 
   isLegacy = true;
 

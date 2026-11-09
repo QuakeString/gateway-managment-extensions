@@ -17,6 +17,7 @@
   <mat-toolbar color="primary">
     <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} {{ 'gateway.snmp-device' | translate }}</h2>
     <span class="flex-1"></span>
+    <st-device-view-switch [(view)]="view"></st-device-view-switch>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -25,6 +26,7 @@
   </mat-toolbar>
   <div mat-dialog-content>
     <div class="tb-form-panel no-border no-padding">
+      <ng-container *ngIf="view === 'connection'">
       <div class="tb-form-row column-xs">
         <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
         <div class="tb-flex no-gap">
@@ -147,6 +149,9 @@
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="password" formControlName="authKey" autocomplete="new-password"/>
+                <div class="tb-flex no-gap align-center fill-height" matSuffix>
+                  <tb-toggle-password class="tb-flex align-center fill-height"></tb-toggle-password>
+                </div>
                 <mat-icon matSuffix
                           matTooltipPosition="above"
                           matTooltipClass="tb-error-tooltip"
@@ -176,6 +181,9 @@
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="password" formControlName="privKey" autocomplete="new-password"/>
+                <div class="tb-flex no-gap align-center fill-height" matSuffix>
+                  <tb-toggle-password class="tb-flex align-center fill-height"></tb-toggle-password>
+                </div>
                 <mat-icon matSuffix
                           matTooltipPosition="above"
                           matTooltipClass="tb-error-tooltip"
@@ -242,116 +250,11 @@
       <div *ngIf="bulkOnV1" class="tb-form-hint tb-primary-fill tb-flex align-center">
         {{ 'gateway.snmp-bulk-v1' | translate }}
       </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('telemetry').value">
-            <mat-chip *ngFor="let ts of (deviceForm.get('telemetry').value | slice: 0 : 50)">
-              {{ chipLabel(ts) }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #telemetryButton
-                  (click)="manageKeys($event, telemetryButton, SnmpValueKey.TELEMETRY)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
-            <mat-chip *ngFor="let attr of (deviceForm.get('attributes').value | slice: 0 : 50)">
-              {{ chipLabel(attr) }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #attributesButton
-                  (click)="manageKeys($event, attributesButton, SnmpValueKey.ATTRIBUTES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.gw-attribute-updates' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdateRequests').value">
-            <mat-chip *ngFor="let au of (deviceForm.get('attributeUpdateRequests').value | slice: 0 : 50)">
-              {{ chipLabel(au) }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #attributeUpdatesButton
-                  (click)="manageKeys($event, attributeUpdatesButton, SnmpValueKey.ATTRIBUTES_UPDATES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.gw-rpc-methods' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('serverSideRpcRequests').value">
-            <mat-chip *ngFor="let rpc of (deviceForm.get('serverSideRpcRequests').value | slice: 0 : 50)">
-              {{ chipLabel(rpc) }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #rpcButton
-                  (click)="manageKeys($event, rpcButton, SnmpValueKey.RPC)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.snmp-notifications' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('notifications').value">
-            <mat-chip *ngFor="let notification of (deviceForm.get('notifications').value | slice: 0 : 50)">
-              {{ chipLabel(notification) }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #notificationsButton
-                  (click)="manageKeys($event, notificationsButton, SnmpValueKey.NOTIFICATIONS)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
+      </ng-container>
+      <ng-container *ngIf="view === 'mapping'">
+      <st-data-mapping [form]="deviceForm" [rows]="mappingRows" [panel]="keysPanel"
+                       (panelOpen)="keysPopupClosed = !$event"></st-data-mapping>
+      </ng-container>
     </div>
   </div>
   <div mat-dialog-actions class="justify-end">

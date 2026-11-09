@@ -18,10 +18,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -29,15 +26,12 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { profinetAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import {
   PROFINET_DEFAULT_POLL_PERIOD_MS,
   PROFINET_DEFAULT_REDUCTION_RATIO,
@@ -106,6 +100,7 @@ export function subslotNumber(v: number | string | undefined): number {
   return typeof v === 'number' ? v : (gsdmlNumber(v) ?? 1);
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-profinet-device-dialog',
   templateUrl: './profinet-device-dialog.component.html',
@@ -113,13 +108,17 @@ export function subslotNumber(v: number | string | undefined): number {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDeviceDialogComponent, ProfinetDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly ValueKey = ProfinetValueKey;
   readonly reductionRatios = PROFINET_REDUCTION_RATIOS;
@@ -160,7 +159,6 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
     rpc: [[] as ProfinetRpcConfig[]],
   }, { validators: [(group: AbstractControl) => this.addressValid(group)] });
 
-  private popoverComponent: TbPopoverComponent<ProfinetDataKeysPanelComponent>;
   private gsdmlMeta: { file?: string; dap?: string } | undefined;
   /** The device's diagnosis texts, from its GSDML: kept as they came. */
   private diagnosisTexts: Pick<ProfinetDeviceConfig, 'channelDiagnosis' | 'unitDiagnosis'> = {};
@@ -173,10 +171,6 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
     @Inject(MAT_DIALOG_DATA) public data: ProfinetDeviceDialogData,
     public dialogRef: MatDialogRef<ProfinetDeviceDialogComponent, ProfinetDeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private matDialog: MatDialog,
   ) {
@@ -485,16 +479,21 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
 
   // ── Keys ───────────────────────────────────────────────────────────────
 
-  manageKeys($event: Event, matButton: MatButton, keysType: ProfinetValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: ProfinetValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.key },
+    { key: ProfinetValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.key },
+    { key: ProfinetValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.key },
+    { key: ProfinetValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method },
+  ];
+
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: ProfinetDataKeysPanelComponent,
+    context: row => this.keysContext(row.key as ProfinetValueKey),
+  };
+
+  private keysContext(keysType: ProfinetValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [ProfinetValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -522,40 +521,9 @@ export class ProfinetDeviceDialogComponent extends DialogComponent<ProfinetDevic
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      ProfinetDataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: ProfinetKeys) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 
   // ── Validation ─────────────────────────────────────────────────────────
 

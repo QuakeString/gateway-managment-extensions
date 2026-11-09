@@ -19,6 +19,7 @@
     <h2>{{ 'gateway.device' | translate}}</h2>
     <span class="flex-1"></span>
     <div [tb-help]="socketDeviceHelpLink"></div>
+    <st-device-view-switch [(view)]="view"></st-device-view-switch>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -27,6 +28,7 @@
   </mat-toolbar>
   <div mat-dialog-content>
     <div class="tb-form-panel no-border no-padding">
+      <ng-container *ngIf="view === 'connection'">
       <div class="tb-form-row column-xs">
         <div class="fixed-title-width">
           <div class="tb-required" translate>
@@ -101,116 +103,11 @@
           formControlName="reportStrategy"
         />
       }
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width" translate>gateway.timeseries</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceFormGroup.get('telemetry').value">
-            <mat-chip *ngFor="let telemetry of (deviceFormGroup.get('telemetry').value | slice: 0 : 50)">
-              {{ telemetry.key }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="{{ 'action.edit' | translate }}"
-                  matTooltipPosition="above"
-                  #socketTelemetryButton
-                  (click)="manageKeys($event, socketTelemetryButton, SocketValueKey.TIMESERIES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width" translate>gateway.attributes</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('attributes').value" class="tb-flex">
-            <mat-chip *ngFor="let attribute of (deviceFormGroup.get('attributes').value | slice: 0 : 50)">
-              {{ attribute.key }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="{{ 'action.edit' | translate }}"
-                  matTooltipPosition="above"
-                  #attributesButton
-                  (click)="manageKeys($event, attributesButton, SocketValueKey.ATTRIBUTES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width" translate>gateway.attribute-requests</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('attributeRequests').value" class="tb-flex">
-            <mat-chip *ngFor="let request of (deviceFormGroup.get('attributeRequests').value | slice: 0 : 50)">
-              {{ request.type }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="{{ 'action.edit' | translate }}"
-                  matTooltipPosition="above"
-                  #attributeRequestsButton
-                  (click)="manageKeys($event, attributeRequestsButton, SocketValueKey.ATTRIBUTES_REQUESTS)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width" translate>gateway.attribute-updates</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('attributeUpdates').value" class="tb-flex">
-            <mat-chip *ngFor="let attribute of (deviceFormGroup.get('attributeUpdates').value | slice: 0 : 50)">
-              {{ attribute.encoding }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="{{ 'action.edit' | translate }}"
-                  matTooltipPosition="above"
-                  #attributesUpdatesButton
-                  (click)="manageKeys($event, attributesUpdatesButton, SocketValueKey.ATTRIBUTES_UPDATES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width" translate>gateway.rpc-methods</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox [tbEllipsisChipList]="deviceFormGroup.get('serverSideRpc').value" class="tb-flex">
-            <mat-chip *ngFor="let rpc of (deviceFormGroup.get('serverSideRpc').value | slice: 0 : 50)">
-              {{ rpc.methodRPC }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="{{ 'action.edit' | translate }}"
-                  matTooltipPosition="above"
-                  #rpcMethodsButton
-                  (click)="manageKeys($event, rpcMethodsButton, SocketValueKey.RPC_METHODS)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
+      </ng-container>
+      <ng-container *ngIf="view === 'mapping'">
+      <st-data-mapping [form]="deviceFormGroup" [rows]="mappingRows" [panel]="keysPanel"
+                       (panelOpen)="keysPopupClosed = !$event"></st-data-mapping>
+      </ng-container>
     </div>
   </div>
   <div mat-dialog-actions class="justify-end">

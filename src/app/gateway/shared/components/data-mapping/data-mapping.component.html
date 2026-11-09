@@ -1,0 +1,53 @@
+<!--
+
+    Copyright © 2016-2026 The SENTIENT Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-row space-between tb-flex" *ngFor="let row of rows">
+  <div *ngIf="row.hint; else plainTitle" class="fixed-title-width"
+       tb-hint-tooltip-icon="{{ row.hint | translate }}">{{ row.label | translate }}</div>
+  <ng-template #plainTitle>
+    <div class="fixed-title-width">{{ row.label | translate }}</div>
+  </ng-template>
+  <div class="tb-flex ellipsis-chips-container">
+    <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="entries(row)">
+      <mat-chip *ngFor="let entry of (entries(row) | slice: 0 : 50)">{{ row.chip(entry) }}</mat-chip>
+      <mat-chip class="mat-mdc-chip ellipsis-chip">
+        <label class="ellipsis-text"></label>
+      </mat-chip>
+    </mat-chip-listbox>
+    <button type="button"
+            mat-icon-button
+            color="primary"
+            [matTooltip]="'gateway.gw-edit-hint' | translate"
+            matTooltipPosition="above"
+            #editButton
+            (click)="edit($event, editButton, row)"
+            (contextmenu)="editAsSpreadsheet($event, editButton, row)">
+      <tb-icon matButtonIcon>edit</tb-icon>
+    </button>
+    <ng-container *ngFor="let action of row.actions">
+      <span *ngIf="!action.visible || action.visible()" [matTooltip]="tooltip(action) | translate" matTooltipPosition="above">
+        <button type="button"
+                mat-icon-button
+                color="primary"
+                [disabled]="action.disabled?.()"
+                (click)="action.run()">
+          <mat-icon>{{ action.icon }}</mat-icon>
+        </button>
+      </span>
+    </ng-container>
+  </div>
+</div>

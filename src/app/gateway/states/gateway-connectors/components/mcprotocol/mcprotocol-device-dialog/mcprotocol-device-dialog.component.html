@@ -17,6 +17,7 @@
   <mat-toolbar color="primary">
     <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} {{ 'gateway.mcprotocol-device' | translate }}</h2>
     <span class="flex-1"></span>
+    <st-device-view-switch [(view)]="view"></st-device-view-switch>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -25,6 +26,7 @@
   </mat-toolbar>
   <div mat-dialog-content>
     <div class="tb-form-panel no-border no-padding">
+      <ng-container *ngIf="view === 'connection'">
       <div class="tb-form-row column-xs">
         <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
         <div class="tb-flex no-gap">
@@ -165,94 +167,11 @@
           </div>
         </mat-expansion-panel>
       </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.gw-timeseries' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('timeseries').value">
-            <mat-chip *ngFor="let ts of (deviceForm.get('timeseries').value | slice: 0 : 50)">
-              {{ ts.tag }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #timeseriesButton
-                  (click)="manageKeys($event, timeseriesButton, McValueKey.TIMESERIES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.attributes' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributes').value">
-            <mat-chip *ngFor="let attr of (deviceForm.get('attributes').value | slice: 0 : 50)">
-              {{ attr.tag }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #attributesButton
-                  (click)="manageKeys($event, attributesButton, McValueKey.ATTRIBUTES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.gw-attribute-updates' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('attributeUpdates').value">
-            <mat-chip *ngFor="let au of (deviceForm.get('attributeUpdates').value | slice: 0 : 50)">
-              {{ au.tag }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #attributeUpdatesButton
-                  (click)="manageKeys($event, attributeUpdatesButton, McValueKey.ATTRIBUTES_UPDATES)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
-      <div class="tb-form-row space-between tb-flex">
-        <div class="fixed-title-width">{{ 'gateway.gw-rpc-methods' | translate }}</div>
-        <div class="tb-flex ellipsis-chips-container">
-          <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="deviceForm.get('rpc').value">
-            <mat-chip *ngFor="let rpc of (deviceForm.get('rpc').value | slice: 0 : 50)">
-              {{ rpc.method }}
-            </mat-chip>
-            <mat-chip class="mat-mdc-chip ellipsis-chip">
-              <label class="ellipsis-text"></label>
-            </mat-chip>
-          </mat-chip-listbox>
-          <button type="button"
-                  mat-icon-button
-                  color="primary"
-                  [matTooltip]="'gateway.gw-edit' | translate"
-                  matTooltipPosition="above"
-                  #rpcButton
-                  (click)="manageKeys($event, rpcButton, McValueKey.RPC)">
-            <tb-icon matButtonIcon>edit</tb-icon>
-          </button>
-        </div>
-      </div>
+      </ng-container>
+      <ng-container *ngIf="view === 'mapping'">
+      <st-data-mapping [form]="deviceForm" [rows]="mappingRows" [panel]="keysPanel"
+                       (panelOpen)="keysPopupClosed = !$event"></st-data-mapping>
+      </ng-container>
     </div>
   </div>
   <div mat-dialog-actions class="justify-end">
