@@ -19,25 +19,19 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+  } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatButton } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 
 import { AppState } from '@core/public-api';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, helpBaseUrl, SharedModule } from '@shared/public-api';
-import { TbPopoverService } from '@shared/components/popover.service';
 
 import {
   ConnectorType,
-  EllipsisChipListDirective,
   noLeadTrailSpacesRegex,
   ReportStrategyComponent,
   ReportStrategyDefaultValue,
@@ -57,8 +51,8 @@ import {
 } from '../../../models/public-api';
 import { DeviceInfoTableComponent } from '../../device-info-table/device-info-table.component';
 import { BacnetDeviceDataKeysPanelComponent } from '../device-data-keys-pannel/bacnet-device-data-keys-panel.component';
-import { TbPopoverComponent } from '@shared/components/popover.component';
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-bacnet-device-dialog',
   templateUrl: './bacnet-device-dialog.component.html',
@@ -66,15 +60,19 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     TruncateWithTooltipDirective,
     DeviceInfoTableComponent,
     ReportStrategyComponent,
   ]
 })
 export class BacnetDeviceDialogComponent extends DialogComponent<BacnetDeviceDialogComponent, BacnetDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(this.data?.buttonTitle === 'action.apply');
 
   deviceFormGroup = this.fb.group({
     host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -98,18 +96,13 @@ export class BacnetDeviceDialogComponent extends DialogComponent<BacnetDeviceDia
   readonly ConnectorType = ConnectorType;
   readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
 
-  private popoverComponent: TbPopoverComponent<BacnetDeviceDataKeysPanelComponent>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: BacnetDeviceConfigInfo,
               public dialogRef: MatDialogRef<BacnetDeviceDialogComponent, BacnetDeviceConfig>,
               private fb: FormBuilder,
-              private popoverService: TbPopoverService,
-              private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef,
               private cdr: ChangeDetectorRef,
-              private destroyRef: DestroyRef,
   ) {
     super(store, router, dialogRef);
 
@@ -133,17 +126,22 @@ export class BacnetDeviceDialogComponent extends DialogComponent<BacnetDeviceDia
     }
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: BacnetDeviceKeysType): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: BacnetDeviceKeysType.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.key },
+    { key: BacnetDeviceKeysType.TIMESERIES, label: 'gateway.timeseries', chip: e => e.key },
+    { key: BacnetDeviceKeysType.ATTRIBUTES_UPDATES, label: 'gateway.attribute-updates', chip: e => e.key },
+    { key: BacnetDeviceKeysType.RPC_METHODS, label: 'gateway.rpc-methods', chip: e => e.method },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: BacnetDeviceDataKeysPanelComponent,
+    placement: 'leftBottom',
+    context: row => this.keysContext(row.key as BacnetDeviceKeysType),
+  };
+
+  private keysContext(keysType: BacnetDeviceKeysType): Record<string, any> {
     const keysControl = this.deviceFormGroup.get(keysType);
     const ctx = {
       keys: keysControl.value,
@@ -154,29 +152,7 @@ export class BacnetDeviceDialogComponent extends DialogComponent<BacnetDeviceDia
       noKeysText: BacnetDeviceKeysNoKeysTextTranslationsMap.get(keysType),
       withReportStrategy: this.data.withReportStrategy,
     };
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      BacnetDeviceDataKeysPanelComponent,
-      'leftBottom',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied.subscribe((keysData: BacnetDeviceKey[]) => {
-      this.popoverComponent.hide();
-      keysControl.patchValue(keysData);
-      keysControl.markAsDirty();
-      this.cdr.markForCheck();
-    });
-    this.popoverComponent.tbHideStart.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.keysPopupClosed = true;
-    });
+    return ctx;
   }
+
 }

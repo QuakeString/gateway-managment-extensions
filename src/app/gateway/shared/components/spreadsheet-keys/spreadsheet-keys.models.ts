@@ -39,7 +39,9 @@ export interface SpreadsheetColumnConfig {
   step?: number;
   headerClass?: string;
   cellClass?: string;
-  uppercase?: boolean;
+  /** Uppercase what is typed or pasted; a function decides per value (an S7
+   *  absolute address is uppercased, a TIA tag name keeps its case). */
+  uppercase?: boolean | ((value: string) => boolean);
   translateLabels?: boolean;
   /** Translation key for the tooltip shown when the cell's control is invalid. */
   errorText?: string;

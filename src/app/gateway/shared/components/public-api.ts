@@ -27,3 +27,7 @@ export * from './add-to-write/add-to-write.models';
 export * from './add-to-write/add-to-write-dialog.component';
 export * from './add-to-write/add-to-write.handler';
 export * from './add-to-write/write-adapters';
+export * from './device-view-switch/device-view-switch.component';
+export * from './data-mapping/data-mapping.models';
+export * from './data-mapping/data-mapping.component';
+export * from './data-mapping/open-keys-spreadsheet';

@@ -27,6 +27,7 @@ import {
   SlaveConfig,
 } from '../../../models/public-api';
 import { SharedModule } from '@shared/public-api';
+import { DeviceViewSwitchComponent } from '../../../../../shared/public-api';
 import { CommonModule } from '@angular/common';
 import { ModbusValuesComponent } from '../modbus-values/modbus-values.component';
 import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
@@ -49,6 +50,7 @@ import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
     ModbusValuesComponent,
@@ -61,6 +63,7 @@ import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })
 export class ModbusSlaveDialogComponent extends ModbusSlaveDialogAbstract<ModbusSlaveDialogComponent, SlaveConfig> {
+
 
   constructor(
     protected fb: FormBuilder,

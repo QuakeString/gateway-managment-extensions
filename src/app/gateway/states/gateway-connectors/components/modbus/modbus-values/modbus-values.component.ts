@@ -59,6 +59,7 @@ import { ModbusDataKeysPanelComponent } from '../modbus-data-keys-panel/modbus-d
 import { coerceBoolean, SharedModule } from '@shared/public-api';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { openKeysSpreadsheet } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-modbus-values',
@@ -158,6 +159,15 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
     return register
       ? this.valuesFormGroup.get(register).get(valueKey) as FormGroup
       : this.valuesFormGroup.get(valueKey) as FormGroup;
+  }
+
+  /** Right-click on edit: the keys straight in the full-screen spreadsheet. */
+  manageKeysAsSpreadsheet($event: MouseEvent, matButton: MatButton, keysType: ModbusValueKey, register?: ModbusRegisterType): void {
+    $event.preventDefault();
+    if (!this.popoverService.hasPopover(matButton._elementRef.nativeElement)) {
+      this.manageKeys($event, matButton, keysType, register);
+    }
+    openKeysSpreadsheet(this.popoverComponent);
   }
 
   manageKeys($event: Event, matButton: MatButton, keysType: ModbusValueKey, register?: ModbusRegisterType): void {

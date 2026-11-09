@@ -18,7 +18,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, 
 import { Store } from '@ngrx/store';
 import { FormBuilder, FormControl, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
+import { forkJoin, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -206,6 +206,11 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
   };
   private destroy$ = new Subject<void>();
+  private syncRecheck: Subscription;
+  private firstConnectorSelected = false;
+  /** The attribute scopes read at least once: the first connector is shown
+   *  only from all three, never from the gateway's copy alone. */
+  private loaded = new Set<AttributeScope>();
   private subscription: IWidgetSubscription;
   private attributeUpdateSubject = new Subject<GatewayAttributeData>();
 
@@ -259,7 +264,25 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       );
       this.initialConnector = connector;
       this.updateData(true);
+      this.recheckUntilSynced(connector.name);
       this.connectorForm.markAsPristine();
+    });
+  }
+
+  /**
+   * The gateway answers a save a moment after it is stored, and nothing
+   * pushes that answer to this page: read again every 2 s until the
+   * connector is in sync, for up to 30 s.
+   */
+  private recheckUntilSynced(name: string): void {
+    this.syncRecheck?.unsubscribe();
+    this.syncRecheck = timer(2000, 2000).pipe(take(15), takeUntil(this.destroy$)).subscribe(() => {
+      const row = this.dataSource.data.find(attribute => attribute.key === name);
+      if (row && this.isConnectorSynced(row)) {
+        this.syncRecheck.unsubscribe();
+        return;
+      }
+      this.updateData(true);
     });
   }
 
@@ -353,16 +376,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
+      this.loaded.add(AttributeScope.CLIENT_SCOPE);
       this.combineData();
       this.generateSubscription();
       this.setClientData(data);
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
+      this.loaded.add(AttributeScope.SHARED_SCOPE);
       this.combineData();
     });
     this.serverDataSource.loadAttributes(this.device, AttributeScope.SERVER_SCOPE, this.pageLink, reload).subscribe(data => {
       this.inactiveData = data.data.filter(value => this.inactiveConnectors.includes(value.key));
+      this.loaded.add(AttributeScope.SERVER_SCOPE);
       this.combineData();
     });
   }
@@ -388,13 +414,21 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (clientIndex === -1) {
       return false;
     }
+    // The gateway's copy is in sync when it holds the saved configuration
+    // and SENTIENT stored it after the save. Both times are SENTIENT's own
+    // (lastUpdateTs): the ts inside the values come from the browser's and
+    // the gateway's clocks, and a browser a few ms ahead left an applied
+    // connector out of sync. A save the gateway never answered stays out of
+    // sync, even one that puts back what the gateway runs.
+    const client = this.activeData[clientIndex];
+    const clientData = typeof client.value === 'string' ? JSON.parse(client.value) : client.value;
     const sharedIndex = this.sharedAttributeData.findIndex(data => {
       const sharedData = data.value;
       const hasSameName = sharedData.name === connectorData.name;
       const hasEmptyConfig = isEqual(sharedData.configurationJson, {}) && hasSameName;
-      const hasSameConfig = this.hasSameConfig(sharedData.configurationJson, connectorData.configurationJson);
-      const isRecentlyCreated = sharedData.ts && sharedData.ts <= connectorData.ts;
-      return hasSameName && isRecentlyCreated && (hasSameConfig || hasEmptyConfig);
+      const hasSameConfig = this.hasSameConfig(sharedData.configurationJson, clientData.configurationJson);
+      const answered = client.lastUpdateTs >= data.lastUpdateTs;
+      return hasSameName && answered && (hasSameConfig || hasEmptyConfig);
     });
     return sharedIndex !== -1;
   }
@@ -440,6 +474,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       ...attribute,
       value: typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value
     }));
+    this.selectFirstConnectorOnce();
+  }
+
+  /** On opening the page, show the first connector in the list's order
+   *  rather than an empty configuration panel. Once only: after that, an
+   *  empty panel means the user closed or deleted a connector. */
+  private selectFirstConnectorOnce(): void {
+    if (this.firstConnectorSelected || this.initialConnector || this.loaded.size < 3 || !this.dataSource.data.length) {
+      return;
+    }
+    this.firstConnectorSelected = true;
+    const [first] = this.dataSource.sortData([...this.dataSource.data], this.dataSource.sort);
+    this.setFormValue(first.value);
   }
 
   private clearOutConnectorForm(): void {
@@ -861,7 +908,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     forkJoin(this.getAttributeExecutionTasks(attribute))
       .pipe(
         take(1),
-        tap(() => this.updateData(true)),
+        tap(() => {
+          this.updateData(true);
+          this.recheckUntilSynced(attribute.key);
+        }),
         takeUntil(this.destroy$),
       )
       .subscribe();

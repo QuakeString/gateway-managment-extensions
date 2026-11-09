@@ -19,8 +19,6 @@ import {
   Component,
   DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
@@ -28,15 +26,13 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { snmpAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import {
   SNMP_BULK_METHODS,
   SnmpAuthProtocol,
@@ -61,6 +57,7 @@ export interface SnmpDeviceDialogData {
 /** The v3 (USM) fields; present in the saved device only when version is v3. */
 const SECURITY_FIELDS = ['securityName', 'securityLevel', 'authProtocol', 'authKey', 'privProtocol', 'privKey', 'contextName', 'engineId'] as const;
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-snmp-device-dialog',
   templateUrl: './snmp-device-dialog.component.html',
@@ -68,13 +65,17 @@ const SECURITY_FIELDS = ['securityName', 'securityLevel', 'authProtocol', 'authK
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogComponent, SnmpDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly SnmpValueKey = SnmpValueKey;
   readonly SnmpVersion = SnmpVersion;
@@ -114,7 +115,6 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
     notifications: [[] as SnmpKeyEntry[]],
   });
 
-  private popoverComponent: TbPopoverComponent<SnmpDataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -124,9 +124,6 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
     @Inject(MAT_DIALOG_DATA) public data: SnmpDeviceDialogData,
     public dialogRef: MatDialogRef<SnmpDeviceDialogComponent, SnmpDeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
   ) {
@@ -210,17 +207,22 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
     }
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: SnmpValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: SnmpValueKey.TELEMETRY, label: 'gateway.gw-timeseries', chip: e => this.chipLabel(e) },
+    { key: SnmpValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => this.chipLabel(e) },
+    { key: SnmpValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => this.chipLabel(e) },
+    { key: SnmpValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => this.chipLabel(e) },
+    { key: SnmpValueKey.NOTIFICATIONS, label: 'gateway.snmp-notifications', chip: e => this.chipLabel(e) },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: SnmpDataKeysPanelComponent,
+    context: row => this.keysContext(row.key as SnmpValueKey),
+  };
+
+  private keysContext(keysType: SnmpValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [SnmpValueKey.TELEMETRY]: 'gateway.gw-timeseries',
@@ -251,40 +253,9 @@ export class SnmpDeviceDialogComponent extends DialogComponent<SnmpDeviceDialogC
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      SnmpDataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: SnmpKeyEntry[]) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 
   /** securityName is required on v3; the keys follow the security level. */
   private updateSecurityValidators(): void {

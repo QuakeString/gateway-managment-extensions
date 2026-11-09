@@ -18,10 +18,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
@@ -29,15 +26,12 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { tagAddressAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import { FinsDataKey, FinsDeviceConfig, FinsRpcConfig, FinsValueKey } from '../../../models/public-api';
 import { FinsDataKeysPanelComponent } from '../fins-data-keys-panel/fins-data-keys-panel.component';
 
@@ -48,6 +42,7 @@ export interface FinsDeviceDialogData {
   connectorName?: string;
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-fins-device-dialog',
   templateUrl: './fins-device-dialog.component.html',
@@ -55,13 +50,17 @@ export interface FinsDeviceDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class FinsDeviceDialogComponent extends DialogComponent<FinsDeviceDialogComponent, FinsDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly FinsValueKey = FinsValueKey;
   isEdit: boolean;
@@ -87,7 +86,6 @@ export class FinsDeviceDialogComponent extends DialogComponent<FinsDeviceDialogC
     rpc: [[] as FinsRpcConfig[]],
   });
 
-  private popoverComponent: TbPopoverComponent<FinsDataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -97,10 +95,6 @@ export class FinsDeviceDialogComponent extends DialogComponent<FinsDeviceDialogC
     @Inject(MAT_DIALOG_DATA) public data: FinsDeviceDialogData,
     public dialogRef: MatDialogRef<FinsDeviceDialogComponent, FinsDeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
   ) {
     super(store, router, dialogRef);
@@ -131,17 +125,21 @@ export class FinsDeviceDialogComponent extends DialogComponent<FinsDeviceDialogC
     }
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: FinsValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: FinsValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.tag },
+    { key: FinsValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.tag },
+    { key: FinsValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.tag },
+    { key: FinsValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: FinsDataKeysPanelComponent,
+    context: row => this.keysContext(row.key as FinsValueKey),
+  };
+
+  private keysContext(keysType: FinsValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [FinsValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -169,38 +167,7 @@ export class FinsDeviceDialogComponent extends DialogComponent<FinsDeviceDialogC
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      FinsDataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Array<FinsDataKey | FinsRpcConfig>) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 }

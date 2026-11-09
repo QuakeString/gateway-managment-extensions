@@ -102,7 +102,7 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
   private lastSelectedRowControl: FormGroup | null = null;
   // Rows selected through the row-number cells or Ctrl+A. Delete removes rows
   // only for such a selection; with just an active cell it clears the cell.
-  private explicitRowSelection = false;
+  explicitRowSelection = false;
 
   // Spreadsheet selection: the cell the arrow keys move and typing edits.
   // `editing` is true while that cell's native input owns the focus (edit
@@ -366,10 +366,10 @@ body.tb-dark ${hostSel} input[type="number"] {
 
   // ---- Row selection --------------------------------------------------------
 
-  /** Header "#" cell: every row of the table, rendered or not, filtered or not. */
+  /** Header "#" cell: every row the search matches, rendered or not. */
   toggleSelectAll(): void {
-    const all = this.keysFormArray?.controls ?? [];
-    const allSelected = all.length > 0 && all.every(c => this.selectedRowControls.has(c as FormGroup));
+    const all = this.filteredControls.map(f => f.control);
+    const allSelected = all.length > 0 && all.every(c => this.selectedRowControls.has(c));
     if (allSelected) {
       this.selectedRowControls.clear();
       this.explicitRowSelection = false;
@@ -380,9 +380,11 @@ body.tb-dark ${hostSel} input[type="number"] {
     this.cd.markForCheck();
   }
 
+  /** Ctrl+A: every row the search matches. With a search, rows it hides
+   *  are never selected, so Delete cannot remove keys nobody can see. */
   selectAllRows(): void {
     this.selectedRowControls.clear();
-    (this.keysFormArray?.controls ?? []).forEach(c => this.selectedRowControls.add(c as FormGroup));
+    this.filteredControls.forEach(f => this.selectedRowControls.add(f.control));
     this.explicitRowSelection = this.selectedRowControls.size > 0;
     this.cd.markForCheck();
   }
@@ -445,9 +447,16 @@ body.tb-dark ${hostSel} input[type="number"] {
     return !!this.activeCell && this.activeCell.key === key;
   }
 
-  onUppercaseInput(form: FormGroup, key: string): void {
-    const ctrl = form.get(key);
-    if (ctrl) {
+  /** Whether the column uppercases this value. */
+  uppercases(col: SpreadsheetColumnConfig, value: any): boolean {
+    return typeof col.uppercase === 'function'
+      ? typeof value === 'string' && col.uppercase(value)
+      : !!col.uppercase;
+  }
+
+  onUppercaseInput(form: FormGroup, col: SpreadsheetColumnConfig): void {
+    const ctrl = form.get(col.key);
+    if (ctrl && this.uppercases(col, ctrl.value)) {
       const val = ctrl.value;
       const upper = typeof val === 'string' ? val.toUpperCase() : val;
       if (val !== upper) {
@@ -1043,7 +1052,7 @@ body.tb-dark ${hostSel} input[type="number"] {
       }
       default:
         value = String(raw);
-        if (col.uppercase) value = value.toUpperCase();
+        if (this.uppercases(col, value)) value = value.toUpperCase();
     }
     if (col.setValue) {
       col.setValue(row, value);
@@ -1113,6 +1122,12 @@ body.tb-dark ${hostSel} input[type="number"] {
       });
     }
     this.displayedControls = this.filteredControls.slice(0, this.renderLimit);
+    // A selection never reaches past what the search shows.
+    if (this.selectedRowControls.size) {
+      const shown = new Set(this.filteredControls.map(f => f.control));
+      this.selectedRowControls.forEach(c => !shown.has(c) && this.selectedRowControls.delete(c));
+      this.explicitRowSelection = this.explicitRowSelection && this.selectedRowControls.size > 0;
+    }
     if (this.activeCell && !this.keysFormArray.controls.includes(this.activeCell.control)) {
       this.activeCell = null;
       this.editing = false;

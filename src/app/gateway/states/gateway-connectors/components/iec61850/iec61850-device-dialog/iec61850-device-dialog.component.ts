@@ -20,10 +20,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -31,15 +28,12 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { iec61850Adapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormArray, FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState, DeviceService } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import {
   IEC61850DataKey,
   IEC61850DeviceConfig,
@@ -66,15 +60,21 @@ export interface IEC61850DeviceDialogData {
   modelTree?: { logicalDevices: IEC61850ModelNode[] };
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-iec61850-device-dialog',
   templateUrl: './iec61850-device-dialog.component.html',
   styleUrls: ['./iec61850-device-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, SharedModule, EllipsisChipListDirective, DeviceProfileNameAutocompleteComponent],
+  imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,CommonModule, SharedModule, DeviceProfileNameAutocompleteComponent],
 })
 export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850DeviceDialogComponent, IEC61850DeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly AcquisitionMode = IEC61850AcquisitionMode;
   readonly ValueKey = IEC61850ValueKey;
@@ -125,7 +125,6 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
     return this.deviceForm.get('gooseSubscriptions') as FormArray;
   }
 
-  private popoverComponent: TbPopoverComponent<IEC61850DataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -135,10 +134,6 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
     @Inject(MAT_DIALOG_DATA) public data: IEC61850DeviceDialogData,
     public dialogRef: MatDialogRef<IEC61850DeviceDialogComponent, IEC61850DeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private matDialog: MatDialog,
     private deviceService: DeviceService,
@@ -449,17 +444,21 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
     });
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: IEC61850ValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: IEC61850ValueKey.TIMESERIES, label: 'gateway.iec61850-telemetry', hint: 'gateway.hints.iec61850.data-keys', chip: e => e.tag || e.reference, actions: [{ icon: 'wifi_find', tooltip: 'gateway.iec61850-browse-ied', run: () => this.browseAndOpen('timeseries') }] },
+    { key: IEC61850ValueKey.ATTRIBUTES, label: 'gateway.iec61850-attributes', chip: e => e.tag || e.reference, actions: [{ icon: 'wifi_find', tooltip: 'gateway.iec61850-browse-ied', run: () => this.browseAndOpen('attributes') }] },
+    { key: IEC61850ValueKey.ATTRIBUTES_UPDATES, label: 'gateway.iec61850-attribute-updates', chip: e => e.tag || e.reference, actions: [{ icon: 'wifi_find', tooltip: 'gateway.iec61850-browse-ied', run: () => this.browseAndOpen('attributeUpdates') }] },
+    { key: IEC61850ValueKey.RPC, label: 'gateway.iec61850-rpc-methods', chip: e => e.method, actions: [{ icon: 'wifi_find', tooltip: 'gateway.iec61850-browse-ied', run: () => this.browseAndOpen('rpc') }] },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: IEC61850DataKeysPanelComponent,
+    context: row => this.keysContext(row.key as IEC61850ValueKey),
+  };
+
+  private keysContext(keysType: IEC61850ValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const ctx = {
       keys: keysControl.value,
@@ -476,38 +475,7 @@ export class IEC61850DeviceDialogComponent extends DialogComponent<IEC61850Devic
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      IEC61850DataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Array<IEC61850DataKey | IEC61850RpcConfig>) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 }

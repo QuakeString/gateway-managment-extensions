@@ -63,6 +63,12 @@ import { generateSecret } from '@core/public-api';
 // (IEC notation from TIA Portal exports).
 const S7_ADDRESS_REGEX = /^%?(DB\d+\.DB[XBWDL]\d+(\.\d+)?|DB\d+\s*,\s*((DBX|X)\d+(\.\d+)?|(DB[BWDL]|BYTE|BY|B|CHAR|C|WORD|W|INT|I|DWORD|DINT|DW|DD|DI|LREAL|LR|REAL|R)\d+|(DB|D)\d+(\.[0-7])?|(STRING|S)\d+\.\d+)|[MIQEA]\d+\.\d+|[MIQEA][BWDLR]\d+|[CTZ]\d+)$/i;
 
+
+/** An absolute S7 address (DB1.DBD0, MW10, I0.0, %QB2, T1…), not a tag name. */
+export function isS7AbsoluteAddress(value: string): boolean {
+  const v = (value ?? '').trim();
+  return !v.includes('"') && /^%?(DB\d+\.DB[XBWDL]\d|[IQMEA][XBWDL]?\d|P[IQ][BWD]?\d|[TCZ]\d)/i.test(v);
+}
 @Component({
   selector: 'tb-s7-data-keys-panel',
   templateUrl: './s7-data-keys-panel.component.html',
@@ -130,10 +136,9 @@ export class S7DataKeysPanelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.keysFormArray = this.fb.array([]);
-    if (this.keys?.length) {
-      this.keys.forEach(key => this.keysFormArray.push(this.createKeyForm(key)));
-    }
+    // Built in one go: pushing one by one revalidates the whole array per
+    // push, which took seconds on a PLC with thousands of tags.
+    this.keysFormArray = this.fb.array((this.keys ?? []).map(entry => this.createKeyForm(entry)));
     this.buildColumnConfigs();
   }
 
@@ -164,13 +169,17 @@ export class S7DataKeysPanelComponent implements OnInit {
     this.cancelled.emit();
   }
 
-  /** Uppercase the S7 address field as the operator types. S7 address
-   *  syntax is case-insensitive (DB1.DBD0 == db1.dbd0) but the UI
-   *  canonicalises on uppercase so copy/paste from other tools reads
-   *  consistently. */
+  isAbsolute(row: FormGroup): boolean {
+    return isS7AbsoluteAddress(row.get('address')?.value ?? '');
+  }
+
+  /** Uppercase an absolute S7 address as the operator types: its syntax is
+   *  case-insensitive (DB1.DBD0 == db1.dbd0) and the UI shows it one way. A
+   *  TIA tag name ("Motor_DB".speed) keeps its case: the PLC's symbol table
+   *  is matched exactly, and an uppercased name was not found. */
   onAddressInput(row: FormGroup): void {
     const ctrl = row.get('address');
-    if (!ctrl) return;
+    if (!ctrl || !this.isAbsolute(row)) return;
     const val = ctrl.value;
     const upper = typeof val === 'string' ? val.toUpperCase() : val;
     if (val !== upper) ctrl.setValue(upper, { emitEvent: false });
@@ -187,7 +196,7 @@ export class S7DataKeysPanelComponent implements OnInit {
       ];
       this.spreadsheetColumns = [
         { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
-        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: true, errorText: 'gateway.s7-invalid-address' },
+        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: isS7AbsoluteAddress, errorText: 'gateway.s7-invalid-address' },
         { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
           options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
         { key: 'operation', label: 'gateway.gw-operation', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
@@ -203,7 +212,7 @@ export class S7DataKeysPanelComponent implements OnInit {
     ];
     this.spreadsheetColumns = [
       { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: true, errorText: 'gateway.s7-invalid-address' },
+      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: isS7AbsoluteAddress, errorText: 'gateway.s7-invalid-address' },
       { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)', translateLabels: true,
         options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
       ...calibrationColumns((row) => this.canCalibrate(row)),

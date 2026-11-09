@@ -89,7 +89,7 @@
           <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.s7.address' | translate }}">{{ 'gateway.address' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="address" placeholder="DB1.DBD0"
-                   style="text-transform: uppercase"
+                   [style.text-transform]="isAbsolute(row) ? 'uppercase' : 'none'"
                    (input)="onAddressInput(row)">
             <mat-icon matSuffix
                       matTooltipPosition="above"

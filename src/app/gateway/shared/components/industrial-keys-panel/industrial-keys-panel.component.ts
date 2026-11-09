@@ -354,6 +354,14 @@ export class IndustrialKeysPanelComponent implements OnInit, OnChanges, OnDestro
     this.cd.markForCheck();
   }
 
+  /** Delete every ticked key, through the host's own delete path. */
+  deleteSelected(): void {
+    const rows = Array.from(this.selected);
+    this.selected.clear();
+    this.onSpreadsheetDeleteRowsRequested(rows);
+    this.cd.markForCheck();
+  }
+
   addSelectedToWrite(target: WriteTarget): void {
     this.addRowsToWrite(target, this.selected);
   }

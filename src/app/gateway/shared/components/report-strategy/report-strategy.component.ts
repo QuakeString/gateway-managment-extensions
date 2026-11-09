@@ -185,7 +185,7 @@ export class ReportStrategyComponent implements ControlValueAccessor, OnDestroy 
   }
 
   private getDefaultConfig(): ReportStrategyConfig {
-    const defaultType = this.isConfig ? ReportStrategyType.OnReceived : ReportStrategyType.OnReportPeriod;
+    const defaultType = this.isConfig ? ReportStrategyType.OnReceived : ReportStrategyType.OnChangeOrReportPeriod;
     const defaultReportPeriod = this.isConfig ? null : this.defaultValue;
     return { type: defaultType, reportPeriod: defaultReportPeriod };
   }

@@ -20,8 +20,6 @@ import {
   Component,
   DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
@@ -29,15 +27,13 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { dnp3Adapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import {
   DNP3_MAX_ADDRESS,
   DNP3_SESSION_KEY_CHANGE_DEFAULT_MS,
@@ -76,6 +72,7 @@ export interface Dnp3DeviceDialogData {
 
 type Dnp3Keys = Array<Dnp3PointKey | Dnp3AttributeUpdate | Dnp3RpcConfig>;
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-dnp3-device-dialog',
   templateUrl: './dnp3-device-dialog.component.html',
@@ -83,13 +80,17 @@ type Dnp3Keys = Array<Dnp3PointKey | Dnp3AttributeUpdate | Dnp3RpcConfig>;
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogComponent, Dnp3DeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly Dnp3ValueKey = Dnp3ValueKey;
   readonly timeSyncModes = Object.values(Dnp3TimeSync);
@@ -146,7 +147,6 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
     rpc: [[] as Dnp3RpcConfig[]],
   }, { validators: [(group: AbstractControl) => this.addressesValid(group)] });
 
-  private popoverComponent: TbPopoverComponent<Dnp3DataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -156,9 +156,6 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
     @Inject(MAT_DIALOG_DATA) public data: Dnp3DeviceDialogData,
     public dialogRef: MatDialogRef<Dnp3DeviceDialogComponent, Dnp3DeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
   ) {
@@ -377,17 +374,21 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
     this.profileImport = null;
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: Dnp3ValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: Dnp3ValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.key },
+    { key: Dnp3ValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.key },
+    { key: Dnp3ValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.key },
+    { key: Dnp3ValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: Dnp3DataKeysPanelComponent,
+    context: row => this.keysContext(row.key as Dnp3ValueKey),
+  };
+
+  private keysContext(keysType: Dnp3ValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [Dnp3ValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -415,40 +416,9 @@ export class Dnp3DeviceDialogComponent extends DialogComponent<Dnp3DeviceDialogC
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      Dnp3DataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Dnp3Keys) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 
   private uniqueName() {
     return (control: AbstractControl): ValidationErrors | null => {

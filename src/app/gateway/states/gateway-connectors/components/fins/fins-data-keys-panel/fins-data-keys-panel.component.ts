@@ -182,10 +182,9 @@ export class FinsDataKeysPanelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.keysFormArray = this.fb.array([]);
-    if (this.keys?.length) {
-      this.keys.forEach(key => this.keysFormArray.push(this.createKeyForm(key)));
-    }
+    // Built in one go: pushing one by one revalidates the whole array per
+    // push, which took seconds on a PLC with thousands of tags.
+    this.keysFormArray = this.fb.array((this.keys ?? []).map(entry => this.createKeyForm(entry)));
     this.buildColumnConfigs();
   }
 

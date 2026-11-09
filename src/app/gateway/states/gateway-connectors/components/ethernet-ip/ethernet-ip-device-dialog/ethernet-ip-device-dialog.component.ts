@@ -18,10 +18,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -29,15 +26,12 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { tagAddressAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import {
   EthernetIPDeviceConfig, EthernetIPPlcType, EthernetIPDataKey, EthernetIPRpcConfig,
   EthernetIPValueKey, ETHERNET_IP_LOGIX_TYPES, ETHERNET_IP_LOGIX_DRIVER_TYPES,
@@ -59,6 +53,7 @@ export interface EthernetIPDeviceDialogData {
   connectorName?: string;
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-ethernet-ip-device-dialog',
   templateUrl: './ethernet-ip-device-dialog.component.html',
@@ -66,13 +61,17 @@ export interface EthernetIPDeviceDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPDeviceDialogComponent, EthernetIPDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly plcTypes = Object.values(EthernetIPPlcType);
   readonly EthernetIPValueKey = EthernetIPValueKey;
@@ -101,7 +100,6 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
     rpc: [[] as EthernetIPRpcConfig[]],
   });
 
-  private popoverComponent: TbPopoverComponent<EthernetIPDataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -111,10 +109,6 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
     @Inject(MAT_DIALOG_DATA) public data: EthernetIPDeviceDialogData,
     public dialogRef: MatDialogRef<EthernetIPDeviceDialogComponent, EthernetIPDeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private matDialog: MatDialog,
   ) {
@@ -212,17 +206,21 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
     });
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: EthernetIPValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: EthernetIPValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.tag },
+    { key: EthernetIPValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.tag },
+    { key: EthernetIPValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.tag },
+    { key: EthernetIPValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: EthernetIPDataKeysPanelComponent,
+    context: row => this.keysContext(row.key as EthernetIPValueKey),
+  };
+
+  private keysContext(keysType: EthernetIPValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [EthernetIPValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -251,38 +249,7 @@ export class EthernetIPDeviceDialogComponent extends DialogComponent<EthernetIPD
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      EthernetIPDataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Array<EthernetIPDataKey | EthernetIPRpcConfig>) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 }

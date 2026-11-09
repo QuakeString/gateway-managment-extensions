@@ -18,6 +18,7 @@
     <h2>{{ 'gateway.server-slave' | translate }}</h2>
     <span class="flex-1"></span>
     <div [tb-help]="modbusHelpLink"></div>
+    <st-device-view-switch [(view)]="view"></st-device-view-switch>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -27,6 +28,7 @@
   <div mat-dialog-content [formGroup]="slaveConfigFormGroup" class="tb-form-panel">
     <div class="stroked tb-form-panel">
       <div class="tb-form-panel no-border no-padding padding-top">
+        <ng-container *ngIf="view === 'connection'">
         <div class="tb-flex row space-between align-center no-gap fill-width">
           <div class="fixed-title-width" translate>gateway.server-connection</div>
           <tb-toggle-select formControlName="type" appearance="fill">
@@ -343,9 +345,12 @@
             </div>
           </mat-expansion-panel>
         </div>
+        </ng-container>
+        <ng-container *ngIf="view === 'mapping'">
         <div class="tb-form-panel stroked">
           <tb-modbus-values [singleMode]="true" [hideNewFields]="data.hideNewFields" formControlName="values"></tb-modbus-values>
         </div>
+        </ng-container>
       </div>
     </div>
   </div>

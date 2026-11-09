@@ -61,8 +61,15 @@
       <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </div>
-  <div *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length" class="search-result-info">
-    {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.length } }}
+  <div *ngIf="(searchControl.value && filteredControls.length !== keysFormArray.length) || (explicitRowSelection && selectedRowControls.size)"
+       class="search-result-info">
+    <ng-container *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length">
+      {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.length } }}
+    </ng-container>
+    <ng-container *ngIf="explicitRowSelection && selectedRowControls.size">
+      <span *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length"> · </span>
+      {{ 'gateway.keys-selected-count' | translate:{ count: selectedRowControls.size } }}
+    </ng-container>
   </div>
   <div *ngIf="importStatus" class="import-status" [class.error]="importStatus.error">
     <span>{{ importStatus.key | translate:importStatus.params }}</span>
@@ -110,8 +117,8 @@
                 <input class="cell-input" [name]="col.key" [formControlName]="col.key"
                        [class.invalid]="isCellInvalid(col, item.control)"
                        [placeholder]="col.placeholder || ''"
-                       [style.text-transform]="col.uppercase ? 'uppercase' : 'none'"
-                       (input)="col.uppercase && onUppercaseInput(item.control, col.key)"
+                       [style.text-transform]="uppercases(col, item.control.get(col.key)?.value) ? 'uppercase' : 'none'"
+                       (input)="onUppercaseInput(item.control, col)"
                        (keydown)="onCellKeydown($event)">
                 <mat-icon *ngIf="isCellInvalid(col, item.control)"
                           class="cell-error-icon tb-error"

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
 import { FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -43,6 +43,10 @@ import { McProtocolDevicesTableComponent } from '../mcprotocol-devices-table/mcp
   styleUrls: ['../mcprotocol-basic-config/mcprotocol-basic-config.component.scss'],
 })
 export class McProtocolLegacyBasicConfigComponent extends GatewayConnectorBasicConfigDirective<McBasicConfig, McBasicConfig> {
+  /** Bound by the shared template (it asks the gateway, e.g. to browse); unused here. */
+  @Input() gatewayDeviceId: string;
+  @Input() connectorName: string;
+
 
   isLegacy = true;
 

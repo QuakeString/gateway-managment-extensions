@@ -163,7 +163,10 @@ export class GatewayLogsComponent implements OnInit, AfterViewInit {
         }
 
         try {
-          result.status = data[1].match(/\|(\w+)\|/)[1];
+          // The Rust gateway writes Rust's level names (WARN); the Python
+          // one wrote WARNING. Both are the same level here.
+          const level = data[1].match(/\|(\w+)\|/)[1];
+          result.status = (level === 'WARN' ? GatewayStatus.WARNING : level) as GatewayStatus;
         } catch (e) {
           result.status = 'INVALID LOG FORMAT' as GatewayStatus;
         }
@@ -185,10 +188,12 @@ export class GatewayLogsComponent implements OnInit, AfterViewInit {
   statusClass(status: GatewayStatus): string {
     switch (status) {
       case GatewayStatus.DEBUG:
+      case GatewayStatus.TRACE:
         return 'status status-debug';
       case GatewayStatus.WARNING:
         return 'status status-warning';
       case GatewayStatus.ERROR:
+      case GatewayStatus.CRITICAL:
       case GatewayStatus.EXCEPTION:
         return 'status status-error';
       default:

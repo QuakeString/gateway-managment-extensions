@@ -18,10 +18,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   Inject,
-  Renderer2,
-  ViewContainerRef,
   inject,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -29,15 +26,12 @@ import { createKeysWriteHandler } from '../../../../../shared/components/add-to-
 import { tagAddressAdapter } from '../../../../../shared/components/add-to-write/write-adapters';
 import { FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DeviceViewSwitchComponent, DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
 import { DialogComponent, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { Router } from '@angular/router';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeviceProfileNameAutocompleteComponent, EllipsisChipListDirective } from '../../../../../shared/public-api';
+import { DeviceProfileNameAutocompleteComponent, } from '../../../../../shared/public-api';
 import { EtherCatDataKey, EtherCatDeviceConfig, EtherCatRpcConfig, EtherCatValueKey } from '../../../models/public-api';
 import { EtherCatDataKeysPanelComponent } from '../ethercat-data-keys-panel/ethercat-data-keys-panel.component';
 import {
@@ -53,6 +47,7 @@ export interface EtherCatDeviceDialogData {
   connectorName?: string;
 }
 
+import { DataMappingComponent, DataMappingPanel, DataMappingRow } from '../../../../../shared/public-api';
 @Component({
   selector: 'tb-ethercat-device-dialog',
   templateUrl: './ethercat-device-dialog.component.html',
@@ -60,13 +55,17 @@ export interface EtherCatDeviceDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    DataMappingComponent,
+    DeviceViewSwitchComponent,
     CommonModule,
     SharedModule,
-    EllipsisChipListDirective,
     DeviceProfileNameAutocompleteComponent,
   ],
 })
 export class EtherCatDeviceDialogComponent extends DialogComponent<EtherCatDeviceDialogComponent, EtherCatDeviceConfig> {
+
+  /** Connection or data mapping: a saved device opens on its data mapping. */
+  view: DeviceDialogView = initialDeviceDialogView(!!this.data?.isEdit);
 
   readonly EtherCatValueKey = EtherCatValueKey;
   isEdit: boolean;
@@ -83,7 +82,6 @@ export class EtherCatDeviceDialogComponent extends DialogComponent<EtherCatDevic
     rpc: [[] as EtherCatRpcConfig[]],
   });
 
-  private popoverComponent: TbPopoverComponent<EtherCatDataKeysPanelComponent>;
 
   private readonly writeDialog = inject(MatDialog);
 
@@ -93,10 +91,6 @@ export class EtherCatDeviceDialogComponent extends DialogComponent<EtherCatDevic
     @Inject(MAT_DIALOG_DATA) public data: EtherCatDeviceDialogData,
     public dialogRef: MatDialogRef<EtherCatDeviceDialogComponent, EtherCatDeviceConfig>,
     private fb: FormBuilder,
-    private popoverService: TbPopoverService,
-    private renderer: Renderer2,
-    private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef,
     private matDialog: MatDialog,
   ) {
@@ -152,17 +146,21 @@ export class EtherCatDeviceDialogComponent extends DialogComponent<EtherCatDevic
     });
   }
 
-  manageKeys($event: Event, matButton: MatButton, keysType: EtherCatValueKey): void {
-    $event?.stopPropagation();
-    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
-      this.popoverComponent.hide();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-      return;
-    }
+  /** The data mapping rows: the lists this device maps, in order. */
+  readonly mappingRows: DataMappingRow[] = [
+    { key: EtherCatValueKey.TIMESERIES, label: 'gateway.gw-timeseries', chip: e => e.tag },
+    { key: EtherCatValueKey.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.tag },
+    { key: EtherCatValueKey.ATTRIBUTES_UPDATES, label: 'gateway.gw-attribute-updates', chip: e => e.tag },
+    { key: EtherCatValueKey.RPC, label: 'gateway.gw-rpc-methods', chip: e => e.method },
+  ];
 
+  /** The keys panel a row's edit button opens. */
+  readonly keysPanel: DataMappingPanel = {
+    component: EtherCatDataKeysPanelComponent,
+    context: row => this.keysContext(row.key as EtherCatValueKey),
+  };
+
+  private keysContext(keysType: EtherCatValueKey): Record<string, any> {
     const keysControl = this.deviceForm.get(keysType);
     const panelTitles = {
       [EtherCatValueKey.TIMESERIES]: 'gateway.gw-timeseries',
@@ -190,38 +188,7 @@ export class EtherCatDeviceDialogComponent extends DialogComponent<EtherCatDevic
         changed: () => this.cdr.markForCheck(),
       });
     }
-    this.keysPopupClosed = false;
-    this.popoverComponent = this.popoverService.displayPopover(
-      trigger,
-      this.renderer,
-      this.viewContainerRef,
-      EtherCatDataKeysPanelComponent,
-      'leftTop',
-      false,
-      null,
-      ctx,
-      {},
-      {},
-      {},
-      true
-    );
-    this.popoverComponent.tbComponentRef.instance.keysDataApplied
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((keysData: Array<EtherCatDataKey | EtherCatRpcConfig>) => {
-        this.popoverComponent.hide();
-        keysControl.patchValue(keysData as any);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
-    this.popoverComponent.tbComponentRef.instance.cancelled
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.popoverComponent.hide();
-      });
-    this.popoverComponent.tbHideStart
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.keysPopupClosed = true;
-      });
+    return ctx;
   }
+
 }
