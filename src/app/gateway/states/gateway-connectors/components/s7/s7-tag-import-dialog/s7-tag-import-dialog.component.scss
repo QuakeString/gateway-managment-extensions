@@ -87,7 +87,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #ff9800;
+  color: #f44336;
   font-weight: 500;
 }
 
@@ -158,4 +158,36 @@
 
 .text-muted {
   opacity: 0.6;
+}
+
+.duplicate-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff9800;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.warning-text {
+  color: #ff9800;
+  font-size: 12px;
+}
+
+.duplicate-detail {
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid rgba(255, 152, 0, .35);
+  border-radius: 4px;
+  flex-shrink: 0 !important;
+}
+
+.choice-cell {
+  width: 150px;
+  text-align: right;
+}
+
+.choice-toggle {
+  --mat-standard-button-toggle-height: 26px;
+  font-size: 12px;
 }
