@@ -18,27 +18,30 @@
   margin-right: 8px;
 }
 
-// It sits on the primary toolbar: a translucent track, white labels, and
-// a white pill under the chosen view.
+// It sits on the primary toolbar, the same colour in both themes: a
+// translucent track and pill and white labels, so it reads on that bar in
+// the light and the dark theme alike (a theme colour for the label went
+// white-on-white in the dark one).
 .st-device-view-switch {
   display: block;
   width: 340px;
 
   ::ng-deep {
     .mat-button-toggle-group.tb-toggle-header.tb-sliding-pill {
-      background: rgba(255, 255, 255, .16);
+      background: rgba(255, 255, 255, .12);
 
       &.tb-pill-active::before {
-        background: #fff;
+        background: rgba(255, 255, 255, .32);
       }
     }
 
     .mat-button-toggle .mat-button-toggle-label-content {
-      color: rgba(255, 255, 255, .9);
+      color: rgba(255, 255, 255, .72);
     }
 
     .mat-button-toggle-checked .mat-button-toggle-label-content {
-      color: var(--tb-primary, #187074);
+      color: #fff;
+      font-weight: 500;
     }
   }
 }
