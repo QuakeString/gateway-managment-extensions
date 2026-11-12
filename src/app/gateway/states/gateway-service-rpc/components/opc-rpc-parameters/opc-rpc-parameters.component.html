@@ -34,9 +34,9 @@
             <mat-select formControlName="type">
               <mat-select-trigger>
                 <div class="tb-flex align-center">
-                  <mat-icon class="tb-mat-18" [svgIcon]="valueTypes.get(argumentFormGroup.get('type').value)?.icon">
+                  <mat-icon class="tb-mat-18" [svgIcon]="$safeNavigationMigration(valueTypes.get(argumentFormGroup.get('type').value)?.icon)">
                   </mat-icon>
-                  <span>{{ valueTypes.get(argumentFormGroup.get('type').value)?.name | translate }}</span>
+                  <span>{{ $safeNavigationMigration(valueTypes.get(argumentFormGroup.get('type').value)?.name) | translate }}</span>
                 </div>
               </mat-select-trigger>
               <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">

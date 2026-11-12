@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, effect, input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   Direction,
@@ -34,6 +34,7 @@ import { MatTableDataSource } from '@angular/material/table';
     CommonModule,
     SharedModule,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./custom-statistics-table.component.scss']
 })
 export class CustomStatisticsTableComponent implements AfterViewInit {

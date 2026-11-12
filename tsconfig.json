@@ -9,7 +9,9 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "ignoreDeprecations": "6.0",
     "importHelpers": true,
     "skipLibCheck": true,
     "target": "ES2022",
@@ -25,6 +27,9 @@
       "node_modules/@types"
     ],
     "paths": {
+      "echarts/types/dist/*": [
+        "node_modules/echarts/types/dist/*"
+      ],
       "@angular/*": [
         "./node_modules/@angular/*"
       ],

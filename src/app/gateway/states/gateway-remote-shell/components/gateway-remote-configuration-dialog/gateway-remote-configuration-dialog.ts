@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
@@ -31,6 +31,7 @@ export interface GatewayRemoteConfigurationDialogData {
   selector: 'tb-gateway-remote-configuration-dialog',
   templateUrl: './gateway-remote-configuration-dialog.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule

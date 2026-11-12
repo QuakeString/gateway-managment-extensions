@@ -117,7 +117,7 @@
                 <input class="cell-input" [name]="col.key" [formControlName]="col.key"
                        [class.invalid]="isCellInvalid(col, item.control)"
                        [placeholder]="col.placeholder || ''"
-                       [style.text-transform]="uppercases(col, item.control.get(col.key)?.value) ? 'uppercase' : 'none'"
+                       [style.text-transform]="uppercases(col, $safeNavigationMigration(item.control.get(col.key)?.value)) ? 'uppercase' : 'none'"
                        (input)="onUppercaseInput(item.control, col)"
                        (keydown)="onCellKeydown($event)">
                 <mat-icon *ngIf="isCellInvalid(col, item.control)"

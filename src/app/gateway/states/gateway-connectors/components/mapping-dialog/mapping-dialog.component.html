@@ -16,7 +16,7 @@
 
 <div [formGroup]="mappingForm" class="key-mapping">
   <mat-toolbar color="primary">
-    <h2>{{ MappingTypeTranslationsMap.get(this.data?.mappingType) | translate}}<ng-container *ngIf="mappingDeviceLabel"> — {{ mappingDeviceLabel }}</ng-container></h2>
+    <h2>{{ MappingTypeTranslationsMap.get($safeNavigationMigration(this.data?.mappingType)) | translate}}<ng-container *ngIf="mappingDeviceLabel"> — {{ mappingDeviceLabel }}</ng-container></h2>
     <span class="flex-1"></span>
     <div [tb-help]="HelpLinkByMappingTypeMap.get(this.data.mappingType)"></div>
     <button mat-icon-button
@@ -28,7 +28,7 @@
   <div mat-dialog-content>
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-hint tb-primary-fill">
-        {{ MappingHintTranslationsMap.get(this.data?.mappingType) | translate }}
+        {{ MappingHintTranslationsMap.get($safeNavigationMigration(this.data?.mappingType)) | translate }}
       </div>
       <ng-container [ngSwitch]="data.mappingType">
         <ng-template [ngSwitchCase]="MappingType.DATA">

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, DestroyRef, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import {
   AttributeScope,
@@ -62,6 +62,7 @@ import { EditCustomCommandDialogData } from './models/gateway-statistics.model';
     CustomStatisticsTableComponent,
     GatewayStatisticsChartComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./gateway-statistics.component.scss']
 })
 export class GatewayStatisticsComponent implements AfterViewInit {

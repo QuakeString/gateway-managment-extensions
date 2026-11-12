@@ -21,15 +21,15 @@
         <mat-select formControlName="type">
           <mat-select-trigger>
             <div class="tb-flex align-center">
-              <mat-icon *ngIf="!rawData" class="tb-mat-18" [svgIcon]="valueTypes.get(valueTypeFormGroup.get('type').value)?.icon">
+              <mat-icon *ngIf="!rawData" class="tb-mat-18" [svgIcon]="$safeNavigationMigration(valueTypes.get(valueTypeFormGroup.get('type').value)?.icon)">
               </mat-icon>
-              <span>{{ (valueTypes.get(valueTypeFormGroup.get('type').value)?.name | translate) || ('gateway.raw' | translate) }}</span>
+              <span>{{ ($safeNavigationMigration(valueTypes.get(valueTypeFormGroup.get('type').value)?.name) | translate) || ('gateway.raw' | translate) }}</span>
             </div>
           </mat-select-trigger>
           <ng-container *ngIf="!rawData else raw">
             <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
               <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueType)?.icon }}"></mat-icon>
-              <span>{{ valueTypes.get(valueType)?.name | translate }}</span>
+              <span>{{ $safeNavigationMigration(valueTypes.get(valueType)?.name) | translate }}</span>
             </mat-option>
           </ng-container>
           <ng-template #raw>

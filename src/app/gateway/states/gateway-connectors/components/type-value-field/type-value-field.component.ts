@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -54,6 +54,7 @@ import { CommonModule } from '@angular/common';
       multi: true
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     SharedModule,
     CommonModule,

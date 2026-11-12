@@ -89,6 +89,8 @@ export function execute(
   return from(initialize(options, context.workspaceRoot)).pipe(
     switchMap(packager => {
       return packager.watch().pipe(
+        // the packager writes an ES module; the UI loads the SystemJS file made from it
+        switchMap(() => from<Promise<void>>(require(resolve(context.workspaceRoot, 'bundle.js')).bundle())),
         tap(() => {
           createServer(options, context);
         })
@@ -137,4 +139,5 @@ export function createServer(options: StaticServeOptions, context: BuilderContex
   });
 }
 
-export default createBuilder<Record<string, string> & StaticServeOptions>(execute);
+// 'as any': the architect package brings its own copy of rxjs, so the Observable types differ in name only
+export default createBuilder<Record<string, string> & StaticServeOptions>(execute as any);

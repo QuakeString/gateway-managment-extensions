@@ -43,7 +43,7 @@
         <button type="button"
                 mat-icon-button
                 color="primary"
-                [disabled]="action.disabled?.()"
+                [disabled]="$safeNavigationMigration(action.disabled?.())"
                 (click)="action.run()">
           <mat-icon>{{ action.icon }}</mat-icon>
         </button>

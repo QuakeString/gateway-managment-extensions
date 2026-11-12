@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, OnInit, ViewChild, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, forwardRef, OnInit, ViewChild, ChangeDetectorRef, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import {
   ControlValueAccessor,
@@ -49,6 +49,7 @@ import { DeviceProfileService } from '@core/public-api';
   }],
   standalone: true,
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

@@ -13,7 +13,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-import { Component, Type, ViewEncapsulation, ɵComponentDef, ɵNG_COMP_DEF } from '@angular/core';
+import { Component, Type, ViewEncapsulation, ɵComponentDef, ɵNG_COMP_DEF, ChangeDetectionStrategy } from '@angular/core';
 
 export const addLibraryStyles = (target: string) => {
   addStyleFromComponent(LibStylesEntryComponent, target);
@@ -24,6 +24,7 @@ export const addLibraryStyles = (target: string) => {
   template: '',
   styleUrls: ['./style.comp.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   encapsulation: ViewEncapsulation.None
 })
 class LibStylesEntryComponent {

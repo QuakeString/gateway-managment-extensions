@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { FormBuilder, FormControl, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -107,6 +107,7 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
   providers: [{ provide: ErrorStateMatcher, useClass: ForceErrorStateMatcher }, ReportStrategyVersionPipe],
   styleUrls: ['./gateway-connectors.component.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

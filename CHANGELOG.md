@@ -12,6 +12,15 @@ Sentient Gateway new enough to support them (named in the entry).
 
 ## [Unreleased]
 
+### Changed
+- Built for the Angular 22 SENTIENT UI (Angular 22, Material 22, TypeScript 6).
+  No visible change. This bundle needs a SENTIENT release on Angular 22; older
+  releases keep their own bundle.
+
+### Fixed
+- Modbus device dialog on gateways older than 3.5.2: the **Device profile**
+  field was empty and could not be filled, so a device could not be added.
+
 ### Added
 - S7 tag browser: fixed size, theme colours, sortable columns, every tag
   (paged, select-all covers the whole search), search in its own row,

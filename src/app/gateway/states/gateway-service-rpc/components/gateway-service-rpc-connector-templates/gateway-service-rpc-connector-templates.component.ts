@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { ConnectorType } from '../../../../shared/public-api';
 import {
   RPCTemplate,
@@ -31,6 +31,7 @@ import { KeyValueIsNotEmptyPipe, RpcTemplateArrayViewPipe } from '../../pipes/pu
   templateUrl: './gateway-service-rpc-connector-templates.component.html',
   styleUrls: ['./gateway-service-rpc-connector-templates.component.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

@@ -85,7 +85,7 @@
             {{ 'gateway.security-type' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let mapping" class="w-1/6">
-            <div tbTruncateWithTooltip>{{ mapping.security?.type | titlecase }}</div>
+            <div tbTruncateWithTooltip>{{ $safeNavigationMigration(mapping.security?.type) | titlecase }}</div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>

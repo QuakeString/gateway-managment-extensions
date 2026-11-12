@@ -25,13 +25,13 @@
             <mat-select formControlName="modifierType">
               <mat-select-trigger>
                 <div class="tb-flex align-center">
-                  <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(form.get('modifierType')!.value)?.icon"></mat-icon>
-                  <span>{{ ModifierTypesMap.get(form.get('modifierType')!.value)?.name | translate }}</span>
+                  <mat-icon class="tb-mat-18" [svgIcon]="$safeNavigationMigration(ModifierTypesMap.get(form.get('modifierType')!.value)?.icon)"></mat-icon>
+                  <span>{{ $safeNavigationMigration(ModifierTypesMap.get(form.get('modifierType')!.value)?.name) | translate }}</span>
                 </div>
               </mat-select-trigger>
               <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
                 <mat-icon class="tb-mat-20" svgIcon="{{ ModifierTypesMap.get(modifierType)?.icon }}"></mat-icon>
-                <span>{{ ModifierTypesMap.get(modifierType)?.name | translate }}</span>
+                <span>{{ $safeNavigationMigration(ModifierTypesMap.get(modifierType)?.name) | translate }}</span>
               </mat-option>
             </mat-select>
           </mat-form-field>

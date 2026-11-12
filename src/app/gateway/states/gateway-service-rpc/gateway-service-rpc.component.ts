@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -42,6 +42,7 @@ import { SocketRpcParametersComponent } from './components/socket-rpc-parameters
   templateUrl: './gateway-service-rpc.component.html',
   styleUrls: ['./gateway-service-rpc.component.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,
