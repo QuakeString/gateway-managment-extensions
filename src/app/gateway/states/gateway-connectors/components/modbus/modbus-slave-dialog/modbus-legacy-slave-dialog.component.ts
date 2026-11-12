@@ -32,8 +32,12 @@ import { AppState, deleteNullProperties } from '@core/public-api';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
+  DeviceProfileNameAutocompleteComponent,
   ReportStrategyComponent
 } from '../../../../../shared/components/public-api';
+import {
+  TruncateWithTooltipDirective
+} from '../../../../../shared/directives/public-api';
 import {
   ModbusSlaveDialogAbstract
 } from './modbus-slave-dialog.abstract';
@@ -53,6 +57,9 @@ import { DeviceViewSwitchComponent } from '../../../../../shared/public-api';
     ModbusSecurityConfigComponent,
     GatewayPortTooltipPipe,
     ReportStrategyComponent,
+    // the template is shared with the current dialog, so everything it uses must be imported here too
+    TruncateWithTooltipDirective,
+    DeviceProfileNameAutocompleteComponent,
   ],
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })
