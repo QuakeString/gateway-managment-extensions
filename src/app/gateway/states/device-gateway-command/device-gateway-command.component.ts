@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DeviceService } from '@core/public-api';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -24,6 +24,7 @@ import { SharedModule } from '@shared/public-api';
   templateUrl: './device-gateway-command.component.html',
   styleUrls: ['./device-gateway-command.component.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule

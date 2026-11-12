@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { PageComponent, AttributeData, AttributeScope, SharedModule } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState, UtilsService, WINDOW, AttributeService, DeviceService } from '@core/public-api';
@@ -61,6 +61,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './gateway-form.component.html',
   styleUrls: ['./gateway-form.component.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

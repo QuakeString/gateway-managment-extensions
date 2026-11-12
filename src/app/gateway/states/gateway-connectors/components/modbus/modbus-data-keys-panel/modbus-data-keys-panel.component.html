@@ -28,7 +28,7 @@
   <div class="tb-flex">
     <div class="title-container tb-flex">Key:
       <span class="key-label" tbTruncateWithTooltip>{{ row.get('tag')?.value }}</span>
-      <tb-copy-button class="st-key-copy" [copyText]="row.get('tag')?.value" icon="content_copy" miniButton
+      <tb-copy-button class="st-key-copy" [copyText]="$safeNavigationMigration(row.get('tag')?.value)" icon="content_copy" miniButton
                       tooltipText="{{ 'action.copy' | translate }}" tooltipPosition="above"/>
     </div>
     <div class="title-container">Address:
@@ -61,7 +61,7 @@
         <div class="fixed-title-width">Function Code</div>
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="functionCode">
-            <mat-option *ngFor="let code of (functionCodesMap.get(row.get('id')?.value) || defaultFunctionCodes)" [value]="code">
+            <mat-option *ngFor="let code of (functionCodesMap.get($safeNavigationMigration(row.get('id')?.value)) || defaultFunctionCodes)" [value]="code">
               {{ ModbusFunctionCodeTranslationsMap.get(code) | translate }}
             </mat-option>
           </mat-select>

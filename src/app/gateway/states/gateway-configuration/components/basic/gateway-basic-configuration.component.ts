@@ -25,7 +25,8 @@ import {
   OnDestroy,
   Output,
   SimpleChanges,
-  ViewChild
+  ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -86,6 +87,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     GatewayLogsConfigurationComponent,
     GatewaySecurityConfigurationComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

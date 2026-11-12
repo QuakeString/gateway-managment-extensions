@@ -19,7 +19,8 @@ import {
   Component,
   EventEmitter,
   forwardRef,
-  Output
+  Output,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -58,6 +59,7 @@ import { generateSecret } from '@core/public-api';
     }
   ],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, OnDestroy } from '@angular/core';
+import { Component, forwardRef, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -38,6 +38,7 @@ import { GatewayConfigValue } from '../../models/public-api';
     CommonModule,
     SharedModule,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

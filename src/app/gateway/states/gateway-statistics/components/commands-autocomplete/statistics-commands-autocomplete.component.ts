@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, input, output, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, input, output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -38,6 +38,7 @@ import { isEqual } from '@core/public-api';
     multi: true
   }],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

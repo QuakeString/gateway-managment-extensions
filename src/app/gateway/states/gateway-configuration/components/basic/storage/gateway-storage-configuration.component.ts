@@ -13,7 +13,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
-import { AfterViewInit, Component, EventEmitter, forwardRef, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, forwardRef, Output, ChangeDetectionStrategy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -50,6 +50,7 @@ import { isDefinedAndNotNull } from "@core/public-api";
     }
   ],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

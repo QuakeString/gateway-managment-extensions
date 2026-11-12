@@ -230,7 +230,7 @@
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               [withReportStrategy]="connectorForm.get('configVersion').value | withReportStrategy"
-              [gatewayDeviceId]="device?.id"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
               [connectorName]="connectorForm.get('name').value"
               (initialized)="basicConfigInitSubject.next()"
             />
@@ -240,7 +240,7 @@
                 formControlName="basicConfig"
                 [generalTabContent]="generalTabContent"
                 [withReportStrategy]="connectorForm.get('configVersion').value | withReportStrategy"
-                [gatewayDeviceId]="device?.id"
+                [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
                 [connectorName]="connectorForm.get('name').value"
               />
             </ng-template>
@@ -250,8 +250,8 @@
               *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig : ConnectorType.MODBUS else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -319,8 +319,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -338,8 +338,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -357,8 +357,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #finsLegacy>
@@ -376,8 +376,8 @@
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               [gatewayVersion]="gatewayVersion"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
           </ng-container>
@@ -387,8 +387,8 @@
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               [gatewayVersion]="gatewayVersion"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
           </ng-container>
@@ -398,8 +398,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #mcprotocolLegacy>
@@ -417,8 +417,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -436,8 +436,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -455,8 +455,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
@@ -474,8 +474,8 @@
               class="h-full"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
-              [gatewayDeviceId]="device?.id"
-              [connectorName]="connectorForm.get('name')?.value"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
               (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #snmpLegacy>

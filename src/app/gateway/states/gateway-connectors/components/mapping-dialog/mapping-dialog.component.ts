@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, Renderer2, ViewContainerRef } from '@angular/core';
+import { Component, Inject, OnDestroy, Renderer2, ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
   OpcUaNodeBrowserDialogComponent,
@@ -86,6 +86,7 @@ import { opcUaAdapter } from '../../../../shared/components/add-to-write/write-a
   templateUrl: './mapping-dialog.component.html',
   styleUrls: ['./mapping-dialog.component.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

@@ -22,7 +22,8 @@ import {
   Renderer2,
   SecurityContext,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import * as echarts from 'echarts/core';
 import { EChartsOption, SeriesOption } from 'echarts';
@@ -61,6 +62,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './gateway-statistics-chart.component.html',
   standalone: true,
   styleUrls: ['./gateway-statistics-chart.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
     SharedModule,

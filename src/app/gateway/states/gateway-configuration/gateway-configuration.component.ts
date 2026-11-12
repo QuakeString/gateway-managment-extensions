@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, AfterViewInit, DestroyRef } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, AfterViewInit, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -69,6 +69,7 @@ import { GatewayConnectorVersionMappingUtil } from '../gateway-connectors/utils/
     GatewayBasicConfigurationComponent,
     GatewayAdvancedConfigurationComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [GatewayDeviceCredentialsService]
 })
 export class GatewayConfigurationComponent implements AfterViewInit {
