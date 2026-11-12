@@ -14,8 +14,10 @@ SENTIENT's module map (`modules-map.ts`) at load time.
   release → `scripts/publish-ui-types.sh <release-tag>` in the SENTIENT repo
   → bump the pin here → rebuild.
 - `@angular/*`, `@ngrx/store`, echarts pins mirror SENTIENT `ui-ngx` exactly;
-  the runtime supplies them. The `thingsboard/echarts` tarball URL is the
-  shared fork — it is correct, don't "fix" it.
+  the runtime supplies them. echarts comes from our fork `QuakeString/echarts`
+  (tag `5.5.1-TB`) and `resolutions` points its zrender at `QuakeString/zrender`
+  (tag `5.5.0-TB`); the fork does not export its type entry points, hence the
+  `echarts/types/dist/*` path in `tsconfig.json`.
 - Four places hard-code the types package path: `tsconfig.json` paths,
   `src/tsconfig.lib.json` rootDirs, `bundle.js`
   (reads `modules-map.ts` to decide externals), `load-tb-classes.js`

@@ -20,7 +20,7 @@
     "npm": "Please use yarn instead of NPM to install dependencies"
   },
   "dependencies": {
-    "echarts": "https://github.com/thingsboard/echarts/archive/5.5.1-TB.tar.gz",
+    "echarts": "https://github.com/QuakeString/echarts/archive/5.5.1-TB.tar.gz",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -75,11 +75,14 @@
     "prettier": "^2.8.3",
     "rollup": "^4.24.0",
     "rxjs": "~7.8.1",
-    "tailwindcss": "^3.4.14",
     "sentient-ui-types": "https://github.com/QuakeString/sentient-ui-types.git#claude/project-thread-el37en",
+    "tailwindcss": "^3.4.14",
     "ts-node": "^10.9.2",
     "tslib": "^2.7.0",
     "typescript": "~6.0.2",
     "zone.js": "~0.15.1"
+  },
+  "resolutions": {
+    "zrender": "https://github.com/QuakeString/zrender/archive/5.5.0-TB.tar.gz"
   }
 }

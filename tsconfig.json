@@ -27,6 +27,9 @@
       "node_modules/@types"
     ],
     "paths": {
+      "echarts/types/dist/*": [
+        "node_modules/echarts/types/dist/*"
+      ],
       "@angular/*": [
         "./node_modules/@angular/*"
       ],
