@@ -52,3 +52,12 @@ SENTIENT's module map (`modules-map.ts`) at load time.
 ## Ship
 Copy the built bundle to SENTIENT `data/resources/js_modules/` (committed
 artifact there); SENTIENT upserts it into its resource table on start/upgrade.
+
+## Key sheet fill-drag
+- `shared/components/spreadsheet-keys/spreadsheet-fill.ts` holds the fill rules
+  (pure functions, no Angular). A column opts in with `fill:` in its
+  `SpreadsheetColumnConfig`: `'series'` for key names, `'increment'`, or the
+  connector's address rule. No `fill` means copy. A new connector panel needs
+  its own address rule there.
+- New rows come from the host through `addRowsRequested`; the sheet moves them
+  to the end of the list (the mapping panel inserts new keys first).

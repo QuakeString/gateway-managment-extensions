@@ -38,6 +38,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { lastNumberFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import {
   IEC61850ControlModel,
   IEC61850DataKey,
@@ -176,8 +177,8 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
         { value: 'operation', label: 'Operation' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'Method', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'setValue' },
-        { key: 'reference', label: 'Reference', type: 'input', sortable: true, width: 'minmax(200px, 1.5fr)', placeholder: 'GenericIO/GGIO1.AnIn1.mag.f' },
+        { key: 'method', label: 'Method', type: 'input', fill: 'series', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'setValue' },
+        { key: 'reference', label: 'Reference', type: 'input', fill: lastNumberFill, sortable: true, width: 'minmax(200px, 1.5fr)', placeholder: 'GenericIO/GGIO1.AnIn1.mag.f' },
         { key: 'fc', label: 'FC', type: 'select', sortable: true, width: 'minmax(70px, 0.5fr)',
           options: this.fcOptions.map(fc => ({ value: fc, label: fc })) },
         { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)',
@@ -199,8 +200,8 @@ export class IEC61850DataKeysPanelComponent implements OnInit {
       { value: 'valueType', label: 'Value Type' },
     ];
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.1fr)', placeholder: 'analog_input_1' },
-      { key: 'reference', label: 'Reference', type: 'input', sortable: true, width: 'minmax(200px, 1.5fr)', placeholder: 'GenericIO/GGIO1.AnIn1.mag.f' },
+      { key: 'tag', label: 'Key', type: 'input', fill: 'series', sortable: true, width: 'minmax(120px, 1.1fr)', placeholder: 'analog_input_1' },
+      { key: 'reference', label: 'Reference', type: 'input', fill: lastNumberFill, sortable: true, width: 'minmax(200px, 1.5fr)', placeholder: 'GenericIO/GGIO1.AnIn1.mag.f' },
       { key: 'fc', label: 'FC', type: 'select', sortable: true, width: 'minmax(70px, 0.5fr)',
         options: this.fcOptions.map(fc => ({ value: fc, label: fc })) },
       { key: 'valueType', label: 'Value Type', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)',

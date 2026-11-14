@@ -41,6 +41,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig, SelectOption } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { ethernetIpTagFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import {
   EthernetIPDataKey,
   EthernetIPDataType,
@@ -151,10 +152,10 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
         { value: 'plcTag', label: 'gateway.eip-plc-tag' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'readTemperature' },
+        { key: 'method', label: 'gateway.method', type: 'input', fill: 'series', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'readTemperature' },
         { key: 'operation', label: 'gateway.gw-operation', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)', translateLabels: true,
           options: [{ value: 'read', label: 'gateway.gw-read' }, { value: 'write', label: 'gateway.gw-write' }] },
-        { key: 'plcTag', label: 'gateway.eip-plc-tag', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)',
+        { key: 'plcTag', label: 'gateway.eip-plc-tag', type: 'input', fill: ethernetIpTagFill(() => this.isSLC), sortable: true, width: 'minmax(140px, 1.2fr)',
           placeholder: this.isSLC ? 'N7:0' : 'MotorSpeed' },
         { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
           options: [{ value: null as any, label: 'gateway.gw-auto' }, ...this.dataTypes.map(t => ({ value: t, label: t }))] },
@@ -172,8 +173,8 @@ export class EthernetIPDataKeysPanelComponent implements OnInit {
     // calibration is offered on every row (backend skips non-
     // numeric reads at runtime).
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'plcTag', label: 'gateway.eip-plc-tag', type: 'input', sortable: true, width: 'minmax(180px, 1.4fr)',
+      { key: 'tag', label: 'gateway.gw-key', type: 'input', fill: 'series', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'temperature' },
+      { key: 'plcTag', label: 'gateway.eip-plc-tag', type: 'input', fill: ethernetIpTagFill(() => this.isSLC), sortable: true, width: 'minmax(180px, 1.4fr)',
         placeholder: this.isSLC ? 'N7:0' : 'Program:MainProgram.Temperature' },
       ...calibrationColumns(() => true),
       ...reportStrategyColumns(),

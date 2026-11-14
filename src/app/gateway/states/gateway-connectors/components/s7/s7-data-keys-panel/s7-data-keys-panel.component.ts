@@ -41,6 +41,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { s7AddressFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import { S7DataKey, S7RpcConfig, S7ValueKey, S7ValueType } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
 
@@ -195,8 +196,8 @@ export class S7DataKeysPanelComponent implements OnInit {
         { value: 'operation', label: 'gateway.gw-operation' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
-        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: isS7AbsoluteAddress, errorText: 'gateway.s7-invalid-address' },
+        { key: 'method', label: 'gateway.method', type: 'input', fill: 'series', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
+        { key: 'address', label: 'gateway.address', type: 'input', fill: s7AddressFill, sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'DB1.DBD0', uppercase: isS7AbsoluteAddress, errorText: 'gateway.s7-invalid-address' },
         { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
           options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
         { key: 'operation', label: 'gateway.gw-operation', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
@@ -211,8 +212,8 @@ export class S7DataKeysPanelComponent implements OnInit {
       { value: 'valueType', label: 'gateway.gw-value-type' },
     ];
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: isS7AbsoluteAddress, errorText: 'gateway.s7-invalid-address' },
+      { key: 'tag', label: 'gateway.gw-key', type: 'input', fill: 'series', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
+      { key: 'address', label: 'gateway.address', type: 'input', fill: s7AddressFill, sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'DB1.DBD0', uppercase: isS7AbsoluteAddress, errorText: 'gateway.s7-invalid-address' },
       { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)', translateLabels: true,
         options: [{ value: '', label: 'gateway.gw-auto' }, ...this.valueTypes.map(t => ({ value: t, label: t }))] },
       ...calibrationColumns((row) => this.canCalibrate(row)),

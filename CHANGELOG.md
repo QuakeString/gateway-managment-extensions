@@ -18,10 +18,29 @@ Sentient Gateway new enough to support them (named in the entry).
   releases keep their own bundle.
 
 ### Fixed
+- Key sheet import on OPC UA, MQTT and the other mapping connectors wrote
+  the imported rows over the last existing keys and left empty keys at the
+  top. Imported keys now go to the end of the list.
+- Key sheet: the key count, the selection count and the import result no
+  longer push the rows down when they appear; they show in a status line
+  under the sheet.
 - Modbus device dialog on gateways older than 3.5.2: the **Device profile**
   field was empty and could not be filled, so a device could not be added.
 
 ### Added
+- Key sheet (the spreadsheet view of time series, attributes, attribute
+  updates and RPC keys): fill by dragging, as in a spreadsheet. Drag the
+  square in the corner of the selected cell down or up to repeat it; click a
+  row number and drag its square to carry the whole row; drag past the last
+  row to add keys. Key names count their trailing number (`temp9` to
+  `temp10`), dropdowns and numbers copy, and each connector steps its
+  address by the size of the data type: Modbus by registers (16-bit 1,
+  32-bit 2, 64-bit 4), S7 and EtherCAT by bytes and bits (`DBX0.7` to
+  `DBX1.0`), Mitsubishi and Omron by words (hex for X, Y, B, W), PROFINET
+  by type width, OPC UA by the node id number, SNMP by the OID, DNP3 by
+  point index. The cells show what will be written before the drop. Ctrl
+  copies without counting, Escape cancels, Ctrl+Z or **Undo** takes the
+  fill back.
 - S7 tag browser: fixed size, theme colours, sortable columns, every tag
   (paged, select-all covers the whole search), search in its own row,
   fullscreen, and the certificate pin as a shield icon. Keys are named as

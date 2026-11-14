@@ -42,6 +42,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { mcAddressFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import {
   McDataKey,
   McRpcConfig,
@@ -228,8 +229,8 @@ export class McProtocolDataKeysPanelComponent implements OnInit {
         { value: 'operation', label: 'gateway.gw-operation' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
-        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'D102', errorText: 'gateway.mcprotocol-invalid-address' },
+        { key: 'method', label: 'gateway.method', type: 'input', fill: 'series', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'setValue' },
+        { key: 'address', label: 'gateway.address', type: 'input', fill: mcAddressFill, sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'D102', errorText: 'gateway.mcprotocol-invalid-address' },
         { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
           errorText: 'gateway.mcprotocol-bool-only',
           options: valueTypeOptions },
@@ -245,8 +246,8 @@ export class McProtocolDataKeysPanelComponent implements OnInit {
       { value: 'valueType', label: 'gateway.gw-value-type' },
     ];
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
-      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'D100', errorText: 'gateway.mcprotocol-invalid-address' },
+      { key: 'tag', label: 'gateway.gw-key', type: 'input', fill: 'series', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'temperature' },
+      { key: 'address', label: 'gateway.address', type: 'input', fill: mcAddressFill, sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'D100', errorText: 'gateway.mcprotocol-invalid-address' },
       { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)', translateLabels: true,
         errorText: 'gateway.mcprotocol-bool-only',
         options: valueTypeOptions },

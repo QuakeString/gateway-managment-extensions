@@ -26,6 +26,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  signal,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -41,12 +42,34 @@ import { TranslateService } from '@ngx-translate/core';
 import * as XLSX from 'xlsx';
 import { SelectOption, SortDirection, SortFieldOption, SpreadsheetColumnConfig } from './spreadsheet-keys.models';
 import { WriteTarget } from '../add-to-write/add-to-write.models';
+import { computeFill } from './spreadsheet-fill';
 
 interface ActiveCell {
   control: FormGroup;
   key: string;
 }
 
+/** A fill being dragged, or the one just dropped (it stays tinted a moment). */
+interface FillRange {
+  mode: 'row' | 'cell';
+  /** The dragged column; null carries whole rows. */
+  key: string | null;
+  /** Indexes into the rows the search shows; `to` past the end means new rows. */
+  from: number;
+  to: number;
+  /** Ctrl held: copy without counting. */
+  plain: boolean;
+}
+
+interface FillUndo {
+  rows: { control: FormGroup; raw: any; cells: Map<string, any> }[];
+  added: FormGroup[];
+}
+
+const FILL_HANDLE_SIZE = 10;
+const FILL_MAX_NEW_ROWS = 500;
+const FILL_SCROLL_MS = 50;
+const FILL_DONE_MS = 700;
 const COLUMN_RESIZE_STEP = 12;
 const COLUMN_MIN_WIDTH = 40;
 const IMPORT_TRUE_VALUES = new Set(['true', '1', 'yes', 'y', 'x', 'on']);
@@ -118,7 +141,20 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
   resizingColumnKey: string | null = null;
   private stopColumnResize: (() => void) | null = null;
 
-  importStatus: { key: string; params?: Record<string, any>; error?: boolean } | null = null;
+  importStatus: { key: string; params?: Record<string, any>; error?: boolean; undo?: boolean } | null = null;
+
+  // Fill-drag: the range under the mouse while a corner handle is dragged,
+  // then (briefly) the range that was filled.
+  readonly fillRange = signal<FillRange | null>(null);
+  /** Preview of the rows a drag past the last row would add, one text per column. */
+  readonly fillGhostRows = signal<string[][]>([]);
+  /** What the drag will write into the rows it covers: row index → column key → text. */
+  private readonly fillPreview = signal<Map<number, Record<string, string>>>(new Map());
+  readonly filling = signal(false);
+  private fillUndo: FillUndo | null = null;
+  private stopFill: (() => void) | null = null;
+  private fillDoneTimer: any = null;
+  private swallowRowClick = false;
 
   private searchSub: any;
 
@@ -155,6 +191,8 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopColumnResize?.();
+    this.stopFill?.();
+    clearTimeout(this.fillDoneTimer);
     if (this.isFullscreen) {
       this.removeFullscreenClass();
     }
@@ -305,6 +343,18 @@ export class SpreadsheetKeysComponent implements OnInit, OnChanges, OnDestroy {
 .cdk-overlay-pane.spreadsheet-fullscreen-pane {
   z-index: 999 !important;
 }
+.st-fill-tip {
+  position: fixed;
+  z-index: 100000;
+  pointer-events: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font: 500 12px Roboto, "Helvetica Neue", sans-serif;
+  white-space: nowrap;
+  color: #fff;
+  background: #37474f;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
 body.st-col-resizing,
 body.st-col-resizing * {
   cursor: col-resize !important;
@@ -391,6 +441,10 @@ body.tb-dark ${hostSel} input[type="number"] {
 
   selectRow(form: FormGroup, event: MouseEvent): void {
     event.stopPropagation();
+    if (this.swallowRowClick) {   // the click that ends a fill-drag on its own row
+      this.swallowRowClick = false;
+      return;
+    }
     if (event.shiftKey && this.lastSelectedRowControl) {
       const ids = this.displayedControls.map(d => d.control);
       const startIdx = ids.indexOf(this.lastSelectedRowControl);
@@ -427,7 +481,12 @@ body.tb-dark ${hostSel} input[type="number"] {
 
   /** Mouse down inside a cell: the row becomes the (implicit) selection and the
    *  cell becomes active in edit mode — the native input takes the click. */
-  onCellMousedown(form: FormGroup, col: SpreadsheetColumnConfig): void {
+  onCellMousedown(form: FormGroup, col: SpreadsheetColumnConfig, event?: MouseEvent): void {
+    if (event && this.isActiveCell(form, col.key) && this.onFillHandle(event)) {
+      this.startFill('cell', form, col.key, event);
+      return;
+    }
+    this.forgetFill();
     if (!this.selectedRowControls.has(form) || this.selectedRowControls.size !== 1) {
       this.selectedRowControls.clear();
       this.selectedRowControls.add(form);
@@ -467,6 +526,7 @@ body.tb-dark ${hostSel} input[type="number"] {
 
   deleteSelectedRows(): void {
     if (this.selectedRowControls.size === 0) return;
+    this.forgetFill();
     const rows = Array.from(this.selectedRowControls);
     this.deleteRowsRequested.emit(rows);
     this.selectedRowControls.clear();
@@ -549,6 +609,11 @@ body.tb-dark ${hostSel} input[type="number"] {
     if (ctrl && !event.shiftKey && (event.key === 'a' || event.key === 'A')) {
       event.preventDefault();
       this.selectAllRows();
+      return;
+    }
+    if (ctrl && !event.shiftKey && (event.key === 'z' || event.key === 'Z') && this.fillUndo) {
+      event.preventDefault();
+      this.undoFill();
       return;
     }
     if (event.key === 'Delete' && this.explicitRowSelection && this.selectedRowControls.size > 0) {
@@ -742,6 +807,7 @@ body.tb-dark ${hostSel} input[type="number"] {
 
   private enterEditMode(opts: { selectAll?: boolean; caretEnd?: boolean }): void {
     if (!this.activeCell) return;
+    this.forgetFill();
     this.setActiveCell(this.activeCell.control, this.activeCell.key, true, opts);
   }
 
@@ -1006,11 +1072,11 @@ body.tb-dark ${hostSel} input[type="number"] {
       this.setImportStatus('gateway.keys-import-empty', undefined, true);
       return;
     }
-    const before = this.keysFormArray.length;
-    this.addRowsRequested.emit(dataRows.length);
-    const added = this.keysFormArray.length - before;
+    this.forgetFill();
+    const addedRows = this.appendRows(dataRows.length);
+    const added = addedRows.length;
     for (let i = 0; i < added; i++) {
-      const row = this.keysFormArray.at(before + i) as FormGroup;
+      const row = addedRows[i];
       const source = dataRows[i];
       for (const { col, index } of mapping) {
         this.applyImportedValue(col, row, source[index]);
@@ -1071,7 +1137,335 @@ body.tb-dark ${hostSel} input[type="number"] {
   }
 
   clearImportStatus(): void {
+    this.fillUndo = null;
     this.importStatus = null;
+    this.cd.markForCheck();
+  }
+
+  // ---- Fill-drag -------------------------------------------------------------
+  // Dragging the square in the corner of the active cell repeats that cell
+  // down (or up) its column; the square of a selected row number carries the
+  // whole row. Each column's `fill` rule says how its value continues: copy,
+  // count a trailing number, or the connector's own address step. Dragging
+  // past the last row adds keys. Ctrl copies without counting; Escape cancels.
+
+  /** The single selected row whose number cell shows the fill handle. */
+  showsRowFillHandle(form: FormGroup): boolean {
+    return this.explicitRowSelection && this.selectedRowControls.size === 1 && this.selectedRowControls.has(form);
+  }
+
+  onRowNumberMousedown(form: FormGroup, event: MouseEvent): void {
+    if (this.showsRowFillHandle(form) && this.onFillHandle(event)) {
+      this.swallowRowClick = true;
+      this.startFill('row', form, null, event);
+    }
+  }
+
+  /** Tints the cells a drag will fill (and, for a moment, the ones it filled). */
+  isFillTarget(rowIdx: number, key: string | null): boolean {
+    const range = this.fillRange();
+    if (!range || rowIdx === range.from) return false;
+    const inRows = range.to > range.from
+      ? rowIdx > range.from && rowIdx <= range.to
+      : rowIdx < range.from && rowIdx >= range.to;
+    return inRows && (range.mode === 'row' || key === range.key);
+  }
+
+  /** Text shown over a cell the drag will write; null leaves the cell as it is. */
+  fillPreviewText(rowIdx: number, key: string): string | null {
+    return this.fillPreview().get(rowIdx)?.[key] ?? null;
+  }
+
+  /** The handle is drawn by CSS inside the cell's bottom-right corner, so a
+   *  press there lands on the cell itself, never on its input. */
+  private onFillHandle(event: MouseEvent): boolean {
+    const cell = event.currentTarget as HTMLElement | null;
+    if (!cell || event.button !== 0 || event.target !== cell) return false;
+    const rect = cell.getBoundingClientRect();
+    return rect.right - event.clientX <= FILL_HANDLE_SIZE && rect.bottom - event.clientY <= FILL_HANDLE_SIZE;
+  }
+
+  private fillSnapshot(control: FormGroup): Record<string, any> {
+    const row: Record<string, any> = { ...control.getRawValue() };
+    this.columns.forEach(col => row[col.key] = this.getCellValue(col, control));
+    return row;
+  }
+
+  private startFill(mode: 'row' | 'cell', control: FormGroup, key: string | null, event: MouseEvent): void {
+    const wrapper = this.spreadsheetRoot?.nativeElement.querySelector('.spreadsheet-wrapper') as HTMLElement | null;
+    const from = this.filteredControls.findIndex(f => f.control === control);
+    if (!wrapper || from < 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.stopFill?.();
+    clearTimeout(this.fillDoneTimer);   // the tint of the last fill must not end this drag
+    this.forgetFill();
+    this.exitEditMode(true);
+
+    const seed = control;
+    const targets = this.filteredControls.map(f => f.control);
+    const rows = targets.map(c => this.fillSnapshot(c));
+    // New rows land at the end of the list, so they only make sense while
+    // the sheet shows every key in its own order.
+    const canAppend = !this.sortField && !(this.searchControl.value || '').trim();
+    const maxIdx = rows.length - 1 + (canAppend ? FILL_MAX_NEW_ROWS : 0);
+    const doc = wrapper.ownerDocument;
+    const tip = doc.createElement('div');
+    tip.className = 'st-fill-tip';
+    tip.style.display = 'none';
+    // Inside the sheet, not on <body>: a full-screen panel sits above the page.
+    this.spreadsheetRoot.nativeElement.appendChild(tip);
+
+    let lastX = event.clientX;
+    let lastY = event.clientY;
+    let slow = 0;
+    const plan = (range: FillRange) => computeFill({
+      columns: this.columns, rows, from: range.from, to: range.to, mode: range.mode, key: range.key ?? undefined, plain: range.plain,
+    });
+    const indexAt = (clientY: number): number => {
+      const first = this.cellElement(0, 0);
+      if (!first) return from;
+      const rect = first.getBoundingClientRect();
+      return Math.floor((clientY - rect.top) / (rect.height || 28));
+    };
+    const show = (to: number, plain: boolean) => {
+      to = Math.max(0, Math.min(maxIdx, to));
+      const current = this.fillRange();
+      if (!current || current.to !== to || current.plain !== plain) {
+        this.ensureRowRendered(Math.min(to, rows.length - 1));
+        const range: FillRange = { mode, key, from, to, plain };
+        const result = plan(range);
+        const ghosts: string[][] = [];
+        const preview = new Map<number, Record<string, string>>();
+        result.forEach((patch, idx) => {
+          const target = targets[idx];
+          if (!target) {
+            // A new key: cells the seed row does not use stay empty.
+            ghosts.push(this.columns.map(col => this.isCellVisible(col, seed) ? this.fillText(col, seed, patch[col.key]) : ''));
+            return;
+          }
+          const texts: Record<string, string> = {};
+          for (const col of this.columns) {
+            if (col.key in patch && col.type !== 'checkbox' && this.takesFill(col, target, patch[col.key])) {
+              texts[col.key] = this.fillText(col, target, patch[col.key]);
+            }
+          }
+          preview.set(idx, texts);
+        });
+        this.fillRange.set(range);
+        this.fillGhostRows.set(ghosts);
+        this.fillPreview.set(preview);
+        const count = Math.abs(to - from);
+        if (count) {
+          const col = this.columns.find(c => c.key === key) ?? this.columns[0];
+          const value = col ? (result.get(to) ?? {})[col.key] : '';
+          const added = Math.max(0, to - (rows.length - 1));
+          tip.textContent = [
+            this.fillText(col, seed, value),
+            this.translate.instant(added ? 'gateway.keys-fill-tip-new' : 'gateway.keys-fill-tip', { count, added }),
+            ...(plain ? [this.translate.instant('gateway.keys-fill-tip-copy')] : []),
+          ].filter(t => t !== '').join('  ·  ');
+        }
+        tip.style.display = count ? '' : 'none';
+        if (ghosts.length) {
+          // Keep the newest preview row in view without waiting for the timer.
+          this.cd.detectChanges();
+          if (to === maxIdx || lastY >= wrapper.getBoundingClientRect().bottom) {
+            wrapper.scrollTop = wrapper.scrollHeight;
+          }
+        }
+      }
+      tip.style.left = `${lastX + 14}px`;
+      tip.style.top = `${lastY + 16}px`;
+    };
+    // `scroll` is true on the timer: the pointer rests outside the sheet, so
+    // the sheet scrolls towards it and, at its end, grows row by row.
+    const step = (scroll: boolean, plain: boolean) => {
+      const rect = wrapper.getBoundingClientRect();
+      const top = rect.top + 28;                       // below the sticky header
+      const bottom = rect.top + wrapper.clientHeight;  // above a horizontal scrollbar
+      const current = this.fillRange()?.to ?? from;
+      let to: number;
+      if (lastY >= bottom) {
+        const atEnd = wrapper.scrollTop + wrapper.clientHeight >= wrapper.scrollHeight - 1;
+        if (scroll && !atEnd) wrapper.scrollTop += 28;
+        // A sheet with nothing to scroll grows in place, so the pointer's
+        // distance below it counts row for row.
+        const grows = wrapper.scrollHeight <= wrapper.clientHeight + 1;
+        to = Math.max(indexAt(grows ? lastY : bottom - 2), current);
+        if (scroll && atEnd && ++slow % 3 === 0) to = Math.max(to, rows.length - 1) + 1;
+        if (!canAppend) to = Math.min(to, rows.length - 1);
+      } else if (lastY <= top) {
+        if (scroll) wrapper.scrollTop -= 28;
+        to = Math.min(indexAt(top + 2), current);
+      } else {
+        to = indexAt(lastY);
+      }
+      show(to, plain);
+    };
+
+    let plainNow = event.ctrlKey || event.metaKey;
+    const onMove = (e: MouseEvent) => {
+      lastX = e.clientX;
+      lastY = e.clientY;
+      plainNow = e.ctrlKey || e.metaKey;
+      step(false, plainNow);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Cancels the drag only: the panel behind must not close on this key.
+        e.stopImmediatePropagation();
+        finish(false);
+      } else if (e.key === 'Control' || e.key === 'Meta') {
+        plainNow = e.type === 'keydown';
+        step(false, plainNow);
+      }
+    };
+    const onUp = () => finish(true);
+    const timer = setInterval(() => step(true, plainNow), FILL_SCROLL_MS);
+    const finish = (commit: boolean) => {
+      clearInterval(timer);
+      doc.removeEventListener('mousemove', onMove, true);
+      doc.removeEventListener('mouseup', onUp, true);
+      doc.removeEventListener('keydown', onKey, true);
+      doc.removeEventListener('keyup', onKey, true);
+      tip.remove();
+      this.stopFill = null;
+      const range = this.fillRange();
+      this.filling.set(false);
+      this.fillGhostRows.set([]);
+      this.fillPreview.set(new Map());
+      this.fillRange.set(null);
+      // Let the click that follows the mouse-up pass, then stop swallowing.
+      setTimeout(() => this.swallowRowClick = false);
+      if (commit && range && range.to !== range.from) {
+        this.commitFill(range, targets, plan(range));
+      }
+    };
+    doc.addEventListener('mousemove', onMove, true);
+    doc.addEventListener('mouseup', onUp, true);
+    doc.addEventListener('keydown', onKey, true);
+    doc.addEventListener('keyup', onKey, true);
+    this.stopFill = () => finish(false);
+    this.filling.set(true);
+    this.fillRange.set({ mode, key, from, to: from, plain: plainNow });
+  }
+
+  /** Asks the host for `count` default rows and returns them, at the end of
+   *  the list: a host may put a new key first (the mapping panel does). */
+  private appendRows(count: number): FormGroup[] {
+    const before = new Set(this.keysFormArray.controls);
+    this.addRowsRequested.emit(count);
+    const added = this.keysFormArray.controls.filter(c => !before.has(c)) as FormGroup[];
+    const tail = this.keysFormArray.controls.slice(this.keysFormArray.length - added.length);
+    if (added.some((c, i) => tail[i] !== c)) {
+      added.forEach(c => this.keysFormArray.removeAt(this.keysFormArray.controls.indexOf(c), { emitEvent: false }));
+      added.forEach(c => this.keysFormArray.push(c, { emitEvent: false }));
+      this.keysFormArray.updateValueAndValidity();
+    }
+    return added;
+  }
+
+  /** What a preview cell shows for a value: a select shows its option's label. */
+  private fillText(col: SpreadsheetColumnConfig | undefined, row: FormGroup, value: any): string {
+    if (!col || col.type === 'checkbox' || value === null || value === undefined) return '';
+    if (col.type === 'select') {
+      const option = this.getColumnOptions(col, row).find(o => String(o.value) === String(value));
+      if (option) return col.translateLabels ? this.translate.instant(option.label) : option.label;
+    }
+    return typeof value === 'object' ? JSON.stringify(value) : String(value);
+  }
+
+  private commitFill(range: FillRange, targets: FormGroup[], result: Map<number, Record<string, any>>): void {
+    const newCount = Math.max(0, range.to - (targets.length - 1));
+    const added = newCount ? this.appendRows(newCount) : [];
+    const undo: FillUndo = { rows: [], added };
+    let filled = 0;
+    result.forEach((patch, idx) => {
+      const isNew = idx >= targets.length;
+      const control = isNew ? added[idx - targets.length] : targets[idx];
+      if (!control) return;
+      if (!isNew) {
+        undo.rows.push({
+          control,
+          raw: control.getRawValue(),
+          cells: new Map(this.columns.map(col => [col.key, this.getCellValue(col, control)])),
+        });
+      }
+      for (const col of this.columns) {
+        if (col.key in patch) this.writeFillValue(col, control, patch[col.key]);
+      }
+      filled++;
+    });
+    this.keysFormArray.markAsDirty();
+    this.renderLimit = Math.max(this.renderLimit, Math.max(range.from, range.to) + 1);
+    this.updateFilteredControls();
+    this.fillUndo = undo;
+    this.importStatus = {
+      key: added.length ? 'gateway.keys-fill-done-new' : 'gateway.keys-fill-done',
+      params: { count: filled, added: added.length },
+      undo: true,
+    };
+    // The filled cells keep their tint for a moment, then let go.
+    this.fillRange.set(range);
+    clearTimeout(this.fillDoneTimer);
+    this.fillDoneTimer = setTimeout(() => this.fillRange.set(null), FILL_DONE_MS);
+    this.cd.detectChanges();
+    const endCol = Math.max(0, this.colIndex(range.key ?? this.columns[0]?.key));
+    this.cellElement(range.to, endCol)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    this.focusGrid();
+  }
+
+  /** A cell does not take a filled value when it is hidden or disabled for
+   *  that row, or is a select without that option. */
+  private takesFill(col: SpreadsheetColumnConfig, row: FormGroup, value: any): boolean {
+    if (!this.isCellVisible(col, row) || this.isCellDisabled(col, row)) return false;
+    return col.type !== 'select' || this.getColumnOptions(col, row).some(o => String(o.value) === String(value));
+  }
+
+  private writeFillValue(col: SpreadsheetColumnConfig, row: FormGroup, value: any): void {
+    if (!this.takesFill(col, row, value) || this.getCellValue(col, row) === value) return;
+    if (col.setValue) {
+      col.setValue(row, value);
+    } else if (!col.key.startsWith('_')) {
+      const ctrl = row.get(col.key);
+      if (ctrl) {
+        ctrl.setValue(value);
+        ctrl.markAsDirty();
+      }
+    }
+  }
+
+  /** Ctrl+Z or the Undo link: the last fill, as long as nothing was edited since. */
+  undoFill(): void {
+    const undo = this.fillUndo;
+    if (!undo) return;
+    this.fillUndo = null;
+    this.importStatus = null;
+    const alive = new Set(this.keysFormArray.controls);
+    for (const row of undo.rows) {
+      if (!alive.has(row.control)) continue;
+      row.control.patchValue(row.raw);
+      for (const col of this.columns) {
+        this.writeFillValue(col, row.control, row.cells.get(col.key));
+      }
+    }
+    const added = undo.added.filter(c => alive.has(c));
+    if (added.length) {
+      this.deleteRowsRequested.emit(added);
+    }
+    this.keysFormArray.markAsDirty();
+    this.updateFilteredControls();
+    this.focusGrid();
+  }
+
+  /** An edit after a fill makes its undo stale; drop it and its status line. */
+  private forgetFill(): void {
+    if (!this.fillUndo) return;
+    this.fillUndo = null;
+    if (this.importStatus?.undo) {
+      this.importStatus = null;
+    }
     this.cd.markForCheck();
   }
 

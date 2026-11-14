@@ -46,6 +46,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { snmpOidFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import {
   SNMP_BULK_METHODS,
   SNMP_WRITE_METHODS,
@@ -332,11 +333,11 @@ export class SnmpDataKeysPanelComponent implements OnInit {
       { value: 'oid', label: 'gateway.snmp-oid' },
     ];
     this.spreadsheetColumns = [
-      { key: this.nameField, label: this.nameLabel, type: 'input', sortable: true, width: 'minmax(130px, 1.2fr)',
+      { key: this.nameField, label: this.nameLabel, type: 'input', fill: 'series', sortable: true, width: 'minmax(130px, 1.2fr)',
         placeholder: this.isPolled ? 'sysUpTime' : (this.isRpc ? 'setValue' : 'sysContact') },
       { key: 'method', label: 'gateway.method', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
         errorText: 'gateway.snmp-bulk-v1', options: methodOptions },
-      { key: 'oid', label: 'gateway.snmp-oid', type: 'input', sortable: true, width: 'minmax(190px, 1.6fr)',
+      { key: 'oid', label: 'gateway.snmp-oid', type: 'input', fill: snmpOidFill, sortable: true, width: 'minmax(190px, 1.6fr)',
         placeholder: '1.3.6.1.2.1.1.1.0', errorText: 'gateway.snmp-invalid-oid', cellVisible: isOidShape },
       { key: 'scalarOid', label: 'gateway.snmp-scalar-oids', type: 'input', width: 'minmax(160px, 1.4fr)',
         placeholder: '1.3.6.1.2.1.1.3.0', errorText: 'gateway.snmp-invalid-oid', cellVisible: isBulkGet },
@@ -361,11 +362,11 @@ export class SnmpDataKeysPanelComponent implements OnInit {
       { value: 'oid', label: 'gateway.snmp-oid' },
     ];
     this.spreadsheetColumns = [
-      { key: 'key', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(130px, 1.2fr)',
+      { key: 'key', label: 'gateway.gw-key', type: 'input', fill: 'series', sortable: true, width: 'minmax(130px, 1.2fr)',
         placeholder: 'linkDown' },
       { key: 'trapOid', label: 'gateway.snmp-trap-oid', type: 'input', sortable: true, width: 'minmax(190px, 1.6fr)',
         placeholder: '1.3.6.1.6.3.1.1.5.3', errorText: 'gateway.snmp-invalid-oid' },
-      { key: 'oid', label: 'gateway.snmp-oid', type: 'input', sortable: true, width: 'minmax(190px, 1.6fr)',
+      { key: 'oid', label: 'gateway.snmp-oid', type: 'input', fill: snmpOidFill, sortable: true, width: 'minmax(190px, 1.6fr)',
         placeholder: '1.3.6.1.2.1.2.2.1.8', errorText: 'gateway.snmp-invalid-oid' },
       { key: 'type', label: 'gateway.snmp-notification-type', type: 'select', width: 'minmax(130px, 1fr)',
         translateLabels: true, options: targetOptions },

@@ -56,6 +56,7 @@ import { takeUntil } from 'rxjs/operators';
 import { TypeValuePanelComponent } from '../type-value-panel/type-value-panel.component';
 import { ConnectorMappingHelpLinkPipe } from '../../pipes/public-api';
 import { SpreadsheetColumnConfig, SelectOption } from '../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { mappingValueFill } from '../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import {
   CalibrationBlockComponent,
   CalibrationConfig,
@@ -253,7 +254,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       this.searchFields = ['method'];
       this.sortFields = [{ value: 'method', label: 'Method' }];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'Method', type: 'input', sortable: true, width: 'minmax(160px, 1fr)' },
+        { key: 'method', label: 'Method', type: 'input', fill: 'series', sortable: true, width: 'minmax(160px, 1fr)' },
       ];
       return;
     }
@@ -264,7 +265,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
         { value: 'value', label: 'Value' },
       ];
       this.spreadsheetColumns = [
-        { key: 'key', label: 'Key', type: 'input', sortable: true, width: 'minmax(160px, 1.2fr)', placeholder: 'name' },
+        { key: 'key', label: 'Key', type: 'input', fill: 'series', sortable: true, width: 'minmax(160px, 1.2fr)', placeholder: 'name' },
         { key: 'value', label: 'Value', type: 'input', sortable: true, width: 'minmax(200px, 1.4fr)', placeholder: 'value' },
       ];
       return;
@@ -278,7 +279,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     const typeOptions: SelectOption[] = (this.valueTypeKeys as string[])
       .map(t => ({ value: t, label: String(t) }));
     const cols: SpreadsheetColumnConfig[] = [
-      { key: 'key', label: 'Key', type: 'input', sortable: true, width: 'minmax(140px, 1fr)', placeholder: 'name' },
+      { key: 'key', label: 'Key', type: 'input', fill: 'series', sortable: true, width: 'minmax(140px, 1fr)', placeholder: 'name' },
     ];
     if (typeOptions.length > 0) {
       cols.push({
@@ -287,7 +288,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       });
     }
     cols.push({
-      key: 'value', label: 'Value', type: 'input', sortable: true, width: 'minmax(180px, 1.4fr)', placeholder: 'ns=2;s=...',
+      key: 'value', label: 'Value', type: 'input', fill: mappingValueFill, sortable: true, width: 'minmax(180px, 1.4fr)', placeholder: 'ns=2;s=...',
     });
     // Calibration columns visible only when the panel represents
     // an OPC-UA attribute / timeseries (calibrationEnabled). MQTT /

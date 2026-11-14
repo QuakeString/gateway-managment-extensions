@@ -61,23 +61,10 @@
       <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </div>
-  <div *ngIf="(searchControl.value && filteredControls.length !== keysFormArray.length) || (explicitRowSelection && selectedRowControls.size)"
-       class="search-result-info">
-    <ng-container *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length">
-      {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.length } }}
-    </ng-container>
-    <ng-container *ngIf="explicitRowSelection && selectedRowControls.size">
-      <span *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length"> · </span>
-      {{ 'gateway.keys-selected-count' | translate:{ count: selectedRowControls.size } }}
-    </ng-container>
-  </div>
-  <div *ngIf="importStatus" class="import-status" [class.error]="importStatus.error">
-    <span>{{ importStatus.key | translate:importStatus.params }}</span>
-    <button type="button" class="import-status-close" (click)="clearImportStatus()"><mat-icon>close</mat-icon></button>
-  </div>
-
   <div class="spreadsheet-wrapper key-panel" *ngIf="displayedControls.length; else noKeysFs"
        tabindex="0"
+       [class.st-filling]="filling()"
+       [class.st-rows-picked]="explicitRowSelection"
        (keydown)="onGridKeydown($event)"
        (scroll)="onKeyPanelScroll($event)">
     <div class="spreadsheet-table" [style.grid-template-columns]="gridTemplateColumns">
@@ -108,12 +95,16 @@
            *ngFor="let item of displayedControls; let i = index; trackBy: trackByFilteredItem"
            [class.selected]="isRowSelected(item.control)">
         <ng-container [formGroup]="item.control">
-          <div class="cell row-number-cell" (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
+          <div class="cell row-number-cell"
+               [class.st-fill-handle]="showsRowFillHandle(item.control)"
+               [class.st-fill-target]="isFillTarget(i, null)"
+               (mousedown)="onRowNumberMousedown(item.control, $event)"
+               (click)="selectRow(item.control, $event)">{{ i + 1 }}</div>
 
           <ng-container *ngFor="let col of columns">
             <!-- Regular input -->
             <ng-container *ngIf="col.type === 'input' && !col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input class="cell-input" [name]="col.key" [formControlName]="col.key"
                        [class.invalid]="isCellInvalid(col, item.control)"
                        [placeholder]="col.placeholder || ''"
@@ -132,7 +123,7 @@
 
             <!-- Number input with formControlName -->
             <ng-container *ngIf="col.type === 'number' && !col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input class="cell-input" type="number" [name]="col.key" [formControlName]="col.key"
                        [class.invalid]="isCellInvalid(col, item.control)"
                        [step]="col.step || 1"
@@ -150,7 +141,7 @@
 
             <!-- Select with formControlName -->
             <ng-container *ngIf="col.type === 'select' && !col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <select class="cell-select" [formControlName]="col.key" (keydown)="onCellKeydown($event)">
                   <option *ngFor="let opt of getColumnOptions(col, item.control)" [ngValue]="opt.value">{{ col.translateLabels ? (opt.label | translate) : opt.label }}</option>
                 </select>
@@ -159,14 +150,14 @@
 
             <!-- Checkbox with formControlName -->
             <ng-container *ngIf="col.type === 'checkbox' && !col.key.startsWith('_') && !col.externalControl">
-              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input type="checkbox" class="cell-checkbox" [formControlName]="col.key">
               </div>
             </ng-container>
 
             <!-- Checkbox with externalControl -->
             <ng-container *ngIf="col.type === 'checkbox' && col.externalControl">
-              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input type="checkbox" class="cell-checkbox"
                        [formControl]="col.externalControl(item.control)">
               </div>
@@ -174,7 +165,7 @@
 
             <!-- Imperative input (_prefixed key) -->
             <ng-container *ngIf="col.type === 'input' && col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input class="cell-input" [name]="col.key"
                        [value]="getCellValue(col, item.control) ?? ''"
                        [disabled]="isCellDisabled(col, item.control)"
@@ -186,7 +177,7 @@
 
             <!-- Imperative number (_prefixed key) -->
             <ng-container *ngIf="col.type === 'number' && col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input class="cell-input" type="number" [name]="col.key"
                        [value]="getCellValue(col, item.control) ?? ''"
                        [disabled]="isCellDisabled(col, item.control)"
@@ -199,7 +190,7 @@
 
             <!-- Imperative select (_prefixed key) -->
             <ng-container *ngIf="col.type === 'select' && col.key.startsWith('_')">
-              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <select class="cell-select"
                         [disabled]="isCellDisabled(col, item.control)"
                         (change)="onCellValueChange(col, item.control, $event)"
@@ -213,7 +204,7 @@
 
             <!-- Imperative checkbox (_prefixed key, no externalControl) -->
             <ng-container *ngIf="col.type === 'checkbox' && col.key.startsWith('_') && !col.externalControl">
-              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" (mousedown)="onCellMousedown(item.control, col)">
+              <div class="cell center" *ngIf="isCellVisible(col, item.control); else emptyCell" [class.active]="isActiveCell(item.control, col.key)" [class.st-fill-target]="isFillTarget(i, col.key)" [attr.data-fill]="fillPreviewText(i, col.key)" (mousedown)="onCellMousedown(item.control, col, $event)">
                 <input type="checkbox" class="cell-checkbox"
                        [checked]="getCellValue(col, item.control)"
                        [disabled]="isCellDisabled(col, item.control)"
@@ -227,7 +218,33 @@
           </ng-container>
         </ng-container>
       </div>
+
+      <!-- Fill-drag past the last row: preview of the keys it will add -->
+      <div class="spreadsheet-row st-fill-ghost" *ngFor="let ghost of fillGhostRows(); let g = index">
+        <div class="cell row-number-cell">{{ displayedControls.length + g + 1 }}</div>
+        <div class="cell" *ngFor="let text of ghost"><span class="st-fill-ghost-text">{{ text }}</span></div>
+      </div>
     </div>
+  </div>
+
+  <!-- Status bar under the sheet. Its height is reserved, so a count, a
+       selection or a fill result never moves the rows under the mouse. -->
+  <div class="st-status-line" *ngIf="displayedControls.length">
+    <span *ngIf="(searchControl.value && filteredControls.length !== keysFormArray.length) || (explicitRowSelection && selectedRowControls.size)"
+          class="search-result-info">
+      <ng-container *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length">
+        {{ 'gateway.keys-count-of' | translate:{ filtered: filteredControls.length, total: keysFormArray.length } }}
+      </ng-container>
+      <ng-container *ngIf="explicitRowSelection && selectedRowControls.size">
+        <span *ngIf="searchControl.value && filteredControls.length !== keysFormArray.length"> · </span>
+        {{ 'gateway.keys-selected-count' | translate:{ count: selectedRowControls.size } }}
+      </ng-container>
+    </span>
+    <span *ngIf="importStatus" class="import-status" [class.error]="importStatus.error">
+      <span>{{ importStatus.key | translate:importStatus.params }}</span>
+      <button *ngIf="importStatus.undo" type="button" class="import-status-undo" (click)="undoFill()">{{ 'gateway.keys-fill-undo' | translate }}</button>
+      <button type="button" class="import-status-close" (click)="clearImportStatus()"><mat-icon>close</mat-icon></button>
+    </span>
   </div>
 
   <ng-template #noKeysFs>

@@ -48,6 +48,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { ethercatAddressFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import { EtherCatDataKey, EtherCatRpcConfig, EtherCatValueKey, EtherCatValueType } from '../../../models/public-api';
 import { generateSecret } from '@core/public-api';
 
@@ -261,8 +262,8 @@ export class EtherCatDataKeysPanelComponent implements OnInit {
         { value: 'operation', label: 'gateway.gw-operation' },
       ];
       this.spreadsheetColumns = [
-        { key: 'method', label: 'gateway.method', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'reset' },
-        { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'pdo:2.1', errorText: 'gateway.ethercat-invalid-address' },
+        { key: 'method', label: 'gateway.method', type: 'input', fill: 'series', sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'reset' },
+        { key: 'address', label: 'gateway.address', type: 'input', fill: ethercatAddressFill, sortable: true, width: 'minmax(150px, 1.4fr)', placeholder: 'pdo:2.1', errorText: 'gateway.ethercat-invalid-address' },
         { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(120px, 1fr)', translateLabels: true,
           errorText: 'gateway.ethercat-value-type-required',
           options: valueTypeOptions },
@@ -278,8 +279,8 @@ export class EtherCatDataKeysPanelComponent implements OnInit {
       { value: 'valueType', label: 'gateway.gw-value-type' },
     ];
     this.spreadsheetColumns = [
-      { key: 'tag', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'statusWord' },
-      { key: 'address', label: 'gateway.address', type: 'input', sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'pdo:0', errorText: 'gateway.ethercat-invalid-address' },
+      { key: 'tag', label: 'gateway.gw-key', type: 'input', fill: 'series', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'statusWord' },
+      { key: 'address', label: 'gateway.address', type: 'input', fill: ethercatAddressFill, sortable: true, width: 'minmax(140px, 1.2fr)', placeholder: 'pdo:0', errorText: 'gateway.ethercat-invalid-address' },
       { key: 'valueType', label: 'gateway.gw-value-type', type: 'select', sortable: true, width: 'minmax(110px, 0.9fr)', translateLabels: true,
         errorText: 'gateway.ethercat-value-type-required',
         options: valueTypeOptions },
