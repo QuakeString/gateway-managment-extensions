@@ -15,6 +15,7 @@
 ///
 
 import { FormControl, FormGroup } from '@angular/forms';
+import { SpreadsheetFillRule } from './spreadsheet-fill';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -45,6 +46,10 @@ export interface SpreadsheetColumnConfig {
   translateLabels?: boolean;
   /** Translation key for the tooltip shown when the cell's control is invalid. */
   errorText?: string;
+  /** What dragging the cell's corner (or a row number's) puts into the next
+   *  row: 'copy' (default), 'series' (temp9 → temp10), 'increment' (a number
+   *  plus 1) or a rule of the connector, e.g. its address step. */
+  fill?: SpreadsheetFillRule;
   cellVisible?: (row: FormGroup) => boolean;
   cellDisabled?: (row: FormGroup) => boolean;
   externalControl?: (row: FormGroup) => FormControl<boolean>;

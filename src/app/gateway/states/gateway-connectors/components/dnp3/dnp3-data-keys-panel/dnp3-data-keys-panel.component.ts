@@ -196,7 +196,7 @@ export class Dnp3DataKeysPanelComponent implements OnInit {
   private buildColumnConfigs(): void {
     const option = (prefix: string) => (value: string) => ({ value, label: `gateway.dnp3-${prefix}-${value}` });
     const index: SpreadsheetColumnConfig = {
-      key: 'index', label: 'gateway.dnp3-index', type: 'number', sortable: true, width: 'minmax(80px, 0.6fr)', placeholder: '0',
+      key: 'index', label: 'gateway.dnp3-index', type: 'number', fill: 'increment', sortable: true, width: 'minmax(80px, 0.6fr)', placeholder: '0',
     };
     if (this.isCommand) {
       const nameKey = this.isRpc ? 'method' : 'key';
@@ -207,7 +207,7 @@ export class Dnp3DataKeysPanelComponent implements OnInit {
         { value: 'index', label: 'gateway.dnp3-index' },
       ];
       this.spreadsheetColumns = [
-        { key: nameKey, label: this.isRpc ? 'gateway.method' : 'gateway.gw-key', type: 'input', sortable: true,
+        { key: nameKey, label: this.isRpc ? 'gateway.method' : 'gateway.gw-key', type: 'input', fill: 'series', sortable: true,
           width: 'minmax(140px, 1.3fr)', placeholder: this.isRpc ? 'tripBreaker' : 'setpoint',
           errorText: this.isRpc ? 'gateway.dnp3-method-reserved' : undefined },
         { key: 'pointType', label: 'gateway.dnp3-point-type', type: 'select', sortable: true, width: 'minmax(150px, 1.2fr)',
@@ -228,7 +228,7 @@ export class Dnp3DataKeysPanelComponent implements OnInit {
       { value: 'index', label: 'gateway.dnp3-index' },
     ];
     this.spreadsheetColumns = [
-      { key: 'key', label: 'gateway.gw-key', type: 'input', sortable: true, width: 'minmax(130px, 1.2fr)', placeholder: 'busVoltage' },
+      { key: 'key', label: 'gateway.gw-key', type: 'input', fill: 'series', sortable: true, width: 'minmax(130px, 1.2fr)', placeholder: 'busVoltage' },
       { key: 'pointType', label: 'gateway.dnp3-point-type', type: 'select', sortable: true, width: 'minmax(160px, 1.2fr)',
         translateLabels: true, options: this.pointTypes.map(option('point-type')) },
       index,

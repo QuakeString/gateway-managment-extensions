@@ -40,6 +40,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { profinetBitFill, profinetOffsetFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 import {
   PROFINET_NUMERIC_TYPES,
   PROFINET_RESERVED_RPCS,
@@ -245,14 +246,14 @@ export class ProfinetDataKeysPanelComponent implements OnInit {
     ];
     const typeOptions = this.valueTypes.map(value => ({ value, label: value }));
     this.spreadsheetColumns = [
-      { key: nameKey, label: this.isRpc ? 'gateway.method' : 'gateway.gw-key', type: 'input', sortable: true,
+      { key: nameKey, label: this.isRpc ? 'gateway.method' : 'gateway.gw-key', type: 'input', fill: 'series', sortable: true,
         width: 'minmax(140px, 1.3fr)', placeholder: this.isRpc ? 'setValve' : 'temperature',
         errorText: this.isRpc ? 'gateway.profinet-method-reserved' : undefined },
       { key: 'slot', label: 'gateway.profinet-slot', type: 'number', sortable: true, width: 'minmax(70px, 0.5fr)', placeholder: '1' },
       { key: 'subslot', label: 'gateway.profinet-subslot', type: 'number', width: 'minmax(80px, 0.5fr)', placeholder: '1' },
-      { key: 'offset', label: 'gateway.profinet-offset', type: 'number', sortable: true, width: 'minmax(80px, 0.5fr)', placeholder: '0' },
+      { key: 'offset', label: 'gateway.profinet-offset', type: 'number', fill: profinetOffsetFill(profinetWidth), sortable: true, width: 'minmax(80px, 0.5fr)', placeholder: '0' },
       { key: 'type', label: 'gateway.profinet-type', type: 'select', sortable: true, width: 'minmax(110px, 0.8fr)', options: typeOptions },
-      { key: 'bit', label: 'gateway.profinet-bit', type: 'number', width: 'minmax(60px, 0.4fr)', placeholder: '—',
+      { key: 'bit', label: 'gateway.profinet-bit', type: 'number', fill: profinetBitFill, width: 'minmax(60px, 0.4fr)', placeholder: '—',
         cellVisible: (row) => this.isBool(row) },
       ...(this.isUpdate || this.isRpc ? [] : [
         { key: 'quality', label: 'gateway.profinet-quality', type: 'select', width: 'minmax(110px, 0.8fr)',

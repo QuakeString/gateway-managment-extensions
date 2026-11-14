@@ -105,18 +105,41 @@
     display: none;
   }
 
+  // One line under the sheet for the key count, the selection and the result
+  // of an import or a fill. Always there, so showing a message moves nothing.
+  .st-status-line {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 24px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
   .import-status {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    padding: 2px 0 4px;
+    padding: 0;
     color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
 
     &.error {
       color: var(--tb-error, #f44336);
     }
 
+    .import-status-undo {
+      border: none;
+      background: transparent;
+      padding: 0 4px;
+      font: inherit;
+      font-weight: 500;
+      color: var(--tb-primary, #26a69a);
+      cursor: pointer;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
     .import-status-close {
       border: none;
       background: transparent;
@@ -140,7 +163,6 @@
   .search-result-info {
     font-size: 12px;
     color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
-    padding-bottom: 4px;
   }
 
   .spreadsheet-keys-root {
@@ -156,6 +178,16 @@
     background: var(--tb-surface-card, #ffffff);
   }
 
+  // While a fill is dragged the cells are a drop surface, not editors.
+  .spreadsheet-wrapper.st-filling {
+    cursor: crosshair;
+    user-select: none;
+    .cell-input,
+    .cell-select,
+    .cell-checkbox {
+      pointer-events: none;
+    }
+  }
   .key-panel {
     height: calc(100vh - 112px);
     max-height: 500px;
@@ -300,6 +332,74 @@
       }
     }
 
+    // Fill handle: a square inside the bottom-right corner of the active
+    // cell and of a selected row number. Inside, so the last column and the
+    // last row never grow the sheet. A press on it lands on the cell itself.
+    .cell.active::after,
+    .cell.row-number-cell.st-fill-handle::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 8px;
+      height: 8px;
+      box-sizing: border-box;
+      background: var(--tb-primary, #26a69a);
+      border-top: 1px solid var(--tb-surface-card, #ffffff);
+      border-left: 1px solid var(--tb-surface-card, #ffffff);
+      cursor: crosshair;
+      z-index: 2;
+    }
+    .cell.row-number-cell.st-fill-handle {
+      position: relative;
+    }
+    // With a row picked, the row number carries the handle, not the cell.
+    &:is(.st-rows-picked *) .cell.active::after {
+      display: none;
+    }
+    // Cells the drag will fill; they keep the tint a moment after the drop.
+    .spreadsheet-row .cell.st-fill-target {
+      background-color: color-mix(in srgb, var(--tb-primary, #26a69a) 16%, var(--tb-surface-card, #ffffff));
+    }
+    // What the drag will write, shown over the cell until the drop.
+    .spreadsheet-row .cell.st-fill-target[data-fill] {
+      position: relative;
+      &::before {
+        content: attr(data-fill);
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        padding: 0 8px;
+        box-sizing: border-box;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        line-height: 27px;
+        font-size: 13px;
+        font-style: italic;
+        color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
+        background-color: color-mix(in srgb, var(--tb-primary, #26a69a) 16%, var(--tb-surface-card, #ffffff));
+      }
+    }
+    // Keys a drag past the last row will add.
+    .spreadsheet-row.st-fill-ghost .cell {
+      align-items: center;
+      padding: 0 8px;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+      background-color: color-mix(in srgb, var(--tb-primary, #26a69a) 16%, var(--tb-surface-card, #ffffff));
+      overflow: hidden;
+      &.row-number-cell {
+        padding: 0 4px;
+        font-size: 12px;
+      }
+      .st-fill-ghost-text {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
     .cell-input,
     .cell-select {
       width: 100%;

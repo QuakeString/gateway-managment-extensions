@@ -59,6 +59,7 @@ import {
   reportStrategyColumns,
 } from '../../../../../shared/components/public-api';
 import { SpreadsheetColumnConfig, SelectOption } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-keys.models';
+import { modbusAddressFill } from '../../../../../shared/components/spreadsheet-keys/spreadsheet-fill';
 
 /**
  * Modbus keys panel. Migrated onto the shared IndustrialKeysPanel
@@ -219,7 +220,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     this.searchFields = ['tag', 'address'];
     const dataTypeOptions: SelectOption[] = this.modbusDataTypes.map(t => ({ value: t, label: t }));
     const cols: SpreadsheetColumnConfig[] = [
-      { key: 'tag', label: 'Key', type: 'input', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'Tag' },
+      { key: 'tag', label: 'Key', type: 'input', fill: 'series', sortable: true, width: 'minmax(120px, 1.2fr)', placeholder: 'Tag' },
       { key: 'type', label: 'Data Type', type: 'select', sortable: true, width: 'minmax(100px, 0.8fr)', options: dataTypeOptions },
     ];
     if (this.withFunctionCode) {
@@ -238,7 +239,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
     cols.push(
       { key: 'objectsCount', label: 'Obj. Count', type: 'number', width: 'minmax(80px, 0.7fr)',
         cellDisabled: (row) => !this.ModbusEditableDataTypes.includes(row.get('type')?.value) },
-      { key: 'address', label: 'Address', type: 'number', sortable: true, width: 'minmax(80px, 0.7fr)', placeholder: '0' },
+      { key: 'address', label: 'Address', type: 'number', fill: modbusAddressFill, sortable: true, width: 'minmax(80px, 0.7fr)', placeholder: '0' },
     );
     if (this.isMaster) {
       cols.push({ key: 'value', label: 'Value', type: 'input', width: 'minmax(80px, 0.7fr)', placeholder: 'Value' });
