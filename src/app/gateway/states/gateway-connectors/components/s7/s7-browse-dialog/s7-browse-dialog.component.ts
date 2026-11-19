@@ -110,7 +110,7 @@ export class S7BrowseDialogComponent implements AfterViewInit, OnDestroy {
   fingerprint: string = null;
   truncated = false;
   readonly dataSource = new MatTableDataSource<S7BrowseTag>([]);
-  readonly pageSizes = [100, 250, 500, 1000];
+  readonly pageSizes = [20, 50, 100, 250, 500, 1000];
   displayedColumns = ['select', 'name', 'type', 'block'];
   targetCategory: S7BrowseTarget;
   /** RPC target: the mode new selections take, and the ones changed per tag. */
