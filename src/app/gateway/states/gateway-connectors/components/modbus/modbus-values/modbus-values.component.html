@@ -32,30 +32,6 @@
 
 <ng-template #singleView let-register>
   <div class="tb-form-row space-between tb-flex">
-    <div class="fixed-title-width" translate>gateway.attributes</div>
-    <div class="tb-flex ellipsis-chips-container">
-      <mat-chip-listbox [tbEllipsisChipList]="getValueGroup(ModbusValueKey.ATTRIBUTES, register).value" class="tb-flex">
-        <mat-chip *ngFor="let attribute of (getValueGroup(ModbusValueKey.ATTRIBUTES, register).value | slice: 0 : 50)">
-          {{ attribute.tag }}
-        </mat-chip>
-        <mat-chip class="mat-mdc-chip ellipsis-chip">
-          <label class="ellipsis-text"></label>
-        </mat-chip>
-      </mat-chip-listbox>
-      <button type="button"
-              mat-icon-button
-              color="primary"
-              [disabled]="disabled"
-              matTooltip="{{ 'gateway.gw-edit-hint' | translate }}"
-              matTooltipPosition="above"
-              #attributesButton
-              (click)="manageKeys($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)"
-              (contextmenu)="manageKeysAsSpreadsheet($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)">
-        <tb-icon matButtonIcon>edit</tb-icon>
-      </button>
-    </div>
-  </div>
-  <div class="tb-form-row space-between tb-flex">
     <div class="fixed-title-width" translate>gateway.timeseries</div>
     <div class="tb-flex ellipsis-chips-container">
       <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="getValueGroup(ModbusValueKey.TIMESERIES, register).value">
@@ -75,6 +51,30 @@
               #telemetryButton
               (click)="manageKeys($event, telemetryButton, ModbusValueKey.TIMESERIES, register)"
               (contextmenu)="manageKeysAsSpreadsheet($event, telemetryButton, ModbusValueKey.TIMESERIES, register)">
+        <tb-icon matButtonIcon>edit</tb-icon>
+      </button>
+    </div>
+  </div>
+  <div class="tb-form-row space-between tb-flex">
+    <div class="fixed-title-width" translate>gateway.attributes</div>
+    <div class="tb-flex ellipsis-chips-container">
+      <mat-chip-listbox [tbEllipsisChipList]="getValueGroup(ModbusValueKey.ATTRIBUTES, register).value" class="tb-flex">
+        <mat-chip *ngFor="let attribute of (getValueGroup(ModbusValueKey.ATTRIBUTES, register).value | slice: 0 : 50)">
+          {{ attribute.tag }}
+        </mat-chip>
+        <mat-chip class="mat-mdc-chip ellipsis-chip">
+          <label class="ellipsis-text"></label>
+        </mat-chip>
+      </mat-chip-listbox>
+      <button type="button"
+              mat-icon-button
+              color="primary"
+              [disabled]="disabled"
+              matTooltip="{{ 'gateway.gw-edit-hint' | translate }}"
+              matTooltipPosition="above"
+              #attributesButton
+              (click)="manageKeys($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)"
+              (contextmenu)="manageKeysAsSpreadsheet($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
       </button>
     </div>
