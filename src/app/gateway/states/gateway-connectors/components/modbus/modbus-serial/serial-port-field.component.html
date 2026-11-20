@@ -1,0 +1,163 @@
+<!--
+
+    Copyright © 2016-2025 The SENTIENT Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="st-serial-port-origin" cdkOverlayOrigin #origin="cdkOverlayOrigin" #field>
+  <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+    <input matInput #inputEl
+           class="st-serial-mono"
+           name="value"
+           autocomplete="off"
+           role="combobox"
+           aria-autocomplete="list"
+           [attr.aria-expanded]="open()"
+           [formControl]="control()"
+           [placeholder]="placeholder()"
+           (focus)="show()"
+           (click)="show()"
+           (input)="onInput()"
+           (keydown)="onKey($event)"
+           (blur)="onBlur()"/>
+    @if (control().hasError('required') && control().touched) {
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="'gateway.port-required' | translate"
+                class="tb-error">
+        warning
+      </mat-icon>
+    }
+    <button mat-icon-button matSuffix type="button"
+            class="st-serial-port-toggle"
+            [attr.aria-label]="'gateway.serial.show-ports' | translate"
+            [disabled]="control().disabled"
+            (mousedown)="toggle($event)">
+      <mat-icon>{{ open() ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+    </button>
+  </mat-form-field>
+</div>
+
+<ng-template cdkConnectedOverlay
+             [cdkConnectedOverlayOrigin]="origin"
+             [cdkConnectedOverlayOpen]="open()"
+             [cdkConnectedOverlayWidth]="width()"
+             [cdkConnectedOverlayPositions]="positions"
+             (overlayOutsideClick)="hide()"
+             (detach)="hide()">
+  <div class="st-serial-port-panel" role="listbox" (mousedown)="$event.preventDefault()">
+    <div class="st-serial-port-head">
+      <span class="st-serial-port-title">{{ title() }}</span>
+      <button mat-icon-button type="button" class="st-serial-small-btn"
+              [matTooltip]="'gateway.serial.refresh' | translate"
+              [attr.aria-label]="'gateway.serial.refresh' | translate"
+              [disabled]="loading()"
+              (mousedown)="refresh($event)">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    @if (!answer() && loading()) {
+      <div class="st-serial-port-note">{{ 'gateway.serial.looking' | translate }}</div>
+    }
+    @if (problem() === 'unsupported') {
+      <div class="st-serial-port-note">{{ 'gateway.serial.unsupported' | translate }}</div>
+    }
+    @if (problem() === 'unreachable') {
+      <div class="st-serial-port-note">{{ 'gateway.serial.unreachable' | translate }}</div>
+    }
+    <div class="st-serial-port-list">
+      @for (row of rows(); track row.port.path; let i = $index) {
+        <button type="button" role="option" class="st-serial-port-opt"
+                [class.st-active]="i === active()"
+                [class.st-current]="isCurrent(row.port)"
+                [attr.aria-selected]="isCurrent(row.port)"
+                (mousedown)="$event.preventDefault()"
+                (click)="pick(row.port)">
+          <span class="st-serial-port-icon" aria-hidden="true">
+            @switch (row.port.kind) {
+              @case ('usb') {
+                <svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="5" rx="1"></rect><path d="M10 4.5h.01M14 4.5h.01"></path><rect x="6.5" y="7" width="11" height="9" rx="2"></rect><path d="M12 16v3a2 2 0 0 0 2 2h4"></path></svg>
+              }
+              @case ('cdc') {
+                <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect><rect x="9.5" y="9.5" width="5" height="5" rx="1"></rect><path d="M9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"></path></svg>
+              }
+              @case ('builtin') {
+                <svg viewBox="0 0 24 24"><path d="M3 8h18l-2.5 8.5a2 2 0 0 1-1.9 1.5H7.4a2 2 0 0 1-1.9-1.5z"></path><path d="M7.5 11.5h.01M10.5 11.5h.01M13.5 11.5h.01M16.5 11.5h.01M9 14.5h.01M12 14.5h.01M15 14.5h.01"></path></svg>
+              }
+              @case ('bluetooth') {
+                <svg viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"></path></svg>
+              }
+              @default {
+                <svg viewBox="0 0 24 24"><path d="M9 3v4M15 3v4"></path><path d="M6 7h12v4a6 6 0 0 1-12 0z"></path><path d="M12 17v4"></path></svg>
+              }
+            }
+          </span>
+          <span class="st-serial-port-text">
+            <span class="st-serial-port-line">
+              <span class="st-serial-mono st-serial-port-path">{{ row.port.path }}</span>
+              @if (row.port.bus) {
+                <span class="st-serial-chip st-bus">{{ row.port.bus }}</span>
+              }
+            </span>
+            <span class="st-serial-port-desc">{{ row.desc }}</span>
+          </span>
+          @if (!row.port.access) {
+            <span class="st-serial-chip st-warn">{{ 'gateway.serial.no-access' | translate }}</span>
+          }
+          @if (row.inUse) {
+            <span class="st-serial-chip st-warn">{{ row.inUse }}</span>
+          }
+        </button>
+      }
+    </div>
+    @if (noPorts() && inDocker()) {
+      <div class="st-serial-port-empty">
+        <div class="st-serial-port-empty-head">
+          <span class="st-serial-port-icon st-warn" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 13h18v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z"></path><path d="M5 13V9h3v4M8 13V9h3v4M11 13V9h3v4M8 9V5h3v4"></path></svg>
+          </span>
+          <span><b>{{ 'gateway.serial.docker-empty-title' | translate }}</b><br>{{ 'gateway.serial.docker-empty-text' | translate }}</span>
+        </div>
+        <div class="st-serial-code">
+          <button mat-icon-button type="button" class="st-serial-small-btn st-serial-copy"
+                  [matTooltip]="(copied() ? 'gateway.serial.copied' : 'gateway.serial.copy') | translate"
+                  [attr.aria-label]="(copied() ? 'gateway.serial.copied' : 'gateway.serial.copy') | translate"
+                  (mousedown)="copy($event)">
+            <mat-icon [class.st-ok]="copied()">{{ copied() ? 'check' : 'content_copy' }}</mat-icon>
+          </button>
+          <pre class="st-serial-mono">{{ composeSnippet() }}</pre>
+        </div>
+        <div class="st-serial-port-hint">{{ 'gateway.serial.type-by-hand' | translate }}</div>
+      </div>
+    }
+    @if (noPorts() && !inDocker()) {
+      <div class="st-serial-port-note">{{ 'gateway.serial.host-empty' | translate }}</div>
+    }
+    @if (noMatch()) {
+      <div class="st-serial-port-note">{{ 'gateway.serial.no-match' | translate }}</div>
+    }
+    @if (noAccess().length) {
+      <div class="st-serial-port-foot">
+        {{ (inDocker() ? 'gateway.serial.no-access-docker' : 'gateway.serial.no-access-host')
+           | translate: { group: groupHint() || 'dialout' } }}
+      </div>
+    } @else if (inDocker() && answer()?.ports.length) {
+      <div class="st-serial-port-foot">{{ 'gateway.serial.docker-hint' | translate }}</div>
+    }
+  </div>
+</ng-template>

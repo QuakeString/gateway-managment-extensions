@@ -1,0 +1,209 @@
+/**
+ * Copyright © 2016-2025 The SENTIENT Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@use './serial-common';
+
+:host {
+  display: block;
+}
+
+.st-serial-scan {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px 20px;
+  border: 1px solid var(--tb-primary, #187074);
+  border-radius: 8px;
+  background: var(--tb-surface-card, #ffffff);
+  color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
+}
+
+.st-serial-scan-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.st-serial-scan-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.st-serial-scan-name {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.st-serial-scan-port {
+  font-size: 13px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st-serial-scan-scope {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.st-serial-scan-text {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+}
+
+.st-serial-scan-notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tb-primary, #187074) 7%, transparent);
+  font-size: 13px;
+  line-height: 19px;
+
+  .mat-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    line-height: 18px;
+    margin-top: 1px;
+    color: var(--tb-primary, #187074);
+  }
+
+  &.st-error {
+    background: var(--tb-error-tooltip-bg, #fff2f3);
+    color: var(--tb-error-tooltip-text, rgba(209, 39, 48, 1));
+
+    .mat-icon {
+      color: inherit;
+    }
+  }
+}
+
+.st-serial-scan-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.st-serial-scan-probe {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+
+  > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.st-serial-scan-found {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.st-serial-scan-found-title {
+  font-size: 13px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+}
+
+.st-serial-found {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--tb-hover, #f4f4f4);
+  }
+
+  &.st-on {
+    border-color: var(--tb-primary, #187074);
+    background: color-mix(in srgb, var(--tb-primary, #187074) 10%, transparent);
+  }
+}
+
+.st-serial-radio {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--tb-text-hint, rgba(0, 0, 0, 0.38));
+
+  &.st-on {
+    border: 5px solid var(--tb-primary, #187074);
+  }
+}
+
+.st-serial-found-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.st-serial-found-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.st-serial-found-unit {
+  width: 64px;
+  flex: none;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.st-serial-found-ident {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-serial-found-orders {
+  padding-left: 76px;
+  font-size: 12px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+}
+
+.st-serial-scan-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

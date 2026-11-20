@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Directive, inject, Inject, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, computed, Directive, inject, Inject, OnDestroy, signal } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -23,6 +23,7 @@ import {
 } from '@angular/forms';
 import {
   ModbusBaudrates,
+  ModbusDefaultBaudrate,
   ModbusByteSizes,
   ModbusDefaultRetries,
   ModbusMethodLabelsMap,
@@ -55,6 +56,7 @@ import { ModbusOrderDetectDialogComponent } from '../modbus-order-dialogs/modbus
 import { ModbusOrderHelpDialogComponent } from '../modbus-order-dialogs/modbus-order-help-dialog.component';
 import { takeUntil } from 'rxjs/operators';
 import { DeviceDialogView, initialDeviceDialogView } from '../../../../../shared/public-api';
+import { samePort, SerialPortsAnswer, SerialScanChoice } from '../modbus-serial/serial-port.models';
 
 @Directive()
 export abstract class ModbusSlaveDialogAbstract<Component, Config> extends DialogComponent<Component, Config> implements OnDestroy {
@@ -80,6 +82,22 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
   readonly modbusHelpLink =
     helpBaseUrl + '/docs/iot-gateway/config/modbus/#section-master-description-and-configuration-parameters';
 
+  /** The auto detect panel under the serial Port row is open. */
+  readonly serialDetectOpen = signal(false);
+  /** The ports the gateway listed, once the Port list was opened. */
+  readonly serialPorts = signal<SerialPortsAnswer>(null);
+  /** The serial port as typed, for the auto detect panel. */
+  readonly serialPortValue = signal('');
+  /** Fields auto detect filled in, shown highlighted until edited. */
+  readonly detectFilled = signal<ReadonlySet<string>>(new Set());
+  /** Connectors the gateway says use the port in the field. */
+  readonly serialPortUsers = computed(() => {
+    const port = this.serialPortValue();
+    return (this.serialPorts()?.ports ?? [])
+      .filter(p => samePort(p.path, port) || (p.byId && samePort(p.byId, port)))
+      .flatMap(p => p.inUse ?? []);
+  });
+
   private readonly serialSpecificControlKeys = ['serialPort', 'baudrate', 'stopbits', 'bytesize', 'parity', 'strict'];
   private readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host'];
 
@@ -103,6 +121,7 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
     this.updateControlsEnabling(this.data.value.type);
     this.observeTypeChange();
     this.observeShowSecurity();
+    this.observeSerialPort();
     this.showSecurityControl.patchValue(!!this.data.value.security && !isEqual(this.data.value.security, {}));
   }
 
@@ -134,7 +153,7 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       method: [ModbusMethodType.SOCKET, [Validators.required]],
-      baudrate: [this.modbusBaudrates[0]],
+      baudrate: [ModbusDefaultBaudrate],
       stopbits: [1],
       bytesize: [ModbusByteSizes[0]],
       parity: [ModbusParity.None],
@@ -303,6 +322,77 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
       this.cdr.markForCheck();
     }
   }
+
+  get serialPortControl(): FormControl<string> {
+    return this.slaveConfigFormGroup.get('serialPort') as FormControl<string>;
+  }
+
+  /** Auto detect asks the gateway itself, so a gateway is all it needs. */
+  get canDetectSerial(): boolean {
+    return !!this.data.gatewayDeviceId && !!this.serialPortValue().trim() && this.serialPortControl.enabled;
+  }
+
+  get detectSerialHint(): string {
+    if (!this.data.gatewayDeviceId) {
+      return 'gateway.serial.detect-needs-gateway';
+    }
+    return this.serialPortValue().trim() ? 'gateway.serial.detect-hint' : 'gateway.serial.detect-needs-port';
+  }
+
+  toggleSerialDetect(): void {
+    if (this.serialDetectOpen()) {
+      this.serialDetectOpen.set(false);
+    } else if (this.canDetectSerial) {
+      this.serialDetectOpen.set(true);
+    }
+  }
+
+  applySerialDetect(choice: SerialScanChoice): void {
+    const patch: Record<string, unknown> = {
+      unitId: choice.unitId,
+      baudrate: choice.baudrate,
+      bytesize: choice.bytesize,
+      stopbits: choice.stopbits,
+      parity: choice.parity,
+    };
+    if (choice.byteOrder && choice.wordOrder) {
+      patch.byteOrder = choice.byteOrder;
+      patch.wordOrder = choice.wordOrder;
+    }
+    this.detectFilled.set(new Set(Object.keys(patch)));
+    this.applyingDetect = true;
+    this.slaveConfigFormGroup.patchValue(patch);
+    this.applyingDetect = false;
+    this.slaveConfigFormGroup.markAsDirty();
+    this.serialDetectOpen.set(false);
+    this.cdr.markForCheck();
+  }
+
+  isDetectFilled(key: string): boolean {
+    return this.detectFilled().has(key);
+  }
+
+  private observeSerialPort(): void {
+    const control = this.slaveConfigFormGroup.get('serialPort');
+    this.serialPortValue.set(control.value ?? '');
+    control.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => this.serialPortValue.set(value ?? ''));
+    // A filled field stops being highlighted once the user changes it.
+    for (const key of ['unitId', 'baudrate', 'bytesize', 'stopbits', 'parity', 'byteOrder', 'wordOrder']) {
+      this.slaveConfigFormGroup.get(key).valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          if (this.detectFilled().has(key) && !this.applyingDetect) {
+            const next = new Set(this.detectFilled());
+            next.delete(key);
+            this.detectFilled.set(next);
+          }
+        });
+    }
+  }
+
+  private applyingDetect = false;
 
   protected abstract addFieldsToFormGroup(): void;
   protected abstract getSlaveResultData(): Config;

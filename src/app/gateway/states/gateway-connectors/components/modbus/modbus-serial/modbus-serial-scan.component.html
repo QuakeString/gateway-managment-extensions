@@ -1,0 +1,118 @@
+<!--
+
+    Copyright © 2016-2025 The SENTIENT Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="st-serial-scan">
+  <div class="st-serial-scan-head">
+    <div class="st-serial-scan-title">
+      <span class="st-serial-scan-name">{{ 'gateway.serial.auto-detect' | translate }}</span>
+      <span class="st-serial-mono st-serial-scan-port">{{ port() || ('gateway.serial.no-port' | translate) }}</span>
+    </div>
+    @if (phase() === 'idle') {
+      <div class="st-serial-scan-scope">
+        <tb-toggle-select appearance="fill" [ngModel]="scope()" (ngModelChange)="pickScope($event)">
+          <tb-toggle-option value="quick">{{ 'gateway.serial.scan-quick' | translate }}</tb-toggle-option>
+          <tb-toggle-option value="thorough">{{ 'gateway.serial.scan-thorough' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+        <div tb-hint-tooltip-icon="{{ 'gateway.serial.scan-scope-hint' | translate }}"></div>
+      </div>
+    }
+    <button mat-icon-button type="button" class="st-serial-small-btn"
+            [attr.aria-label]="'gateway.serial.close-detect' | translate"
+            [matTooltip]="'gateway.serial.close-detect' | translate"
+            (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  @if (phase() === 'idle') {
+    <div class="st-serial-scan-text">{{ scopeText() }}</div>
+    @if (inUse().length) {
+      <div class="st-serial-scan-notice">
+        <mat-icon>info_outline</mat-icon>
+        <span [innerHTML]="'gateway.serial.scan-pauses' | translate: { name: inUse().join(', ') }"></span>
+      </div>
+    }
+  }
+
+  @if (phase() === 'running') {
+    <div class="st-serial-scan-progress">
+      <mat-progress-bar [mode]="scan()?.total ? 'determinate' : 'indeterminate'" [value]="percent()"></mat-progress-bar>
+      <div class="st-serial-scan-probe">
+        <span class="st-serial-mono">{{ probeText() }}</span>
+        <span>{{ remainText() }}</span>
+      </div>
+    </div>
+  }
+
+  @if (rows().length) {
+    <div class="st-serial-scan-found">
+      <div class="st-serial-scan-found-title">{{ foundTitle() }}</div>
+      @for (row of rows(); track row.device.unit + '-' + row.line; let i = $index) {
+        <button type="button" class="st-serial-found" role="radio"
+                [class.st-on]="i === picked()"
+                [attr.aria-checked]="i === picked()"
+                (click)="picked.set(i)">
+          <span class="st-serial-radio" [class.st-on]="i === picked()"></span>
+          <span class="st-serial-found-text">
+            <span class="st-serial-found-line">
+              <span class="st-serial-found-unit">{{ 'gateway.serial.scan-unit' | translate: { unit: row.device.unit } }}</span>
+              <span class="st-serial-mono">{{ row.line }}</span>
+              @if (row.identity) {
+                <span class="st-serial-found-ident">{{ row.identity }}</span>
+              }
+            </span>
+            @if (row.orders) {
+              <span class="st-serial-found-orders">{{ row.orders }}</span>
+            }
+          </span>
+          <span class="st-serial-chip" [class.st-good]="row.device.reply === 'data'"
+                [class.st-muted]="row.device.reply !== 'data'">{{ row.reply }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  @if (failure()) {
+    <div class="st-serial-scan-notice st-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ failure() }}</span>
+    </div>
+  }
+
+  @if (nothingFound()) {
+    <div class="st-serial-scan-notice">{{ 'gateway.serial.scan-nothing' | translate }}</div>
+  }
+
+  <div class="st-serial-scan-actions">
+    @switch (phase()) {
+      @case ('idle') {
+        <button mat-raised-button color="primary" type="button"
+                [disabled]="!port()?.trim() || starting()"
+                (click)="start()">{{ 'gateway.serial.scan-start' | translate }}</button>
+      }
+      @case ('running') {
+        <button mat-button color="primary" type="button" (click)="stop()">{{ 'gateway.serial.scan-stop' | translate }}</button>
+      }
+      @case ('done') {
+        <button mat-button color="primary" type="button" (click)="again()">{{ 'gateway.serial.scan-again' | translate }}</button>
+        <button mat-raised-button color="primary" type="button"
+                [disabled]="!rows()[picked()]"
+                (click)="apply()">{{ 'gateway.serial.scan-use' | translate }}</button>
+      }
+    }
+  </div>
+</div>
