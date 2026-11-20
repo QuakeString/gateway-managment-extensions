@@ -13,6 +13,8 @@ Sentient Gateway new enough to support them (named in the entry).
 ## [Unreleased]
 
 ### Changed
+- Connector types S7 and ADS are named SIEMENS S7 and BECKHOFF ADS, like
+  OMRON FINS and FANUC FOCAS.
 - Data Mapping lists Time series first, then Attributes, in every connector.
   Modbus, BACnet, MQTT, OPC UA and Request listed Attributes first.
 

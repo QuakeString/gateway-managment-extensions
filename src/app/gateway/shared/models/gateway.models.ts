@@ -84,8 +84,8 @@ export enum ConnectorType {
 export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, string>([
   [ConnectorType.MODBUS, 'MODBUS'],
   [ConnectorType.OPCUA, 'OPCUA'],
-  [ConnectorType.S7, 'S7'],
-  [ConnectorType.ADS, 'ADS'],
+  [ConnectorType.S7, 'SIEMENS S7'],
+  [ConnectorType.ADS, 'BECKHOFF ADS'],
   [ConnectorType.ETHERCAT, 'EtherCAT'],
   [ConnectorType.FINS, 'OMRON FINS'],
   [ConnectorType.FOCAS, 'FANUC FOCAS'],
