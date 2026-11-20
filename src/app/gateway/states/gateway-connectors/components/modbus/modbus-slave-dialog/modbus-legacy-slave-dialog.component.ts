@@ -42,6 +42,8 @@ import {
   ModbusSlaveDialogAbstract
 } from './modbus-slave-dialog.abstract';
 import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
+import { SerialPortFieldComponent } from '../modbus-serial/serial-port-field.component';
+import { ModbusSerialScanComponent } from '../modbus-serial/modbus-serial-scan.component';
 
 import { DeviceViewSwitchComponent } from '../../../../../shared/public-api';
 @Component({
@@ -60,6 +62,8 @@ import { DeviceViewSwitchComponent } from '../../../../../shared/public-api';
     // the template is shared with the current dialog, so everything it uses must be imported here too
     TruncateWithTooltipDirective,
     DeviceProfileNameAutocompleteComponent,
+    SerialPortFieldComponent,
+    ModbusSerialScanComponent,
   ],
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })

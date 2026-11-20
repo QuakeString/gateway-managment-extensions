@@ -1,0 +1,240 @@
+/**
+ * Copyright © 2016-2025 The SENTIENT Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Shared by the serial port list and the auto detect panel. Colours come
+// from the platform theme tokens, so light and dark follow the theme.
+
+.st-serial-mono {
+  font-family: 'Roboto Mono', 'Roboto', monospace;
+}
+
+.st-serial-chip {
+  flex: none;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+
+  &.st-bus {
+    line-height: 18px;
+    font-weight: 500;
+    border: 1px solid var(--tb-primary, #187074);
+    color: var(--tb-primary, #187074);
+  }
+
+  &.st-warn {
+    background: color-mix(in srgb, var(--st-status-warn, #d84315) 14%, transparent);
+    color: var(--st-status-warn, #d84315);
+  }
+
+  &.st-good {
+    background: color-mix(in srgb, var(--st-status-good, #2e7d32) 14%, transparent);
+    color: var(--st-status-good, #2e7d32);
+  }
+
+  &.st-muted {
+    background: var(--tb-overlay-bg, rgba(0, 0, 0, 0.06));
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+  }
+}
+
+.st-serial-small-btn {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  color: var(--tb-icon-color, rgba(0, 0, 0, 0.54));
+  --mdc-icon-button-state-layer-size: 32px;
+  --mat-icon-button-state-layer-size: 32px;
+
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+  }
+}
+
+.st-serial-port-icon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tb-primary, #187074) 12%, transparent);
+  color: var(--tb-primary, #187074);
+
+  &.st-warn {
+    background: color-mix(in srgb, var(--st-status-warn, #d84315) 14%, transparent);
+    color: var(--st-status-warn, #d84315);
+  }
+
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.st-serial-port-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(440px, 60vh);
+  overflow: hidden;
+  background: var(--tb-surface-overlay, #ffffff);
+  color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
+  border: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.st-serial-port-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 4px 4px 4px 16px;
+  border-bottom: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
+}
+
+.st-serial-port-title {
+  flex: 1;
+  font-size: 13px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+}
+
+.st-serial-port-list {
+  flex: 0 1 auto;
+  overflow-y: auto;
+}
+
+.st-serial-port-opt {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+
+  &:hover, &.st-active {
+    background: var(--tb-hover, #f4f4f4);
+  }
+
+  &.st-current {
+    background: color-mix(in srgb, var(--tb-primary, #187074) 10%, transparent);
+  }
+}
+
+.st-serial-port-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.st-serial-port-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.st-serial-port-path {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.st-serial-port-desc {
+  font-size: 12px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-serial-port-note {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+}
+
+.st-serial-port-foot {
+  flex: none;
+  padding: 8px 16px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+  border-top: 1px solid var(--tb-border, rgba(0, 0, 0, 0.12));
+  background: color-mix(in srgb, var(--tb-primary, #187074) 5%, transparent);
+}
+
+.st-serial-port-empty {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.st-serial-port-empty-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.st-serial-code {
+  position: relative;
+  border-radius: 6px;
+  background: var(--tb-overlay-bg, rgba(0, 0, 0, 0.06));
+
+  pre {
+    margin: 0;
+    padding: 10px 44px 10px 12px;
+    font-size: 13px;
+    line-height: 19px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));
+  }
+
+  .st-serial-copy {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+  }
+
+  .st-ok {
+    color: var(--tb-primary, #187074);
+  }
+}
+
+.st-serial-port-hint {
+  font-size: 12px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+}

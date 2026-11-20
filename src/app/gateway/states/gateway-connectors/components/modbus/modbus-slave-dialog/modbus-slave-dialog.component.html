@@ -73,20 +73,32 @@
           </div>
           <ng-template #serialPort>
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.serial-port' | translate }}" translate>gateway.port</div>
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput name="value" formControlName="serialPort" placeholder="{{ 'gateway.set' | translate }}"/>
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="'gateway.port-required' | translate"
-                            *ngIf="slaveConfigFormGroup.get('serialPort').hasError('required') &&
-                                            slaveConfigFormGroup.get('serialPort').touched"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
-                </mat-form-field>
+              <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.serial.port-hint' | translate }}" translate>gateway.port</div>
+              <div class="tb-flex align-center st-serial-port-row">
+                <st-serial-port-field class="tb-flex"
+                                      [control]="serialPortControl"
+                                      [gatewayDeviceId]="data.gatewayDeviceId"
+                                      (portsChange)="serialPorts.set($event)"></st-serial-port-field>
+                <span [matTooltip]="detectSerialHint | translate" matTooltipPosition="above">
+                  <button mat-stroked-button color="primary" type="button"
+                          class="st-serial-detect-btn"
+                          [class.st-open]="serialDetectOpen()"
+                          [disabled]="!canDetectSerial && !serialDetectOpen()"
+                          (click)="toggleSerialDetect()">
+                    <mat-icon>manage_search</mat-icon>
+                    {{ 'gateway.serial.detect' | translate }}
+                  </button>
+                </span>
+              </div>
             </div>
+            @if (serialDetectOpen()) {
+              <st-modbus-serial-scan [gatewayDeviceId]="data.gatewayDeviceId"
+                                     [port]="serialPortValue()"
+                                     [stopbits]="slaveConfigFormGroup.get('stopbits').value"
+                                     [inUse]="serialPortUsers()"
+                                     (use)="applySerialDetect($event)"
+                                     (closed)="serialDetectOpen.set(false)"></st-modbus-serial-scan>
+            }
           </ng-template>
           <div class="tb-form-row column-xs">
             <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.framer-type' | translate }}" translate>
@@ -101,7 +113,7 @@
           </div>
         </div>
         <ng-container *ngIf="protocolType === ModbusProtocolType.Serial">
-          <div class="tb-form-row column-xs">
+          <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('baudrate')">
             <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.baudrate' | translate }}" translate>gateway.baudrate</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <mat-select formControlName="baudrate">
@@ -109,7 +121,7 @@
                 </mat-select>
               </mat-form-field>
           </div>
-          <div class="tb-form-row column-xs">
+          <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('bytesize')">
             <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.bytesize' | translate }}" translate>gateway.bytesize</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <mat-select formControlName="bytesize">
@@ -117,13 +129,13 @@
                 </mat-select>
               </mat-form-field>
           </div>
-          <div class="tb-form-row column-xs">
+          <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('stopbits')">
             <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.stopbits' | translate }}"  translate>gateway.stopbits</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput type="number" min="0" name="value" formControlName="stopbits" placeholder="{{ 'gateway.set' | translate }}"/>
               </mat-form-field>
           </div>
-          <div class="tb-form-row column-xs">
+          <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('parity')">
             <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.parity' | translate }}" translate>gateway.parity</div>
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <mat-select formControlName="parity">
@@ -139,7 +151,7 @@
             </mat-slide-toggle>
           </div>
         </ng-container>
-        <div class="tb-form-row column-xs">
+        <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('unitId')">
           <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.unit-id' | translate }}" translate>gateway.unit-id</div>
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput type="number" min="0" name="value" formControlName="unitId" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -197,7 +209,7 @@
                     <input matInput type="number" min="0" name="value" formControlName="timeout" placeholder="{{ 'gateway.set' | translate }}"/>
                   </mat-form-field>
               </div>
-              <div class="tb-form-row column-xs">
+              <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('byteOrder')">
                 <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.byte-order' | translate }}" translate>gateway.byte-order</div>
                   <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                     <mat-select formControlName="byteOrder">
@@ -205,7 +217,7 @@
                     </mat-select>
                   </mat-form-field>
               </div>
-              <div class="tb-form-row column-xs">
+              <div class="tb-form-row column-xs" [class.st-detect-filled]="isDetectFilled('wordOrder')">
                 <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.word-order' | translate }}" translate>gateway.word-order</div>
                   <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                     <mat-select formControlName="wordOrder">
@@ -355,6 +367,9 @@
     </div>
   </div>
   <div mat-dialog-actions class="justify-end">
+    @if (detectFilled().size) {
+      <span class="st-detect-note">{{ 'gateway.serial.filled-note' | translate }}</span>
+    }
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

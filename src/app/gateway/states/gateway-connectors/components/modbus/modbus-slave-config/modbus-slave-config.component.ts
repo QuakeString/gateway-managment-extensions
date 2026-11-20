@@ -33,6 +33,7 @@ import {
 } from '../../../../../shared/public-api';
 import {
   ModbusBaudrates,
+  ModbusDefaultBaudrate,
   ModbusMethodLabelsMap,
   ModbusMethodType,
   ModbusOrderType,
@@ -113,7 +114,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       method: [ModbusMethodType.SOCKET],
       unitId: [null, [Validators.required]],
-      baudrate: [this.modbusBaudrates[0]],
+      baudrate: [ModbusDefaultBaudrate],
       deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       pollPeriod: [1000, [Validators.required]],
@@ -255,7 +256,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       wordOrder = ModbusOrderType.BIG,
       security = {},
       values = {} as ModbusRegisterValues,
-      baudrate = this.modbusBaudrates[0],
+      baudrate = ModbusDefaultBaudrate,
       host = '',
       port = null,
     } = slaveConfig;

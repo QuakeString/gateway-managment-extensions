@@ -43,6 +43,8 @@ import {
   ModbusSlaveDialogAbstract
 } from './modbus-slave-dialog.abstract';
 import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
+import { SerialPortFieldComponent } from '../modbus-serial/serial-port-field.component';
+import { ModbusSerialScanComponent } from '../modbus-serial/modbus-serial-scan.component';
 
 @Component({
   selector: 'tb-modbus-slave-dialog',
@@ -59,6 +61,8 @@ import { GatewayPortTooltipPipe } from '../../../pipes/public-api';
     ReportStrategyComponent,
     TruncateWithTooltipDirective,
     DeviceProfileNameAutocompleteComponent,
+    SerialPortFieldComponent,
+    ModbusSerialScanComponent,
   ],
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })

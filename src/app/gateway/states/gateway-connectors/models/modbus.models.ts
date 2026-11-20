@@ -127,7 +127,9 @@ export interface ModbusValue {
   bitTargetType?: ModbusBitTargetType;
 }
 
-export const ModbusBaudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
+export const ModbusBaudrates = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
+// The default before 1200 and 2400 joined the list.
+export const ModbusDefaultBaudrate = 4800;
 export const ModbusByteSizes = [5, 6, 7, 8];
 export const ModbusDefaultRetries = 3;
 

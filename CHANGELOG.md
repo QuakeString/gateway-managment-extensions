@@ -12,6 +12,23 @@ Sentient Gateway new enough to support them (named in the entry).
 
 ## [Unreleased]
 
+### Added
+- Modbus server (serial): the Port field lists the serial ports the gateway
+  can see (`/dev/...` on Linux, `COMn` on Windows) with their kind, chip and
+  USB ID, RS-485 or RS-232 when the adapter says so, the connectors using a
+  port, and ports the gateway may not open. Type to filter, pick one, or type
+  any path. A gateway in Docker that sees no port shows the compose
+  `devices:` and `group_add:` lines with a copy button.
+- Modbus server (serial): Detect searches the port for devices (Quick or
+  Thorough), shows progress live and lists the devices that answered with
+  their unit ID and line settings, and their vendor and product when the
+  device reports them. "Use these settings" fills baud rate, byte size,
+  stop bits, parity and unit ID (and byte and word order for devices in the
+  gateway's device list) and highlights what it changed. A connector on the
+  port pauses for the search. Needs the Sentient Gateway release after
+  4.16.3; older gateways answer that they cannot list or search ports.
+- Modbus baud rates 1200 and 2400.
+
 ### Changed
 - Built for the Angular 22 SENTIENT UI (Angular 22, Material 22, TypeScript 6).
   No visible change. This bundle needs a SENTIENT release on Angular 22; older

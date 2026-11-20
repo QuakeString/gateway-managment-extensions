@@ -44,3 +44,35 @@
     }
   }
 }
+
+:host {
+  .st-serial-port-row {
+    gap: 12px;
+    min-width: 0;
+  }
+
+  // The same height as the field beside it.
+  .st-serial-detect-btn {
+    height: 40px;
+    flex: none;
+
+    &.st-open {
+      background: color-mix(in srgb, var(--tb-primary, #187074) 10%, transparent);
+    }
+  }
+
+  .tb-form-row {
+    transition: background-color .4s;
+  }
+
+  .tb-form-row.st-detect-filled {
+    background: color-mix(in srgb, var(--tb-primary, #187074) 10%, transparent);
+  }
+
+  .st-detect-note {
+    flex: 1;
+    padding-left: 8px;
+    font-size: 13px;
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.54));
+  }
+}
