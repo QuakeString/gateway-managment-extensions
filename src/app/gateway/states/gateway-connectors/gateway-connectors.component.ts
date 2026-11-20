@@ -87,6 +87,7 @@ import { RestLegacyBasicConfigComponent, RestBasicConfigComponent } from './comp
 import { S7BasicConfigComponent, S7LegacyBasicConfigComponent } from './components/s7/public-api';
 import { AdsBasicConfigComponent, AdsLegacyBasicConfigComponent } from './components/ads/public-api';
 import { FinsBasicConfigComponent, FinsLegacyBasicConfigComponent } from './components/fins/public-api';
+import { FocasBasicConfigComponent, FocasLegacyBasicConfigComponent } from './components/focas/public-api';
 import { Dnp3BasicConfigComponent } from './components/dnp3/public-api';
 import { ProfinetBasicConfigComponent } from './components/profinet/public-api';
 import { McProtocolBasicConfigComponent, McProtocolLegacyBasicConfigComponent } from './components/mcprotocol/public-api';
@@ -132,6 +133,8 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
     AdsLegacyBasicConfigComponent,
     FinsBasicConfigComponent,
     FinsLegacyBasicConfigComponent,
+    FocasBasicConfigComponent,
+    FocasLegacyBasicConfigComponent,
     Dnp3BasicConfigComponent,
     ProfinetBasicConfigComponent,
     McProtocolBasicConfigComponent,
@@ -165,6 +168,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     ConnectorType.ADS,
     ConnectorType.ETHERCAT,
     ConnectorType.FINS,
+    ConnectorType.FOCAS,
     ConnectorType.DNP3,
     ConnectorType.PROFINET,
     ConnectorType.MCPROTOCOL,

@@ -30,6 +30,7 @@ export * from './socket/public-api';
 export * from './s7/public-api';
 export * from './ads/public-api';
 export * from './fins/public-api';
+export * from './focas/public-api';
 export * from './dnp3/public-api';
 export * from './profinet/public-api';
 export * from './mcprotocol/public-api';

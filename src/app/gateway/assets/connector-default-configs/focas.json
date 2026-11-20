@@ -1,0 +1,96 @@
+{
+  "3.7": {
+    "devices": [
+      {
+        "deviceName": "VMC-01",
+        "deviceType": "CNC",
+        "host": "192.168.1.50",
+        "port": 8193,
+        "pollPeriod": 1000,
+        "timeoutMs": 3000,
+        "maxRequestsPerFrame": 8,
+        "connectAttemptCount": 3,
+        "waitAfterFailedAttemptsMs": 10000,
+        "timeseries": [
+          {
+            "tag": "machineState",
+            "address": "status.state"
+          },
+          {
+            "tag": "mode",
+            "address": "status.autText"
+          },
+          {
+            "tag": "runStatus",
+            "address": "status.runText"
+          },
+          {
+            "tag": "emergency",
+            "address": "status.emergencyText"
+          },
+          {
+            "tag": "alarmActive",
+            "address": "alarm.active"
+          },
+          {
+            "tag": "alarmCount",
+            "address": "alarm.count"
+          },
+          {
+            "tag": "alarm",
+            "address": "alarm.first"
+          },
+          {
+            "tag": "programNumber",
+            "address": "program.main"
+          },
+          {
+            "tag": "programName",
+            "address": "program.name"
+          },
+          {
+            "tag": "sequenceNumber",
+            "address": "program.sequence"
+          },
+          {
+            "tag": "partsCount",
+            "address": "param:6711"
+          },
+          {
+            "tag": "partsTotal",
+            "address": "param:6712"
+          },
+          {
+            "tag": "spindleSpeed",
+            "address": "spindle.actual"
+          },
+          {
+            "tag": "feedRate",
+            "address": "feed.actual"
+          }
+        ],
+        "attributes": [
+          {
+            "tag": "cncSeries",
+            "address": "sysinfo.series"
+          },
+          {
+            "tag": "cncVersion",
+            "address": "sysinfo.version"
+          },
+          {
+            "tag": "axisNames",
+            "address": "axis.names"
+          }
+        ],
+        "rpc": [
+          {
+            "method": "readPartsCount",
+            "address": "param:6711",
+            "operation": "read"
+          }
+        ]
+      }
+    ]
+  }
+}
