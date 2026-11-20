@@ -12,6 +12,10 @@ Sentient Gateway new enough to support them (named in the entry).
 
 ## [Unreleased]
 
+### Changed
+- Data Mapping lists Time series first, then Attributes, in every connector.
+  Modbus, BACnet, MQTT, OPC UA and Request listed Attributes first.
+
 ### Added
 - Modbus server (serial): the Port field lists the serial ports the gateway
   can see (`/dev/...` on Linux, `COMn` on Windows) with their kind, chip and

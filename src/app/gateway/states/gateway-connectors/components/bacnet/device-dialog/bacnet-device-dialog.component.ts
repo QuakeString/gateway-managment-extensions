@@ -128,8 +128,8 @@ export class BacnetDeviceDialogComponent extends DialogComponent<BacnetDeviceDia
 
   /** The data mapping rows: the lists this device maps, in order. */
   readonly mappingRows: DataMappingRow[] = [
-    { key: BacnetDeviceKeysType.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.key },
     { key: BacnetDeviceKeysType.TIMESERIES, label: 'gateway.timeseries', chip: e => e.key },
+    { key: BacnetDeviceKeysType.ATTRIBUTES, label: 'gateway.attributes', chip: e => e.key },
     { key: BacnetDeviceKeysType.ATTRIBUTES_UPDATES, label: 'gateway.attribute-updates', chip: e => e.key },
     { key: BacnetDeviceKeysType.RPC_METHODS, label: 'gateway.rpc-methods', chip: e => e.method },
   ];

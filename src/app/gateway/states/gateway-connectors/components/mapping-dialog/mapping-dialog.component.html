@@ -100,28 +100,6 @@
                 <div class="tb-form-panel no-border no-padding"
                      *ngIf="converterType === ConvertorTypeEnum.BYTES || converterType === ConvertorTypeEnum.JSON">
                   <div class="tb-form-row space-between tb-flex">
-                    <div class="fixed-title-width" translate>gateway.attributes</div>
-                    <div class="tb-flex ellipsis-chips-container">
-                      <mat-chip-listbox [tbEllipsisChipList]="converterAttributes" class="tb-flex">
-                          <mat-chip *ngFor="let attribute of converterAttributes">
-                            {{ attribute }}
-                          </mat-chip>
-                          <mat-chip class="mat-mdc-chip ellipsis-chip">
-                            <label class="ellipsis-text"></label>
-                          </mat-chip>
-                      </mat-chip-listbox>
-                      <button type="button"
-                              mat-icon-button
-                              color="primary"
-                              matTooltip="{{ 'action.edit' | translate }}"
-                              matTooltipPosition="above"
-                              #attributesButton
-                              (click)="manageKeys($event, attributesButton, MappingKeysType.ATTRIBUTES)">
-                        <tb-icon matButtonIcon>edit</tb-icon>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="tb-form-row space-between tb-flex">
                     <div class="fixed-title-width" translate>gateway.timeseries</div>
                     <div class="tb-flex ellipsis-chips-container">
                       <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="converterTelemetry">
@@ -139,6 +117,28 @@
                               matTooltipPosition="above"
                               #telemetryButton
                               (click)="manageKeys($event, telemetryButton, MappingKeysType.TIMESERIES)">
+                        <tb-icon matButtonIcon>edit</tb-icon>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="tb-form-row space-between tb-flex">
+                    <div class="fixed-title-width" translate>gateway.attributes</div>
+                    <div class="tb-flex ellipsis-chips-container">
+                      <mat-chip-listbox [tbEllipsisChipList]="converterAttributes" class="tb-flex">
+                          <mat-chip *ngFor="let attribute of converterAttributes">
+                            {{ attribute }}
+                          </mat-chip>
+                          <mat-chip class="mat-mdc-chip ellipsis-chip">
+                            <label class="ellipsis-text"></label>
+                          </mat-chip>
+                      </mat-chip-listbox>
+                      <button type="button"
+                              mat-icon-button
+                              color="primary"
+                              matTooltip="{{ 'action.edit' | translate }}"
+                              matTooltipPosition="above"
+                              #attributesButton
+                              (click)="manageKeys($event, attributesButton, MappingKeysType.ATTRIBUTES)">
                         <tb-icon matButtonIcon>edit</tb-icon>
                       </button>
                     </div>
@@ -641,6 +641,37 @@
             />
           }
           <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.timeseries</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="opcTelemetry">
+                <mat-chip *ngFor="let telemetry of (opcTelemetry | slice: 0 : 50)">
+                  {{ telemetry }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Browse server"
+                      matTooltipPosition="above"
+                      [disabled]="!data.gatewayDeviceId || !data.connectorName"
+                      (click)="browseOpcuaNodes('timeseries')">
+                <mat-icon>wifi_find</mat-icon>
+              </button>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
+                      #opcTelemetryButton
+                      (click)="manageKeys($event, opcTelemetryButton, MappingKeysType.TIMESERIES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
             <div class="fixed-title-width" translate>gateway.attributes</div>
             <div class="tb-flex ellipsis-chips-container">
               <!-- Slice the *ngFor to ~50 — the directive hides
@@ -676,37 +707,6 @@
                       matTooltipPosition="above"
                       #opcAttributesButton
                       (click)="manageKeys($event, opcAttributesButton, MappingKeysType.ATTRIBUTES)">
-                <tb-icon matButtonIcon>edit</tb-icon>
-              </button>
-            </div>
-          </div>
-          <div class="tb-form-row space-between tb-flex">
-            <div class="fixed-title-width" translate>gateway.timeseries</div>
-            <div class="tb-flex ellipsis-chips-container">
-              <mat-chip-listbox class="tb-flex" [tbEllipsisChipList]="opcTelemetry">
-                <mat-chip *ngFor="let telemetry of (opcTelemetry | slice: 0 : 50)">
-                  {{ telemetry }}
-                </mat-chip>
-                <mat-chip class="mat-mdc-chip ellipsis-chip">
-                  <label class="ellipsis-text"></label>
-                </mat-chip>
-              </mat-chip-listbox>
-              <button type="button"
-                      mat-icon-button
-                      color="primary"
-                      matTooltip="Browse server"
-                      matTooltipPosition="above"
-                      [disabled]="!data.gatewayDeviceId || !data.connectorName"
-                      (click)="browseOpcuaNodes('timeseries')">
-                <mat-icon>wifi_find</mat-icon>
-              </button>
-              <button type="button"
-                      mat-icon-button
-                      color="primary"
-                      matTooltip="{{ 'action.edit' | translate }}"
-                      matTooltipPosition="above"
-                      #opcTelemetryButton
-                      (click)="manageKeys($event, opcTelemetryButton, MappingKeysType.TIMESERIES)">
                 <tb-icon matButtonIcon>edit</tb-icon>
               </button>
             </div>
