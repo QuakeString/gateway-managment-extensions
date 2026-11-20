@@ -23,6 +23,7 @@ export * from './rest.models';
 export * from './s7.models';
 export * from './ads.models';
 export * from './fins.models';
+export * from './focas.models';
 export * from './dnp3.models';
 export * from './profinet.models';
 export * from './mcprotocol.models';

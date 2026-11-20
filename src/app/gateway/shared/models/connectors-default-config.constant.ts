@@ -32,6 +32,7 @@ import s7 from '../../assets/connector-default-configs/s7.json';
 import ads from '../../assets/connector-default-configs/ads.json';
 import ethercat from '../../assets/connector-default-configs/ethercat.json';
 import fins from '../../assets/connector-default-configs/fins.json';
+import focas from '../../assets/connector-default-configs/focas.json';
 import dnp3 from '../../assets/connector-default-configs/dnp3.json';
 import profinet from '../../assets/connector-default-configs/profinet.json';
 import mcprotocol from '../../assets/connector-default-configs/mcprotocol.json';
@@ -60,6 +61,7 @@ export const connectorConfigs = {
   [ConnectorType.ADS]: ads,
   [ConnectorType.ETHERCAT]: ethercat,
   [ConnectorType.FINS]: fins,
+  [ConnectorType.FOCAS]: focas,
   [ConnectorType.DNP3]: dnp3,
   [ConnectorType.PROFINET]: profinet,
   [ConnectorType.MCPROTOCOL]: mcprotocol,

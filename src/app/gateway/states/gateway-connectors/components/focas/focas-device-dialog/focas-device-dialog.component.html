@@ -1,0 +1,147 @@
+<!--
+  Copyright © 2016-2025 The SENTIENT Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<div [formGroup]="deviceForm" class="dialog-mapping">
+  <mat-toolbar color="primary">
+    <h2>{{ (isEdit ? 'action.edit' : 'action.add') | translate }} {{ 'gateway.focas-device' | translate }}</h2>
+    <span class="flex-1"></span>
+    <st-device-view-switch [(view)]="view"></st-device-view-switch>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-border no-padding">
+      <ng-container *ngIf="view === 'connection'">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">{{ 'gateway.gw-device-name' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="deviceName" placeholder="VMC-01"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.gw-device-name-required' | translate"
+                      *ngIf="deviceForm.get('deviceName').hasError('required')
+                                           && deviceForm.get('deviceName').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ 'gateway.device-profile' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <tb-device-profile-name-autocomplete formControlName="deviceType"></tb-device-profile-name-autocomplete>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required">{{ 'gateway.host' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="host" placeholder="192.168.1.50"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.gw-host-required' | translate"
+                      *ngIf="deviceForm.get('host').hasError('required')
+                                           && deviceForm.get('host').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.focas.port' | translate }}">{{ 'gateway.port' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput type="number" formControlName="port"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'gateway.focas-port-required' | translate"
+                      *ngIf="(deviceForm.get('port').hasError('required')
+                              || deviceForm.get('port').hasError('min')
+                              || deviceForm.get('port').hasError('max'))
+                              && deviceForm.get('port').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ 'gateway.advanced-connection-settings' | translate }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding">
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.focas-timeout-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="timeoutMs"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.gw-poll-period-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="pollPeriod"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.gw-connect-attempts' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="connectAttemptCount"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width">{{ 'gateway.gw-wait-after-failed-ms' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="waitAfterFailedAttemptsMs"/>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.focas.max-requests-per-frame' | translate }}">{{ 'gateway.focas-max-requests-per-frame' | translate }}</div>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="maxRequestsPerFrame"/>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </div>
+      </ng-container>
+      <ng-container *ngIf="view === 'mapping'">
+      <st-data-mapping [form]="deviceForm" [rows]="mappingRows" [panel]="keysPanel"
+                       (panelOpen)="keysPopupClosed = !$event"></st-data-mapping>
+      </ng-container>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'gateway.gw-cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="deviceForm.invalid || !keysPopupClosed">
+      {{ (isEdit ? 'action.update' : 'action.add') | translate }}
+    </button>
+  </div>
+</div>

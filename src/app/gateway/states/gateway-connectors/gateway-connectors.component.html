@@ -370,6 +370,25 @@
               />
             </ng-template>
           </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.FOCAS">
+            <tb-focas-basic-config
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig : ConnectorType.FOCAS else focasLegacy"
+              class="h-full"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              [gatewayDeviceId]="$safeNavigationMigration(device?.id)"
+              [connectorName]="$safeNavigationMigration(connectorForm.get('name')?.value)"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #focasLegacy>
+              <tb-focas-legacy-basic-config
+                class="h-full"
+                formControlName="basicConfig"
+                (initialized)="basicConfigInitSubject.next()"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
           <ng-container *ngSwitchCase="ConnectorType.DNP3">
             <tb-dnp3-basic-config
               class="h-full"

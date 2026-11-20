@@ -1085,6 +1085,14 @@
         "destination-unit": "FINS unit (DA2). 0 addresses the CPU unit; use 10-15 (0x10+unit) for a specific Ethernet unit.",
         "source-node": "FINS node of the gateway (SA1). Leave empty to derive it from the last octet of the gateway's local IP address."
       },
+      "focas": {
+        "tag": "Name for the key on the platform.",
+        "address": "What to read from the CNC. Machine values: status.state (RUNNING, HOLD, STOPPED, IDLE, ALARM, EMERGENCY), status.autText (MEM, MDI, JOG...), status.runText, alarm.active, alarm.count, alarm.first, program.main, program.name, program.sequence, feed.actual, spindle.actual, position.abs.X / machine / rel / dist, servoLoad.X, sysinfo.series, axis.names. Numbered tables: param:6711 (parts count), param:1420:1 (axis 1), param:3401.5 (bit), diag:411, macro:500, pmc:D100, pmc:R100.3.",
+        "data-keys": "Address is a FOCAS address such as status.state, alarm.first, program.main, spindle.actual, param:6711 (parts count), macro:500 or pmc:D100. Only PMC keys take a value type.",
+        "value-type": "Size of the PMC value: uint8 (default, one byte), int16/uint16 (two bytes), int32/uint32/float32 (four bytes). A bit address such as R100.3 is always bool.",
+        "port": "FOCAS TCP port set on the CNC's embedded Ethernet screen, 8193 by default. No Fanuc library or CNC option is needed.",
+        "max-requests-per-frame": "How many FOCAS requests the gateway packs into one frame. 8 suits most CNCs; lower it only if a CNC drops the connection on large polls."
+      },
       "snmp": {
         "ip": "IP address or host name of the SNMP agent.",
         "port": "UDP port of the agent, 161 by default.",
@@ -1509,6 +1517,15 @@
     "fins-invalid-address": "Enter a FINS address, e.g. D100, D100.5, CIO20.07, W10, H5, A448, E0_100, T15, C4",
     "fins-bool-only": "A bit address (.NN suffix) always reads as bool",
     "fins-value-type-default": "Default (word)",
+    "focas-device": "Fanuc CNC",
+    "focas-devices-title": "Fanuc CNCs",
+    "focas-no-devices": "No CNCs configured. Click + to add a Fanuc CNC.",
+    "focas-port-required": "Port must be between 1 and 65535",
+    "focas-timeout-ms": "Response timeout (ms)",
+    "focas-max-requests-per-frame": "Requests per frame",
+    "focas-invalid-address": "Enter a FOCAS address, e.g. status.state, alarm.first, program.main, spindle.actual, position.abs.X, param:6711, diag:411, macro:500, pmc:D100, pmc:R100.3",
+    "focas-bool-only": "A PMC bit address (.0-.7) always reads as bool",
+    "focas-value-type-default": "Default (uint8)",
     "fins-supported-formats": "Supported: .xlsx, .csv, .ods",
     "fins-valid-tags": "{{count}} valid tags",
     "fins-import-n-tags": "Import {{count}} Tags",
