@@ -198,6 +198,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private activeData: Array<any> = [];
   private inactiveData: Array<any> = [];
   private sharedAttributeData: Array<GatewayAttributeData> = [];
+  private sharedCopiesChecked = false;
   private basicConfigSub: Subscription;
   private jsonConfigSub: Subscription;
   private subscriptionOptions: WidgetSubscriptionOptions = {
@@ -318,9 +319,17 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
 
     tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, attributesToSave));
+    if (scope === AttributeScope.SERVER_SCOPE) {
+      // A disabled connector keeps a shared copy, so the gateway still
+      // lists it as off (see getAttributeExecutionTasks).
+      tasks.push(this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributesToSave));
+    }
 
     if (attributesToDelete.length) {
       tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, attributesToDelete));
+      if (scope === AttributeScope.SERVER_SCOPE) {
+        tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributesToDelete));
+      }
     }
 
     return tasks;
@@ -395,7 +404,34 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.inactiveData = data.data.filter(value => this.inactiveConnectors.includes(value.key));
       this.loaded.add(AttributeScope.SERVER_SCOPE);
       this.combineData();
+      this.addMissingSharedCopies(this.inactiveData);
     });
+  }
+
+  /**
+   * A connector disabled before disabled connectors kept a shared copy has
+   * only its server copy, and the gateway no longer lists it. Write the
+   * shared copy once per page load.
+   */
+  private addMissingSharedCopies(inactive: Array<GatewayAttributeData>): void {
+    if (this.sharedCopiesChecked || !inactive.length) {
+      return;
+    }
+    this.sharedCopiesChecked = true;
+    const names = inactive.map(attribute => attribute.key);
+    this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, names)
+      .pipe(take(1), takeUntil(this.destroy$))
+      .subscribe((shared: Array<AttributeData>) => {
+        const present = new Set(shared.map(attribute => attribute.key));
+        const missing = inactive
+          .filter(attribute => !present.has(attribute.key))
+          .map(attribute => ({ key: attribute.key, value: attribute.value }));
+        if (missing.length) {
+          this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, missing)
+            .pipe(take(1), takeUntil(this.destroy$))
+            .subscribe();
+        }
+      });
   }
 
   isConnectorSynced(attribute: GatewayAttributeData): boolean {
@@ -572,7 +608,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         const scope = this.activeConnectors.includes(attribute.value?.name) ?
           AttributeScope.SHARED_SCOPE :
           AttributeScope.SERVER_SCOPE;
-        tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, [attribute]));
+        // Delete removes it from the gateway: a disabled connector has a
+        // shared copy as well, and deleting that is what tells the gateway.
+        tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [attribute]));
+        if (scope === AttributeScope.SERVER_SCOPE) {
+          tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, [attribute]));
+        }
         this.removeConnectorFromList(attribute.key, true);
         this.removeConnectorFromList(attribute.key, false);
         tasks.push(this.getSaveEntityAttributesTask(scope));
@@ -924,10 +965,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   private getAttributeExecutionTasks(attribute: GatewayAttributeData): Observable<any>[] {
     const isActive = this.activeConnectors.includes(attribute.key);
-    const scopeOld =  isActive ? AttributeScope.SERVER_SCOPE : AttributeScope.SHARED_SCOPE;
     const scopeNew = isActive ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
 
-    return [
+    // Disabling keeps the shared copy: the gateway learns from
+    // active_connectors that the connector is off, stops it and keeps
+    // listing it as off. Deleting the shared copy is what deletes it on the
+    // gateway, so only a delete does that.
+    const tasks: Observable<any>[] = [
       this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
         key: 'active_connectors',
         value: this.activeConnectors
@@ -936,9 +980,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         key: 'inactive_connectors',
         value: this.inactiveConnectors
       }]),
-      this.attributeService.deleteEntityAttributes(this.device, scopeOld, [attribute]),
       this.attributeService.saveEntityAttributes(this.device, scopeNew, [attribute])
     ];
+    if (isActive) {
+      tasks.push(this.attributeService.deleteEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, [attribute]));
+    }
+    return tasks;
   }
 
   private onDataUpdateError(e: any): void {
