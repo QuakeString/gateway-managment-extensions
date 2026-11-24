@@ -58,7 +58,7 @@ import {
   SocketBasicConfigComponent,
   SocketLegacyBasicConfigComponent
 } from './components/public-api';
-import { debounceTime, filter, switchMap, take, takeUntil, tap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import {
   AttributeData,
@@ -198,6 +198,14 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private activeData: Array<any> = [];
   private inactiveData: Array<any> = [];
   private sharedAttributeData: Array<GatewayAttributeData> = [];
+  /** Every shared / server attribute as last read, before the
+   *  active/inactive filter: a save patches the keys it touched here
+   *  instead of reading every connector again. */
+  private sharedAll: Array<GatewayAttributeData> = [];
+  private serverAll: Array<GatewayAttributeData> = [];
+  /** Every client attribute (the gateway's copies) as the websocket last
+   *  sent them. */
+  private clientAll: Array<GatewayAttributeData> = [];
   private sharedCopiesChecked = false;
   private basicConfigSub: Subscription;
   private jsonConfigSub: Subscription;
@@ -268,27 +276,98 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         ? this.translate.instant('gateway.connector-created')
         : this.translate.instant('gateway.connector-updated')
       );
+      const previousName = this.initialConnector?.name;
       this.initialConnector = connector;
-      this.updateData(true);
-      this.recheckUntilSynced(connector.name);
+      this.refreshAfterWrite([connector.name, previousName]);
       this.connectorForm.markAsPristine();
     });
   }
 
   /**
-   * The gateway answers a save a moment after it is stored, and nothing
-   * pushes that answer to this page: read again every 2 s until the
-   * connector is in sync, for up to 30 s.
+   * After a save, enable, disable or delete: read back only the connectors
+   * it touched (`names`, the old name too on a rename) and wait for the
+   * gateway's copy on the websocket, which stays open.
+   *
+   * This used to read every connector in all three scopes again, every 2 s
+   * for up to 30 s: with large connectors (a 10,000-key S7 connector is
+   * about 1.8 MB) one save downloaded tens of megabytes.
    */
-  private recheckUntilSynced(name: string): void {
+  private refreshAfterWrite(names: Array<string>): void {
     this.syncRecheck?.unsubscribe();
-    this.syncRecheck = timer(2000, 2000).pipe(take(15), takeUntil(this.destroy$)).subscribe(() => {
-      const row = this.dataSource.data.find(attribute => attribute.key === name);
-      if (row && this.isConnectorSynced(row)) {
-        this.syncRecheck.unsubscribe();
-        return;
-      }
+    const keys = Array.from(new Set(names.filter(name => !!name)));
+    // The REST API takes keys as a comma-separated list: a name with a comma
+    // cannot be asked for alone.
+    if (!keys.length || keys.some(key => key.includes(','))) {
       this.updateData(true);
+      this.waitForGateway(keys[0]);
+      return;
+    }
+    const serverKeys = keys.filter(key => this.inactiveConnectors.includes(key) || this.serverAll.some(a => a.key === key));
+    forkJoin([
+      this.attributeService.getEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, keys),
+      serverKeys.length
+        ? this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, serverKeys)
+        : of([] as Array<AttributeData>)
+    ]).pipe(take(1), takeUntil(this.destroy$)).subscribe({
+      next: ([shared, server]) => {
+        this.sharedAll = this.patchAttributes(this.sharedAll, keys, shared);
+        this.serverAll = this.patchAttributes(this.serverAll, keys, server);
+        this.applyLists();
+        this.waitForGateway(keys[0]);
+      },
+      // The read-back failed: fall back to reading everything once.
+      error: () => {
+        this.updateData(true);
+        this.waitForGateway(keys[0]);
+      }
+    });
+  }
+
+  /** `list` with `keys` replaced by what was read (a key not read is gone). */
+  private patchAttributes(list: Array<GatewayAttributeData>, keys: Array<string>,
+                          read: Array<AttributeData>): Array<GatewayAttributeData> {
+    return [
+      ...list.filter(attribute => !keys.includes(attribute.key)),
+      ...(read as Array<GatewayAttributeData>)
+    ];
+  }
+
+  /** The three scopes as last read, filtered by the active / inactive lists. */
+  private applyLists(): void {
+    this.activeData = this.clientAll.filter(value => this.activeConnectors.includes(value.key));
+    this.sharedAttributeData = this.sharedAll.filter(value => this.activeConnectors.includes(value.key));
+    this.inactiveData = this.serverAll.filter(value => this.inactiveConnectors.includes(value.key));
+    this.combineData();
+    this.setClientData({data: this.clientAll} as PageData<GatewayAttributeData>);
+    this.cd.markForCheck();
+  }
+
+  /**
+   * The gateway's copy comes back on the websocket a moment after the save.
+   * If the connector is still out of sync after 30 s while the gateway is
+   * online, read everything once, in case a push was missed.
+   */
+  private waitForGateway(name: string): void {
+    this.syncRecheck?.unsubscribe();
+    if (!name) {
+      return;
+    }
+    // The gateway's state is read again first (three small keys): the
+    // page's copy is from when it opened, and a gateway that went offline
+    // since then must not cost a full read.
+    this.syncRecheck = timer(30000).pipe(
+      filter(() => {
+        const row = this.dataSource.data.find(attribute => attribute.key === name);
+        return !!row && !this.isConnectorSynced(row);
+      }),
+      switchMap(() => this.readGatewayState()),
+      takeUntil(this.destroy$)
+    ).subscribe(active => {
+      this.isGatewayActive = active;
+      const row = this.dataSource.data.find(attribute => attribute.key === name);
+      if (active && row && !this.isConnectorSynced(row)) {
+        this.updateData(true);
+      }
     });
   }
 
@@ -389,6 +468,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
     this.attributeDataSource.loadAttributes(this.device, AttributeScope.CLIENT_SCOPE, this.pageLink, reload).subscribe(data => {
+      this.clientAll = data.data;
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.loaded.add(AttributeScope.CLIENT_SCOPE);
       this.combineData();
@@ -396,11 +476,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.setClientData(data);
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
+      this.sharedAll = data.data;
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.loaded.add(AttributeScope.SHARED_SCOPE);
       this.combineData();
     });
     this.serverDataSource.loadAttributes(this.device, AttributeScope.SERVER_SCOPE, this.pageLink, reload).subscribe(data => {
+      this.serverAll = data.data;
       this.inactiveData = data.data.filter(value => this.inactiveConnectors.includes(value.key));
       this.loaded.add(AttributeScope.SERVER_SCOPE);
       this.combineData();
@@ -625,7 +707,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         this.clearOutConnectorForm();
         this.cd.detectChanges();
       }
-      this.updateData(true);
+      this.refreshAfterWrite([attribute.key]);
     });
   }
 
@@ -898,16 +980,24 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private loadGatewayState(): void {
-    this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE)
+    this.readGatewayState()
       .pipe(takeUntil(this.destroy$))
-      .subscribe((attributes: AttributeData[]) => {
+      .subscribe(active => this.isGatewayActive = active);
+  }
 
-        const active = attributes.find(data => data.key === 'active').value;
+  /** Whether the gateway is online. Only the three keys: all server
+   *  attributes include every disabled connector's configuration. */
+  private readGatewayState(): Observable<boolean> {
+    return this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE,
+      ['active', 'lastDisconnectTime', 'lastConnectTime']).pipe(
+      map((attributes: AttributeData[]) => {
+        const active = attributes.find(data => data.key === 'active')?.value;
         const lastDisconnectedTime = attributes.find(data => data.key === 'lastDisconnectTime')?.value;
         const lastConnectedTime = attributes.find(data => data.key === 'lastConnectTime')?.value;
-
-        this.isGatewayActive = this.getGatewayStatus(active, lastConnectedTime, lastDisconnectedTime);
-      });
+        return this.getGatewayStatus(active, lastConnectedTime, lastDisconnectedTime);
+      }),
+      catchError(() => of(false))
+    );
   }
 
   private parseConnectors(attribute: GatewayAttributeData[]): string[] {
@@ -954,10 +1044,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     forkJoin(this.getAttributeExecutionTasks(attribute))
       .pipe(
         take(1),
-        tap(() => {
-          this.updateData(true);
-          this.recheckUntilSynced(attribute.key);
-        }),
+        tap(() => this.refreshAfterWrite([attribute.key])),
         takeUntil(this.destroy$),
       )
       .subscribe();

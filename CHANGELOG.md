@@ -13,6 +13,14 @@ Sentient Gateway new enough to support them (named in the entry).
 ## [Unreleased]
 
 ### Changed
+- Saving, enabling, disabling or deleting a connector reads back only that
+  connector and waits for the gateway's copy on the live connection. It used
+  to read every connector of the gateway again every 2 s for up to 30 s: with
+  large connectors (10,000 keys is about 1.8 MB each) one save downloaded
+  tens of megabytes. If the gateway's copy has not come back after 30 s while
+  the gateway is online, the page reads everything once.
+- The gateway's online state is read from its three status keys only, not
+  from every server attribute (which hold every disabled connector).
 - Connector types S7 and ADS are named SIEMENS S7 and BECKHOFF ADS, like
   OMRON FINS and FANUC FOCAS.
 - Data Mapping lists Time series first, then Attributes, in every connector.
