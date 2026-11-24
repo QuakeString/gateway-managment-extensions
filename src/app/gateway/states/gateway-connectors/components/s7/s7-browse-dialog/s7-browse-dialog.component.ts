@@ -35,6 +35,12 @@ export interface S7BrowseConnection {
   username?: string;
 }
 
+/** A SHA-256 fingerprint as the gateway reads it: hex only, colons, spaces and case ignored. */
+export function normalizeS7Fingerprint(text: string | null | undefined): string | null {
+  const hex = (text ?? '').replace(/[:\s-]/g, '').toLowerCase();
+  return hex.length ? hex : null;
+}
+
 export interface S7BrowseDialogData {
   gatewayDeviceId: string;
   connectorName: string;
@@ -61,7 +67,10 @@ export interface S7BrowseResult {
   keys: { tag: string; address: string }[];
   /** New RPC methods, for the `rpc` target. */
   rpc?: { method: string; address: string; operation: 'read' | 'write' }[];
-  /** The PLC's certificate fingerprint, when the user chose to pin it. */
+  /**
+   * The certificate pin to store, only when the user changed it: the PLC's
+   * fingerprint to pin it, an empty string to remove the device's pin.
+   */
   pin?: string;
 }
 
@@ -118,6 +127,8 @@ export class S7BrowseDialogComponent implements AfterViewInit, OnDestroy {
   private rpcModes = new Map<string, S7RpcMode>();
   selected = new Set<string>();
   pin: string = null;
+  /** The pin the device already has, normalized; the shield starts checked when it is the PLC's. */
+  private readonly configuredPin: string | null;
   textSearch = new FormControl('');
   searchOpen = false;
   fullscreen = false;
@@ -146,6 +157,7 @@ export class S7BrowseDialogComponent implements AfterViewInit, OnDestroy {
   ) {
     this.existing = new Set((data.existingAddresses || []).map(a => a.replace(/"/g, '')));
     this.targetCategory = data.targetCategory || 'timeseries';
+    this.configuredPin = normalizeS7Fingerprint(data.connection?.tls?.certificateFingerprint);
     if (this.targetCategory === 'rpc') {
       this.displayedColumns = ['select', 'name', 'rpcMode', 'type', 'block'];
     }
@@ -194,6 +206,9 @@ export class S7BrowseDialogComponent implements AfterViewInit, OnDestroy {
             : body.error || this.translate.instant('gateway.s7plus.browse-failed');
         } else {
           this.fingerprint = body.certificateFingerprint ?? null;
+          if (this.configuredPin && normalizeS7Fingerprint(this.fingerprint) === this.configuredPin) {
+            this.pin = this.fingerprint;
+          }
           this.truncated = !!body.truncated;
           this.dataSource.data = Array.isArray(body.tags) ? body.tags : [];
           this.filter();
@@ -328,6 +343,21 @@ export class S7BrowseDialogComponent implements AfterViewInit, OnDestroy {
     return end < 0 ? tag.name : tag.name.slice(0, end);
   }
 
+  /** The pin differs from what the device has: Apply has something to store. */
+  get pinChanged(): boolean {
+    return normalizeS7Fingerprint(this.pin) !== this.configuredPin;
+  }
+
+  /** The device already has this PLC's certificate pinned. */
+  get pinSaved(): boolean {
+    return !!this.pin && !this.pinChanged;
+  }
+
+  /** What `add()` hands back for the pin: undefined when unchanged. */
+  private pinResult(): string | undefined {
+    return this.pinChanged ? (this.pin ?? '') : undefined;
+  }
+
   /** Pins the PLC's certificate, or takes the pin back. */
   togglePin(): void {
     this.pin = this.pin ? null : this.fingerprint;
@@ -350,11 +380,11 @@ export class S7BrowseDialogComponent implements AfterViewInit, OnDestroy {
           rpc.push({ method: `set_${key}`, address, operation: 'write' });
         }
       }
-      this.dialogRef.close({ keys: [], rpc, pin: this.pin ?? undefined });
+      this.dialogRef.close({ keys: [], rpc, pin: this.pinResult() });
       return;
     }
     const keys = names.map(name => ({ tag: s7TagKey(name), address: s7TagAddress(name) }));
-    this.dialogRef.close({ keys, pin: this.pin ?? undefined });
+    this.dialogRef.close({ keys, pin: this.pinResult() });
   }
 
   cancel(): void {

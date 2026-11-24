@@ -22,7 +22,7 @@
       <mat-icon>search</mat-icon>
     </button>
     <button *ngIf="fingerprint" mat-icon-button type="button" (click)="togglePin()"
-            [matTooltip]="(pin ? 'gateway.s7plus.pinned-hint' : 'gateway.s7plus.pin-hint') | translate:{ fingerprint: fingerprint }"
+            [matTooltip]="(pinSaved ? 'gateway.s7plus.pin-saved-hint' : pin ? 'gateway.s7plus.pinned-hint' : 'gateway.s7plus.pin-hint') | translate:{ fingerprint: fingerprint }"
             matTooltipClass="st-s7-pin-tooltip">
       <mat-icon>{{ pin ? 'verified_user' : 'shield' }}</mat-icon>
     </button>
@@ -140,7 +140,7 @@
                    [hidePageSize]="false" showFirstLastButtons></mat-paginator>
     <span class="flex-1"></span>
     <button mat-button color="primary" type="button" (click)="cancel()">{{ 'gateway.gw-cancel' | translate }}</button>
-    <button mat-raised-button color="primary" type="button" [disabled]="selected.size === 0 && !pin" (click)="add()">
+    <button mat-raised-button color="primary" type="button" [disabled]="selected.size === 0 && !pinChanged" (click)="add()">
       {{ selected.size ? ('gateway.s7plus.add-n-tags' | translate:{ count: selected.size }) : ('gateway.s7plus.apply-pin' | translate) }}
     </button>
   </div>

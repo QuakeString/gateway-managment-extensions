@@ -1963,6 +1963,7 @@
       "add": "Add {{count}}",
       "apply-pin": "Apply",
       "pinned-hint": "The certificate will be pinned when you add or apply. Click to undo. SHA-256: {{fingerprint}}",
+      "pin-saved-hint": "This device already has this PLC's certificate pinned. Click and apply to remove the pin. SHA-256: {{fingerprint}}",
       "fullscreen": "Fullscreen",
       "exit-fullscreen": "Exit fullscreen",
       "select-all-matching": "Select all {{count}} matching tags",
