@@ -58,7 +58,7 @@ import {
   SocketBasicConfigComponent,
   SocketLegacyBasicConfigComponent
 } from './components/public-api';
-import { debounceTime, filter, switchMap, take, takeUntil, tap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import {
   AttributeData,
@@ -352,9 +352,20 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (!name) {
       return;
     }
-    this.syncRecheck = timer(30000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+    // The gateway's state is read again first (three small keys): the
+    // page's copy is from when it opened, and a gateway that went offline
+    // since then must not cost a full read.
+    this.syncRecheck = timer(30000).pipe(
+      filter(() => {
+        const row = this.dataSource.data.find(attribute => attribute.key === name);
+        return !!row && !this.isConnectorSynced(row);
+      }),
+      switchMap(() => this.readGatewayState()),
+      takeUntil(this.destroy$)
+    ).subscribe(active => {
+      this.isGatewayActive = active;
       const row = this.dataSource.data.find(attribute => attribute.key === name);
-      if (row && this.isGatewayActive && !this.isConnectorSynced(row)) {
+      if (active && row && !this.isConnectorSynced(row)) {
         this.updateData(true);
       }
     });
@@ -969,19 +980,24 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private loadGatewayState(): void {
-    // Only the three keys: all server attributes include every disabled
-    // connector's configuration.
-    this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE,
-      ['active', 'lastDisconnectTime', 'lastConnectTime'])
+    this.readGatewayState()
       .pipe(takeUntil(this.destroy$))
-      .subscribe((attributes: AttributeData[]) => {
+      .subscribe(active => this.isGatewayActive = active);
+  }
 
+  /** Whether the gateway is online. Only the three keys: all server
+   *  attributes include every disabled connector's configuration. */
+  private readGatewayState(): Observable<boolean> {
+    return this.attributeService.getEntityAttributes(this.device, AttributeScope.SERVER_SCOPE,
+      ['active', 'lastDisconnectTime', 'lastConnectTime']).pipe(
+      map((attributes: AttributeData[]) => {
         const active = attributes.find(data => data.key === 'active')?.value;
         const lastDisconnectedTime = attributes.find(data => data.key === 'lastDisconnectTime')?.value;
         const lastConnectedTime = attributes.find(data => data.key === 'lastConnectTime')?.value;
-
-        this.isGatewayActive = this.getGatewayStatus(active, lastConnectedTime, lastDisconnectedTime);
-      });
+        return this.getGatewayStatus(active, lastConnectedTime, lastDisconnectedTime);
+      }),
+      catchError(() => of(false))
+    );
   }
 
   private parseConnectors(attribute: GatewayAttributeData[]): string[] {
