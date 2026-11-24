@@ -238,7 +238,8 @@ export class S7DeviceDialogComponent extends DialogComponent<S7DeviceDialogCompo
         control.setValue([...((control.value || []) as S7RpcConfig[]), ...result.rpc]);
         control.markAsDirty();
       }
-      if (result.pin) {
+      // A fingerprint pins the certificate; an empty string removes the pin.
+      if (result.pin !== undefined) {
         this.deviceForm.get('tls.certificateFingerprint').setValue(result.pin);
         this.deviceForm.get('tls.certificateFingerprint').markAsDirty();
       }
