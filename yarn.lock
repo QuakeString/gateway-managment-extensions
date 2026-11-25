@@ -8641,9 +8641,9 @@ send@^1.1.0, send@^1.2.0:
     range-parser "^1.2.1"
     statuses "^2.0.2"
 
-"sentient-ui-types@https://github.com/QuakeString/sentient-ui-types.git#4.4.1.10":
-  version "4.4.1"
-  resolved "https://github.com/QuakeString/sentient-ui-types.git#9396ce81f06c774083fe223228225a960846a5df"
+"sentient-ui-types@https://github.com/QuakeString/sentient-ui-types.git#4.4.2.0":
+  version "4.4.2"
+  resolved "https://github.com/QuakeString/sentient-ui-types.git#d3bf19e524796271f833e2e714559fa006758642"
   dependencies:
     "@angular/animations" "22.2.6"
     "@angular/cdk" "22.2.7"
