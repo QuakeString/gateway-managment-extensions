@@ -41,6 +41,7 @@ import { SharedModule } from '@shared/public-api';
 import { MatDialog } from '@angular/material/dialog';
 import { Dnp3DeviceConfig } from '../../../models/public-api';
 import { Dnp3DeviceDialogComponent, Dnp3DeviceDialogData } from '../dnp3-device-dialog/dnp3-device-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-dnp3-devices-table',
@@ -195,6 +196,7 @@ export class Dnp3DevicesTableComponent implements ControlValueAccessor, Validato
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().pipe(takeUntilDestroyed(this.destroyRef));

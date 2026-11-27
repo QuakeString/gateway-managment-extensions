@@ -63,6 +63,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   ModbusLegacySlaveDialogComponent
 } from '../modbus-slave-dialog/modbus-legacy-slave-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-modbus-master-table',
@@ -195,6 +196,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
       (ModbusLegacySlaveDialogComponent, {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         data: {
           value: value as LegacySlaveConfig,
           hideNewFields: true,
@@ -205,6 +207,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
     return this.dialog.open<ModbusSlaveDialogComponent, ModbusSlaveInfo, ModbusValues>(ModbusSlaveDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      position: deviceDialogPosition(),
       data: {
         value: value as SlaveConfig,
         buttonTitle,

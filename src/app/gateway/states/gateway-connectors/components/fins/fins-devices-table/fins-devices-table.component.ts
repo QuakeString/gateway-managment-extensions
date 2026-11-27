@@ -45,6 +45,7 @@ import {
   FinsTagImportDialogData,
   FinsTagImportResult,
 } from '../fins-tag-import-dialog/fins-tag-import-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-fins-devices-table',
@@ -141,6 +142,7 @@ export class FinsDevicesTableComponent implements ControlValueAccessor, Validato
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -163,6 +165,7 @@ export class FinsDevicesTableComponent implements ControlValueAccessor, Validato
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {

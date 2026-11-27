@@ -45,6 +45,7 @@ import {
   McTagImportDialogData,
   McTagImportResult,
 } from '../mcprotocol-tag-import-dialog/mcprotocol-tag-import-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-mcprotocol-devices-table',
@@ -141,6 +142,7 @@ export class McProtocolDevicesTableComponent implements ControlValueAccessor, Va
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -163,6 +165,7 @@ export class McProtocolDevicesTableComponent implements ControlValueAccessor, Va
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {

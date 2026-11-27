@@ -50,6 +50,7 @@ import {
   EthernetIPTagImportDialogData,
   EthernetIPTagImportResult,
 } from '../ethernet-ip-tag-import-dialog/ethernet-ip-tag-import-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-ethernet-ip-devices-table',
@@ -147,6 +148,7 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -169,6 +171,7 @@ export class EthernetIPDevicesTableComponent implements ControlValueAccessor, Va
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {

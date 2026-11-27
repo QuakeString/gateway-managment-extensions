@@ -40,6 +40,7 @@ import { SharedModule } from '@shared/public-api';
 import { MatDialog } from '@angular/material/dialog';
 import { FocasDataKey, FocasDeviceConfig } from '../../../models/public-api';
 import { FocasDeviceDialogComponent, FocasDeviceDialogData } from '../focas-device-dialog/focas-device-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-focas-devices-table',
@@ -135,6 +136,7 @@ export class FocasDevicesTableComponent implements ControlValueAccessor, Validat
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -157,6 +159,7 @@ export class FocasDevicesTableComponent implements ControlValueAccessor, Validat
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {

@@ -45,6 +45,7 @@ import {
   EtherCatTagImportDialogData,
   EtherCatTagImportResult,
 } from '../ethercat-tag-import-dialog/ethercat-tag-import-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-ethercat-devices-table',
@@ -141,6 +142,7 @@ export class EtherCatDevicesTableComponent implements ControlValueAccessor, Vali
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -163,6 +165,7 @@ export class EtherCatDevicesTableComponent implements ControlValueAccessor, Vali
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {

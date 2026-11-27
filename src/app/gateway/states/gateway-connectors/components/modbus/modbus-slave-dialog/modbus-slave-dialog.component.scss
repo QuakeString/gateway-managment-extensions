@@ -20,6 +20,12 @@
     max-width: 900px;
   }
 
+  // Same cap as the other connector device dialogs: the body grows with the
+  // open view up to 670px, so Data Mapping stays short.
+  .mat-mdc-dialog-content {
+    max-height: min(670px, calc(100vh - 150px));
+  }
+
   .slave-name-label {
     margin-right: 16px;
     color: var(--tb-text-primary, rgba(0, 0, 0, 0.87));

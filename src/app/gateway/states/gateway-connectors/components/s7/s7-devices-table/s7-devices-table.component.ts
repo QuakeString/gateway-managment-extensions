@@ -45,6 +45,7 @@ import {
   S7TagImportDialogData,
   S7TagImportResult,
 } from '../s7-tag-import-dialog/s7-tag-import-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-s7-devices-table',
@@ -141,6 +142,7 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -163,6 +165,7 @@ export class S7DevicesTableComponent implements ControlValueAccessor, Validator 
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
