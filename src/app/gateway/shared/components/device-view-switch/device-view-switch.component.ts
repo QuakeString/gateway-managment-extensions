@@ -27,6 +27,16 @@ export function initialDeviceDialogView(isEdit: boolean): DeviceDialogView {
   return isEdit ? 'mapping' : 'connection';
 }
 
+/** Where a device dialog opens. The body grows with the open view (Data Mapping
+ *  is short, Connection up to 670px), so a centred dialog would jump when the
+ *  view changes. Pin its top where the full-height dialog would sit centred;
+ *  phones keep the full-screen dialog. */
+export function deviceDialogPosition(): { top: string } | undefined {
+  return window.matchMedia('(min-width: 600px)').matches
+    ? { top: 'max(16px, calc(50vh - 395px))' }
+    : undefined;
+}
+
 /**
  * The Connection | Data Mapping switch in a device dialog's title bar,
  * the same in every connector's device dialog.

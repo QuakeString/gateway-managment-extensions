@@ -39,6 +39,7 @@ import { SharedModule } from '@shared/public-api';
 import { MatDialog } from '@angular/material/dialog';
 import { SnmpDeviceConfig, SnmpVersion, SnmpVersionTranslationsMap } from '../../../models/public-api';
 import { SnmpDeviceDialogComponent, SnmpDeviceDialogData } from '../snmp-device-dialog/snmp-device-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-snmp-devices-table',
@@ -140,6 +141,7 @@ export class SnmpDevicesTableComponent implements ControlValueAccessor, Validato
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -162,6 +164,7 @@ export class SnmpDevicesTableComponent implements ControlValueAccessor, Validato
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {

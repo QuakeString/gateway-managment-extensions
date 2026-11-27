@@ -41,6 +41,7 @@ import { SharedModule } from '@shared/public-api';
 import { MatDialog } from '@angular/material/dialog';
 import { ProfinetDeviceConfig } from '../../../models/public-api';
 import { ProfinetDeviceDialogComponent, ProfinetDeviceDialogData } from '../profinet-device-dialog/profinet-device-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-profinet-devices-table',
@@ -187,6 +188,7 @@ export class ProfinetDevicesTableComponent implements ControlValueAccessor, Vali
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().pipe(takeUntilDestroyed(this.destroyRef));

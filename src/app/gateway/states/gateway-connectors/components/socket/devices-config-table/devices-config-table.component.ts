@@ -49,6 +49,7 @@ import {
 } from '@shared/public-api';
 import { DeviceDialogComponent } from '../device-dialog/device-dialog.component';
 import { DeviceConfigInfo, DevicesConfigMapping } from '../../../models/public-api';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-devices-config-table',
@@ -177,6 +178,7 @@ export class DevicesConfigTableComponent implements ControlValueAccessor, Valida
     return this.dialog.open<DeviceDialogComponent, DeviceConfigInfo, DevicesConfigMapping>(DeviceDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      position: deviceDialogPosition(),
       data: {
         value,
         buttonTitle,

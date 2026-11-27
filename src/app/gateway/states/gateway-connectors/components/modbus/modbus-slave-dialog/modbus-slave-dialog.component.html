@@ -25,9 +25,9 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <div mat-dialog-content [formGroup]="slaveConfigFormGroup" class="tb-form-panel">
-    <div class="stroked tb-form-panel">
-      <div class="tb-form-panel no-border no-padding padding-top">
+  <div mat-dialog-content [formGroup]="slaveConfigFormGroup">
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-panel no-border no-padding">
         <ng-container *ngIf="view === 'connection'">
         <div class="tb-flex row space-between align-center no-gap fill-width">
           <div class="fixed-title-width" translate>gateway.server-connection</div>
@@ -359,9 +359,7 @@
         </div>
         </ng-container>
         <ng-container *ngIf="view === 'mapping'">
-        <div class="tb-form-panel stroked">
-          <tb-modbus-values [singleMode]="true" [hideNewFields]="data.hideNewFields" formControlName="values"></tb-modbus-values>
-        </div>
+        <tb-modbus-values [singleMode]="true" [hideNewFields]="data.hideNewFields" formControlName="values"></tb-modbus-values>
         </ng-container>
       </div>
     </div>

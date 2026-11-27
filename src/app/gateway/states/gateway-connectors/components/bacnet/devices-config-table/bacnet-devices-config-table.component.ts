@@ -29,6 +29,7 @@ import { AbstractDevicesConfigTableComponent } from '../../../abstract/public-ap
 import { CommonModule } from '@angular/common';
 import { isDefinedAndNotNull } from '@core/public-api';
 import { TruncateWithTooltipDirective } from '../../../../../shared/directives/public-api';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-bacnet-devices-config-table',
@@ -103,6 +104,7 @@ export class BacnetDevicesConfigTableComponent extends AbstractDevicesConfigTabl
     return this.dialog.open<BacnetDeviceDialogComponent, BacnetDeviceConfigInfo, BacnetDeviceConfig>(BacnetDeviceDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      position: deviceDialogPosition(),
       data: {
         value,
         buttonTitle,

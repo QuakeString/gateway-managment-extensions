@@ -34,7 +34,7 @@
   }
 
   .mat-mdc-dialog-content {
-    height: 670px;
+    max-height: min(670px, calc(100vh - 150px));
   }
 
   .ellipsis-chips-container {

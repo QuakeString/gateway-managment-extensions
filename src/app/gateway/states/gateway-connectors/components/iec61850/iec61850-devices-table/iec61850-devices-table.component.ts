@@ -42,6 +42,7 @@ import {
   IEC61850DeviceDialogComponent,
   IEC61850DeviceDialogData,
 } from '../iec61850-device-dialog/iec61850-device-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-iec61850-devices-table',
@@ -162,6 +163,7 @@ export class IEC61850DevicesTableComponent implements ControlValueAccessor, Vali
     this.dialog.open(IEC61850DeviceDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      position: deviceDialogPosition(),
       data: dialogData,
     }).afterClosed().subscribe((result: IEC61850DeviceConfig | undefined) => {
       if (result) {

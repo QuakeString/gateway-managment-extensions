@@ -45,6 +45,7 @@ import {
   AdsTagImportDialogData,
   AdsTagImportResult,
 } from '../ads-tag-import-dialog/ads-tag-import-dialog.component';
+import { deviceDialogPosition } from '../../../../../shared/public-api';
 
 @Component({
   selector: 'tb-ads-devices-table',
@@ -141,6 +142,7 @@ export class AdsDevicesTableComponent implements ControlValueAccessor, Validator
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
@@ -163,6 +165,7 @@ export class AdsDevicesTableComponent implements ControlValueAccessor, Validator
         },
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        position: deviceDialogPosition(),
         autoFocus: false,
       }
     ).afterClosed().subscribe(result => {
